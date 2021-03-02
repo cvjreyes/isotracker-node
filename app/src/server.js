@@ -15,6 +15,10 @@ app.get("/", (req, res) => {
 });
 
 require("./resources/users/user.routes.js")(app);
+require("./resources/areas/area.routes.js")(app);
+require("./resources/dpipes/dpipe.routes.js")(app);
+require("./resources/hisoctrls/hisoctrl.routes.js")(app);
+require("./resources/isostatus/isostatus.routes.js")(app);
 
 // set port, listen for requests
 app.listen(3000, () => {
