@@ -24,7 +24,9 @@ User.create = (newUser, result) => {
 };
 
 User.findById = (userId, result) => {
+  console.log("AAAAAAAAAAA")
   sql.query(`SELECT * FROM users WHERE id = ${userId}`, (err, res) => {
+    
     if (err) {
       console.log("error: ", err);
       result(err, null);
@@ -34,6 +36,31 @@ User.findById = (userId, result) => {
     if (res.length) {
       console.log("found user: ", res[0]);
       result(null, res[0]);
+      return;
+    }
+
+    // not found Customer with the id
+    result({ kind: "not_found" }, null);
+  });
+};
+
+User.findByEmail = (userEmail, result) => {
+  console.log("arriba");
+  sql.query("SELECT * FROM users WHERE email = ?",
+
+  [userEmail],
+  (err, res) => {
+    
+    if (err) {
+      console.log("error: ", err);
+      result(err, null);
+      console.log("true");
+      return;
+    }
+    if (res.length) {
+      console.log("found user: ", res[0]);
+      result(null, res[0]);
+      console.log("false");
       return;
     }
 
