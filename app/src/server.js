@@ -19,6 +19,10 @@ require("./resources/areas/area.routes.js")(app);
 require("./resources/dpipes/dpipe.routes.js")(app);
 require("./resources/hisoctrls/hisoctrl.routes.js")(app);
 require("./resources/isostatus/isostatus.routes.js")(app);
+require("./resources/misoctrls/misoctrl.routes.js")(app);
+require("./resources/ppipes_ifc/ppipes_ifc.routes.js")(app);
+require("./resources/ppipes_ifd/ppipes_ifd.routes.js")(app);
+require("./resources/tpipes/tpipe.routes.js")(app);
 
 // set port, listen for requests
 app.listen(3000, () => {

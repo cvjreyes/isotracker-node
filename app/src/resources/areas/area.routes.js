@@ -8,13 +8,13 @@ module.exports = app => {
     app.get("/areas", areas.findAll);
 
     // Retrieve a single area with areaId
-    app.get("/areas/:areaId", areas.findOne);
+    app.get("/area/:areaId", areas.findOne);
 
     // Update a area with areaId
-    app.put("/areas/:areaId", areas.update);
+    app.put("/area/:areaId", areas.update);
 
     // Delete a area with areaId
-    app.delete("/areas/:areaId", areas.delete);
+    app.delete("/area/:areaId", areas.delete);
 
     // Create a new area
     app.delete("/areas", areas.deleteAll);

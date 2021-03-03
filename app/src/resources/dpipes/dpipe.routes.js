@@ -8,13 +8,13 @@ module.exports = app => {
     app.get("/dPipes", dPipes.findAll);
 
     // Retrieve a single dpipe with dpipeId
-    app.get("/dPipes/:dPipeId", dPipes.findOne);
+    app.get("/dPipe/:dPipeId", dPipes.findOne);
 
     // Update a dpipe with dpipeId
-    app.put("/dPipes/:dPipeId", dPipes.update);
+    app.put("/dPipe/:dPipeId", dPipes.update);
 
     // Delete a dpipe with dpipeId
-    app.delete("/dPipes/:dPipeId", dPipes.delete);
+    app.delete("/dPipe/:dPipeId", dPipes.delete);
 
     // Create a new dpipe
     app.delete("/dPipes", dPipes.deleteAll);
