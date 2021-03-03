@@ -9,6 +9,6 @@ module.exports = router;
 module.exports = app => {
     const auth = require("./auth.controller.js");
 
-    app.get("/login", auth.login);
+    app.post("/login", auth.login);
     
   };

@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 
 const login = async(req, res) => {
     const { email, password } = req.body;
-    const user = await userModel.findByEmail("jreyess@technip.com");
+    const user = userModel.findByEmail(email);
+    console.log(user.password)
     if (user.password === password)
     {
       const token = jwt.sign({email: email, role: 'admin'}, process.env.TOKEN_SECRET);
