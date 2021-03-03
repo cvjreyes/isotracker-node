@@ -2,20 +2,20 @@ module.exports = app => {
     const dPipes = require("./dpipe.controller.js");
   
     // Create a new dpipe
-    app.post("/dPipe", dPipes.create);
+    app.post("/api/dPipe", dPipes.create);
 
     // Retrieve all dpipes
-    app.get("/dPipes", dPipes.findAll);
+    app.get("/api/dPipes", dPipes.findAll);
 
     // Retrieve a single dpipe with dpipeId
-    app.get("/dPipe/:dPipeId", dPipes.findOne);
+    app.get("/api/dPipe/:dPipeId", dPipes.findOne);
 
     // Update a dpipe with dpipeId
-    app.put("/dPipe/:dPipeId", dPipes.update);
+    app.put("/api/dPipe/:dPipeId", dPipes.update);
 
     // Delete a dpipe with dpipeId
-    app.delete("/dPipe/:dPipeId", dPipes.delete);
+    app.delete("/api/dPipe/:dPipeId", dPipes.delete);
 
     // Create a new dpipe
-    app.delete("/dPipes", dPipes.deleteAll);
+    app.delete("/api/dPipes", dPipes.deleteAll);
   };

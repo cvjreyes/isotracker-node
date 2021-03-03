@@ -2,20 +2,20 @@ module.exports = app => {
     const areas = require("./area.controller.js");
   
     // Create a new area
-    app.post("/area", areas.create);
+    app.post("/api/area", areas.create);
 
     // Retrieve all areas
-    app.get("/areas", areas.findAll);
+    app.get("/api/areas", areas.findAll);
 
     // Retrieve a single area with areaId
-    app.get("/area/:areaId", areas.findOne);
+    app.get("/api/area/:areaId", areas.findOne);
 
     // Update a area with areaId
-    app.put("/area/:areaId", areas.update);
+    app.put("/api/area/:areaId", areas.update);
 
     // Delete a area with areaId
-    app.delete("/area/:areaId", areas.delete);
+    app.delete("/api/area/:areaId", areas.delete);
 
     // Create a new area
-    app.delete("/areas", areas.deleteAll);
+    app.delete("/api/areas", areas.deleteAll);
   };
