@@ -43,24 +43,22 @@ User.findById = (userId, result) => {
   });
 };
 
-User.findByEmail = async(userEmail, result) => {
-  
-  sql.query("SELECT * FROM users WHERE email = ?",
-
-  [userEmail],
-  async (err, res) => {
+User.findByEmail = async (userEmail, result) =>{
+  sql.query(`SELECT * FROM users WHERE email = ?`,[userEmail], async (err, res) => {
     
     if (err) {
       console.log("error: ", err);
-      return err;
+      result(err, null)
+      return;
     }
     if (res.length) {
       console.log("found user: ", res[0]);
-      return( null, res[0]);
-      
+      result(null, res[0]);
+      return;
     }
+
+    result({ kind: "not_found" }, null);
    
-    
   });
 };
 

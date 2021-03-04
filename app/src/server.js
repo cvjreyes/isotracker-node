@@ -1,11 +1,11 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-
+const cors = require('cors');
 const app = express();
 
 // parse requests of content-type: application/json
 app.use(bodyParser.json());
-
+app.use(cors());
 // parse requests of content-type: application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/api", (req, res) => {
   res.json({ message: "Welcome to the isotracker api." });
 });
-
+require("dotenv").config();
 require("./resources/users/user.routes.js")(app);
 require("./resources/areas/area.routes.js")(app);
 require("./resources/dpipes/dpipe.routes.js")(app);
