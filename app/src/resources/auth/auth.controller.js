@@ -1,4 +1,3 @@
-const userModel = require('../users/user.model');
 const jwt = require('jsonwebtoken');
 const sql = require("../../db.js");
 
@@ -20,8 +19,6 @@ const login = async(req, res) => {
         console.log("connected");
       }
     });
-      
-
     
 };
 
