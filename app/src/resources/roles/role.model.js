@@ -15,8 +15,6 @@ Role.getAll = result => {
         result(null, err);
         return;
       }
-  
-      console.log("roles: ", res);
       result(null, res);
     });
   };
