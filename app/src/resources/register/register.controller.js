@@ -17,7 +17,6 @@ const registerUser = async(req, res) => {
                     res.status(401).send("Error creating user");
                 }else{
                     const role_id = result[0].id;
-                    //sql.query('INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)', [result[0].id, ]
                     sql.query('SELECT id FROM users WHERE email = ?', [email], async(err, result) =>{
                         if (err){
                             console.log(err);
