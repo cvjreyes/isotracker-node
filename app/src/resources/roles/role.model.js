@@ -19,4 +19,5 @@ Role.getAll = result => {
     });
   };
 
+
   module.exports = Role;
