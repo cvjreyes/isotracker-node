@@ -1,9 +1,8 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
 const fs = require("fs");
+const bodyParser = require('body-parser')
 
 const upload = async (req, res) => {
-
-  console.log(req.body)
   try {
     await uploadFile(req, res);
 
@@ -15,14 +14,15 @@ const upload = async (req, res) => {
       message: "Uploaded the file successfully: " + req.file.originalname,
     });
   } catch (err) {
+    console.log(err)
     res.status(500).send({
-      message: `Could not upload the file: ${req.file.originalname}. ${err}`,
+      message: err,
     });
   }
 };
 
 const getListFiles = (req, res) => {
-  const directoryPath = "C:/xampp/htdocs/isotracker-node/isotracker-node/app/storage/isoctrl";
+  const directoryPath = "./app/storage/isoctrl/Design";
 
   fs.readdir(directoryPath, function (err, files) {
     if (err) {
@@ -36,7 +36,7 @@ s
     files.forEach((file) => {
       fileInfos.push({
         name: file,
-        url: "C:/xampp/htdocs/isotracker-node/isotracker-node/app/storage/isoctrl" + file,
+        url: "./app/storage/isoctrl/Design" + file,
       });
     });
 
@@ -46,7 +46,7 @@ s
 
 const download = (req, res) => {
   const fileName = req.params.name;
-  const directoryPath = "C:/xampp/htdocs/isotracker-node/isotracker-node/app/storage/isoctrl";
+  const directoryPath = "./app/storage/isoctrl/Design";
 
   res.download(directoryPath + fileName, fileName, (err) => {
     if (err) {
