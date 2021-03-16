@@ -13,9 +13,16 @@ const upload = async (req, res) => {
     res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
     });
-    fs.copyFile('./app/storage/isoctrl/design/' + req.file.originalname, './app/storage/isoctrl/design/attach/' + req.file.originalname.split('.').slice(0, -1).join('.') + '-CL.pdf', (err) => {
-      if (err) throw err;
-    });
+    var extension = "";
+    var i = req.file.originalname.lastIndexOf('.');
+    if (i > 0) {
+      extension = req.file.originalname.substring(i+1);
+    }
+    if (extension == 'pdf'){
+      fs.copyFile('./app/storage/isoctrl/design/' + req.file.originalname, './app/storage/isoctrl/design/attach/' + req.file.originalname.split('.').slice(0, -1).join('.') + '-CL.pdf', (err) => {
+        if (err) throw err;
+      });
+    }
   } catch (err) {
     console.log(err)
     res.status(500).send({
