@@ -12,6 +12,7 @@ const Misoctrl = function(misoctrl) {
   this.requestedlead= misoctrl.requestedlead,
   this.issued= misoctrl.issued,
   this.deleted= misoctrl.deleted,
+  this.onhold= misocrl.onhold,
   this.claimed= misoctrl.claimed,
   this.verifydesign= misoctrl.verifydesign,
   this.verifystress= misoctrl.verifystress,
@@ -72,8 +73,8 @@ Misoctrl.getAll = result => {
 
 Misoctrl.updateById = (id, misoctrl, result) => {
   sql.query(
-    "UPDATE misoctrls SET filename = ?, isoid = ?, revision = ?, tie = ?, spo = ?, sit = ?, requested = ?, requestedlead = ?, issued = ?, deleted = ?, claimed = ?, verifydesign = ?, verifystress = ?, verifysupports = ?, fromldgsupports = ?, `from` = ?, `to` = ?, comments = ?, user = ?, created_at = ?, updated_at = ? WHERE id = ?",
-    [misoctrl.filename, misoctrl.isoid, misoctrl.revision, misoctrl.tie, misoctrl.spo, misoctrl.sit, misoctrl.requested, misoctrl.requestedlead, misoctrl.issued, misoctrl.deleted, misoctrl.claimed, misoctrl.verifydesign, misoctrl.verifystress, misoctrl.verifysupports, misoctrl.fromldgsupports, misoctrl.from, misoctrl.to, misoctrl.comments, misoctrl.user, misoctrl.created_at, misoctrl.updated_at, id],
+    "UPDATE misoctrls SET filename = ?, isoid = ?, revision = ?, tie = ?, spo = ?, sit = ?, requested = ?, requestedlead = ?, issued = ?, deleted = ?, onhold = ?, claimed = ?, verifydesign = ?, verifystress = ?, verifysupports = ?, fromldgsupports = ?, `from` = ?, `to` = ?, comments = ?, user = ?, created_at = ?, updated_at = ? WHERE id = ?",
+    [misoctrl.filename, misoctrl.isoid, misoctrl.revision, misoctrl.tie, misoctrl.spo, misoctrl.sit, misoctrl.requested, misoctrl.requestedlead, misoctrl.issued, misoctrl.deleted, misoctrl.onhold, misoctrl.claimed, misoctrl.verifydesign, misoctrl.verifystress, misoctrl.verifysupports, misoctrl.fromldgsupports, misoctrl.from, misoctrl.to, misoctrl.comments, misoctrl.user, misoctrl.created_at, misoctrl.updated_at, id],
     (err, res) => {
       if (err) {
         console.log("error: ", err);

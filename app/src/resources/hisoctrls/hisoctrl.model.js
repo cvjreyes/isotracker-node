@@ -11,6 +11,7 @@ const Hisoctrl = function(hisoctrl) {
   this.requestedlead= hisoctrl.requestedlead,
   this.issued= hisoctrl.issued,
   this.deleted= hisoctrl.deleted,
+  this.onhold= hisoctrl.onhold,
   this.claimed= hisoctrl.claimed,
   this.verifydesign= hisoctrl.verifydesign,
   this.verifystress= hisoctrl.verifystress,
@@ -71,8 +72,8 @@ Hisoctrl.getAll = result => {
 
 Hisoctrl.updateById = (id, hisoctrl, result) => {
   sql.query(
-    "UPDATE hisoctrls SET filename = ?, revision = ?, tie = ?, spo = ?, sit = ?, requested = ?, requestedlead = ?, issued = ?, deleted = ?, claimed = ?, verifydesign = ?, verifystress = ?, verifysupports = ?, fromldgsupports = ?, `from` = ?, `to` = ?, comments = ?, user = ?, created_at = ?, updated_at = ? WHERE id = ?",
-    [hisoctrl.filename, hisoctrl.revision, hisoctrl.tie, hisoctrl.spo, hisoctrl.sit, hisoctrl.requested, hisoctrl.requestedlead, hisoctrl.issued, hisoctrl.deleted, hisoctrl.claimed, hisoctrl.verifydesign, hisoctrl.verifystress, hisoctrl.verifysupports, hisoctrl.fromldgsupports, hisoctrl.from, hisoctrl.to, hisoctrl.comments, hisoctrl.user, hisoctrl.created_at, hisoctrl.updated_at, id],
+    "UPDATE hisoctrls SET filename = ?, revision = ?, tie = ?, spo = ?, sit = ?, requested = ?, requestedlead = ?, issued = ?, deleted = ?, onhold = ?, claimed = ?, verifydesign = ?, verifystress = ?, verifysupports = ?, fromldgsupports = ?, `from` = ?, `to` = ?, comments = ?, user = ?, created_at = ?, updated_at = ? WHERE id = ?",
+    [hisoctrl.filename, hisoctrl.revision, hisoctrl.tie, hisoctrl.spo, hisoctrl.sit, hisoctrl.requested, hisoctrl.requestedlead, hisoctrl.issued, hisoctrl.deleted, hisoctrl.onhold,hisoctrl.claimed, hisoctrl.verifydesign, hisoctrl.verifystress, hisoctrl.verifysupports, hisoctrl.fromldgsupports, hisoctrl.from, hisoctrl.to, hisoctrl.comments, hisoctrl.user, hisoctrl.created_at, hisoctrl.updated_at, id],
     (err, res) => {
       if (err) {
         console.log("error: ", err);

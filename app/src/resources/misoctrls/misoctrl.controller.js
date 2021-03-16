@@ -21,6 +21,7 @@ exports.create = (req, res) => {
     requestedlead: req.body.requestedlead,
     issued: req.body.issued,
     deleted: req.body.deleted,
+    onhold: req.body.onhold,
     claimed: req.body.claimed,
     verifydesign: req.body.verifydesign,
     verifystress: req.body.verifystress,
