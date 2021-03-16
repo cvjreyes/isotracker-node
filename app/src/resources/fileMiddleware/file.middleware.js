@@ -7,20 +7,47 @@ let storage = multer.diskStorage({
   destination: (req, file, cb) => {
     var exists = false;
     var where = "";
-    
-    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-    './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
-    for(let i = 0; i < folders.length; i++){
-      const path = folders[i] + '/' + file.originalname;
-      if (fs.existsSync(path)) {
-        exists = true;
-        where = folders[i]
-      }
+    var extension = "";
+    var i = file.originalname.lastIndexOf('.');
+    if (i > 0) {
+      extension = file.originalname.substring(i+1);
     }
-    if(!exists){
-      cb(null, './app/storage/isoctrl/design')
+    if (extension == 'pdf'){
+      console.log("entro a pdf")
+      const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+      if(!exists){
+        const childPath = './app/storage/isoctrl/design/limbo/' + file.originalname.split('.').slice(0, -1).join('.') + '.zip'
+        if (fs.existsSync(childPath)) {
+          const newChildPath = './app/storage/isoctrl/design/attach/' + file.originalname.split('.').slice(0, -1).join('.') + '.zip'
+          fs.rename(childPath, newChildPath, function (err) {
+            if (err) throw err
+            console.log('Successfully renamed - AKA moved!')
+          })
+        }
+        cb(null, './app/storage/isoctrl/design')
+
+      }else{
+        cb("error", null)
+      }
+    }else if(extension == 'zip'){
+      console.log("entro a zip")
+      const parentPath = './app/storage/isoctrl/design/' + file.originalname.split('.').slice(0, -1).join('.') + '.pdf'
+      console.log(parentPath)
+      if (fs.existsSync(parentPath)) {
+        cb(null, './app/storage/isoctrl/design/attach')
+      }else{
+        cb(null, './app/storage/isoctrl/design/limbo')
+      }
     }else{
-      cb(where, null)
+      cb("error", null)
     }
   },
   filename: (req, file, cb) => {
