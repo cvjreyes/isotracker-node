@@ -30,6 +30,7 @@ require("./resources/register/register.routes.js")(app);
 require("./resources/roles/role.routes.js")(app);
 require("./resources/myTrayFiles/myTrayFiles.routes.js")(app);
 require("./resources/fileRoutes/file.routes.js")(app);
+require("./resources/transactions/transaction.routes.js")(app);
 // set port, listen for requests
 app.listen(5000, () => {
   console.log("Server is running on port 5000.");
