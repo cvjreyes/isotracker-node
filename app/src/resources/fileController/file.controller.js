@@ -1,6 +1,7 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
 const fs = require("fs");
 const bodyParser = require('body-parser')
+const sql = require("../../db.js");
 
 const upload = async (req, res) => {
   try {
@@ -19,6 +20,7 @@ const upload = async (req, res) => {
       extension = req.file.originalname.substring(i+1);
     }
     if (extension == 'pdf'){
+      
       fs.copyFile('./app/storage/isoctrl/design/' + req.file.originalname, './app/storage/isoctrl/design/attach/' + req.file.originalname.split('.').slice(0, -1).join('.') + '-CL.pdf', (err) => {
         if (err) throw err;
       });
@@ -67,8 +69,39 @@ const download = (req, res) => {
   });
 };
 
+
+const uploadHis = async (req, res) => {
+
+  let ts = Date.now();
+
+  let date_ob = new Date(ts);
+  let date = date_ob.getDate();
+  let month = date_ob.getMonth() + 1;
+  let year = date_ob.getFullYear();
+
+  let cuerrentDateAndTime = (year + "-" + month + "-" + date + " " + date_ob.getHours() + ":" + date_ob.getMinutes() + ":" + date_ob.getSeconds())
+
+  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user, cuerrentDateAndTime, cuerrentDateAndTime], (err, res) => {
+    if (err) {
+      console.log("error: ", err);
+    }else{
+      console.log("created hisoctrls");
+      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user, cuerrentDateAndTime, cuerrentDateAndTime], (err, res) => {
+        if (err) {
+          console.log("error: ", err);
+        }else{
+          console.log("created misoctrls");
+        }
+      });
+    }
+  });
+}
+
 module.exports = {
   upload,
   getListFiles,
   download,
+  uploadHis
 };

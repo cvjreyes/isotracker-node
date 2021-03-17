@@ -4,7 +4,7 @@ const maxSize = 2 * 1024 * 1024 * 100;
 const fs = require('fs');
 
 let storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: async (req, file, cb) => {
     var exists = false;
     var where = "";
     var extension = "";
@@ -32,7 +32,7 @@ let storage = multer.diskStorage({
             console.log('Successfully renamed - AKA moved!')
           })
         }
-        cb(null, './app/storage/isoctrl/design')
+        await cb(null, './app/storage/isoctrl/design')
 
       }else{
         cb("error", null)
@@ -42,12 +42,12 @@ let storage = multer.diskStorage({
       const parentPath = './app/storage/isoctrl/design/' + file.originalname.split('.').slice(0, -1).join('.') + '.pdf'
       console.log(parentPath)
       if (fs.existsSync(parentPath)) {
-        cb(null, './app/storage/isoctrl/design/attach')
+        await cb(null, './app/storage/isoctrl/design/attach')
       }else{
-        cb(null, './app/storage/isoctrl/design/limbo')
+        await cb(null, './app/storage/isoctrl/design/limbo')
       }
     }else{
-      cb("error", null)
+      await cb("error", null)
     }
   },
   filename: (req, file, cb) => {
