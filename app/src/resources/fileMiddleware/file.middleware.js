@@ -5,6 +5,7 @@ const fs = require('fs');
 
 let storage = multer.diskStorage({
   destination: async (req, file, cb) => {
+    
     var exists = false;
     var where = "";
     var extension = "";
@@ -23,6 +24,7 @@ let storage = multer.diskStorage({
           where = folders[i]
         }
       }
+
       if(!exists){
         const childPath = './app/storage/isoctrl/design/limbo/' + file.originalname.split('.').slice(0, -1).join('.') + '.zip'
         if (fs.existsSync(childPath)) {
@@ -32,6 +34,7 @@ let storage = multer.diskStorage({
             console.log('Successfully renamed - AKA moved!')
           })
         }
+        console.log("Se añade")
         await cb(null, './app/storage/isoctrl/design')
 
       }else{

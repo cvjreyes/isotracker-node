@@ -4,8 +4,9 @@ const sql = require("../../db.js");
 exports.getFilesByTray = async(req, res) => {
     var myFiles = [];
     var folderNum = 3;
-    var role = req.body;
-    role = role.currentRole;
+    var body = req.body;
+    role = body.currentRole;
+    user = body.currentUser;
     
 
     sql.query('SELECT num FROM roles WHERE name = ?', [role], async (err, results) => {
@@ -34,22 +35,17 @@ exports.getFilesByTray = async(req, res) => {
             folder = "lde";
             break;
         }
-        var path = require('path');
-        myFolder = path.join('app/storage/isoctrl', folder)
-        fs.readdir(myFolder, (err, files) => {
-        files.forEach(file => {
-            if(path.extname(file).toLowerCase() === '.pdf'){
-            myFiles.push(file)
-            
-            }
         
-        });
+      }
+
+      sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND claimed = 1', [folder, user], async (err, results) => {
         res.json({
-          files: myFiles
-        });
-      });
-    }
-  });
+          rows: results
+        })
+      })
+    });
+    
+    
   }
 
 

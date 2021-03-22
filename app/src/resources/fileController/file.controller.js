@@ -5,9 +5,11 @@ const sql = require("../../db.js");
 
 const upload = async (req, res) => {
   try {
+    console.log(req.file)
     await uploadFile(req, res);
 
     if (req.file == undefined) {
+      console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
 
@@ -34,8 +36,17 @@ const upload = async (req, res) => {
 };
 
 const getListFiles = (req, res) => {
-  const directoryPath = "./app/storage/isoctrl/Design";
-
+  const tab = req.body.currentTab
+  sql.query('SELECT * FROM misoctrls WHERE `to` = ?', [tab], (err, results) =>{
+    if(!results){
+      console.log("No results found")
+    }else{
+      res.json({
+        rows: results
+      })
+    }
+  })
+  /*
   fs.readdir(directoryPath, function (err, files) {
     if (err) {
       res.status(500).send({
@@ -51,9 +62,10 @@ s
         url: "./app/storage/isoctrl/Design" + file,
       });
     });
-
+    
     res.status(200).send(fileInfos);
   });
+  */
 };
 
 const download = (req, res) => {
@@ -72,23 +84,14 @@ const download = (req, res) => {
 
 const uploadHis = async (req, res) => {
 
-  let ts = Date.now();
-
-  let date_ob = new Date(ts);
-  let date = date_ob.getDate();
-  let month = date_ob.getMonth() + 1;
-  let year = date_ob.getFullYear();
-
-  let cuerrentDateAndTime = (year + "-" + month + "-" + date + " " + date_ob.getHours() + ":" + date_ob.getMinutes() + ":" + date_ob.getSeconds())
-
-  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user, cuerrentDateAndTime, cuerrentDateAndTime], (err, res) => {
+  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
+  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user], (err, res) => {
     if (err) {
       console.log("error: ", err);
     }else{
       console.log("created hisoctrls");
-      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user, cuerrentDateAndTime, cuerrentDateAndTime], (err, res) => {
+      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user], (err, res) => {
         if (err) {
           console.log("error: ", err);
         }else{

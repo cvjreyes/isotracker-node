@@ -2,22 +2,14 @@ const fs = require("fs");
 const sql = require("../../db.js");
 
 const transaction = async (req, res) => {
-    let ts = Date.now();
-
-    let date_ob = new Date(ts);
-    let date = date_ob.getDate();
-    let month = date_ob.getMonth() + 1;
-    let year = date_ob.getFullYear();
-
-    let cuerrentDateAndTime = (year + "-" + month + "-" + date + " " + date_ob.getHours() + ":" + date_ob.getMinutes() + ":" + date_ob.getSeconds())
 
     sql.query("SELECT created_at FROM hisoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
         if (!results[0]){
             res.status(401).send("File no found");
         }else{
             let created_at = results[0].created_at
-            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [req.body.fileName, 0, 0, 0, 0, req.body.from, req.body.to, "Moved", req.body.user, created_at, cuerrentDateAndTime], (err, res) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
+            [req.body.fileName, 0, 0, 0, 0, req.body.from, req.body.to, "Moved", req.body.user], (err, res) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
