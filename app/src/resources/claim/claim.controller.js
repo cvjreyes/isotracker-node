@@ -16,16 +16,17 @@ const singleClaim = async (req, res) => {
                 }
             }
             sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, user, last.created_at], (err, res) => {
+            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, user, last.created_at], (err, results) => {
             if (err) {
                 console.log("error: ", err);
             }else{
-                console.log("created hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 1, user = ? WHERE filename = ?", [user, fileName], (err, res) =>{
+                console.log("created claim in hisoctrls");
+                sql.query("UPDATE misoctrls SET claimed = 1, user = ? WHERE filename = ?", [user, fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
-                        console.log("created misocrtls");
+                        console.log("claimed iso " + fileName);
+                        res.status(200).send("claimed")
                     }
                 })
                 }

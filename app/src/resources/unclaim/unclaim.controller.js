@@ -4,7 +4,6 @@ const { findByEmail } = require("../users/user.model.js");
 const singleUnclaim = async (req, res) => {
     const user = req.body.user
     const fileName = req.body.file
-    console.log("HOLA")
     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if(!results[0]){
             res.status(401).send("No files found");
@@ -16,16 +15,17 @@ const singleUnclaim = async (req, res) => {
                 }
             }
             sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, 0, last.from, last.to , last.comments, "None", last.created_at], (err, res) => {
+            [fileName, 0, 0, 0, 0, 0, last.from, last.to , last.comments, "None", last.created_at], (err, results) => {
             if (err) {
                 console.log("error: ", err);
             }else{
-                console.log("created hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 0, user = ? WHERE filename = ?", ["None", fileName], (err, res) =>{
+                console.log("created unclaim in hisoctrls");
+                sql.query("UPDATE misoctrls SET claimed = 0, user = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
-                        console.log("created misocrtls");
+                      console.log("unclaimed iso " + fileName);
+                      res.status(200).send("unclaimed")
                     }
                 })
                 }
