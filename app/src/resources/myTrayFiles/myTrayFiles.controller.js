@@ -9,6 +9,15 @@ exports.getFilesByTray = async(req, res) => {
     user = body.currentUser;
     console.log("empiezo a hacer fetch")
 
+    var username = "";
+    sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+      if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+      }else{   
+        username  = results[0].name
+      }
+    });
+
     sql.query('SELECT num FROM roles WHERE name = ?', [role], async (err, results) => {
       if (!results[0]){
         res.status(401).send("Username or password incorrect");
@@ -37,7 +46,7 @@ exports.getFilesByTray = async(req, res) => {
         }
         
       }
-      sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND claimed = 1', [folder, user], async (err, results) => { 
+      sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND claimed = 1', [folder, username], async (err, results) => { 
         res.json({
           rows: results
         })

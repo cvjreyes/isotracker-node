@@ -85,18 +85,28 @@ const download = (req, res) => {
 
 const uploadHis = async (req, res) => {
 
+  var username = "";
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+    }
+  });
+
   sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user], (err, res) => {
+  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", username], (err, results) => {
     if (err) {
       console.log("error: ", err);
     }else{
       console.log("created hisoctrls");
       sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", req.body.user], (err, res) => {
+      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username], (err, results) => {
         if (err) {
           console.log("error: ", err);
         }else{
           console.log("created misoctrls");
+          res.status(200).send("uploaded to his")
         }
       });
     }

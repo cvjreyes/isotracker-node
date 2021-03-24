@@ -4,6 +4,15 @@ const { findByEmail } = require("../users/user.model.js");
 const singleClaim = async (req, res) => {
     const user = req.body.user
     const fileName = req.body.file
+
+    var username = "";
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+      if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+      }else{   
+        username  = results[0].name
+      }
+    });
     
     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if(!results[0]){
@@ -16,12 +25,12 @@ const singleClaim = async (req, res) => {
                 }
             }
             sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, user, last.created_at], (err, results) => {
+            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, username, last.created_at], (err, results) => {
             if (err) {
                 console.log("error: ", err);
             }else{
                 console.log("created claim in hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 1, user = ? WHERE filename = ?", [user, fileName], (err, results) =>{
+                sql.query("UPDATE misoctrls SET claimed = 1, user = ? WHERE filename = ?", [username, fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
