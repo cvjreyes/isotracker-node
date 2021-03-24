@@ -20,7 +20,7 @@ const singleUnclaim = async (req, res) => {
                 console.log("error: ", err);
             }else{
                 console.log("created unclaim in hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 0, user = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
+                sql.query("UPDATE misoctrls SET claimed = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
