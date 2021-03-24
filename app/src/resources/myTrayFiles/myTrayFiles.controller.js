@@ -7,7 +7,7 @@ exports.getFilesByTray = async(req, res) => {
     var body = req.body;
     role = body.currentRole;
     user = body.currentUser;
-    console.log("empiezo a hacer fetch")
+    console.log("empiezo a hacer fetch", body)
 
     var username = "";
     sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
@@ -46,7 +46,8 @@ exports.getFilesByTray = async(req, res) => {
         }
         
       }
-      sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND claimed = 1', [folder, username], async (err, results) => { 
+
+      sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1', [folder, username, role], async (err, results) => { 
         res.json({
           rows: results
         })

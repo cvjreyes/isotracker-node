@@ -4,6 +4,7 @@ const { findByEmail } = require("../users/user.model.js");
 const singleClaim = async (req, res) => {
     const user = req.body.user
     const fileName = req.body.file
+    const role = req.body.role
 
     var username = "";
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
@@ -13,7 +14,7 @@ const singleClaim = async (req, res) => {
         username  = results[0].name
       }
     });
-    
+    console.log(username)
     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if(!results[0]){
             res.status(401).send("No files found");
@@ -24,13 +25,13 @@ const singleClaim = async (req, res) => {
                     last = results[i]
                 }
             }
-            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, username, last.created_at], (err, results) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
             if (err) {
                 console.log("error: ", err);
             }else{
                 console.log("created claim in hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 1, user = ? WHERE filename = ?", [username, fileName], (err, results) =>{
+                sql.query("UPDATE misoctrls SET claimed = 1, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
