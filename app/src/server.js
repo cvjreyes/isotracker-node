@@ -34,6 +34,6 @@ require("./resources/transactions/transaction.routes.js")(app);
 require("./resources/claim/claim.routes.js")(app);
 require("./resources/unclaim/unclaim.routes.js")(app);
 // set port, listen for requests
-app.listen(5000, () => {
+app.listen(process.env.REACT_APP_DB_PORT, () => {
   console.log("Server is running on port 5000.");
 });
