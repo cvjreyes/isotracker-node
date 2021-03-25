@@ -39,13 +39,11 @@ const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   console.log("fetch de archivos")
   sql.query('SELECT * FROM misoctrls WHERE `to` = ?', [tab], (err, results) =>{
-    if(!results){
-      console.log("No results found")
-    }else{
+
       res.json({
         rows: results
       })
-    }
+    
   })
   /*
   fs.readdir(directoryPath, function (err, files) {
