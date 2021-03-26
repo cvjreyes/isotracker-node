@@ -13,6 +13,9 @@ module.exports = app => {
     // Retrieve a single user with email
     app.get("/api/userEmail/:userEmail", users.findOneByEmail);
 
+    // Retrieve a single user with username
+    app.post("/api/findByEmail", users.findOneByUsername);
+
     // Update a user with userId
     app.put("/api/user/:userId", users.update);
 
