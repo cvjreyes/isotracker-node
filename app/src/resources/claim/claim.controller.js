@@ -25,13 +25,13 @@ const singleClaim = async (req, res) => {
                     last = results[i]
                 }
             }
-            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, 1, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            [fileName, 0, 0, 0, 0, 1, 0, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
             if (err) {
                 console.log("error: ", err);
             }else{
                 console.log("created claim in hisoctrls");
-                sql.query("UPDATE misoctrls SET claimed = 1, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
