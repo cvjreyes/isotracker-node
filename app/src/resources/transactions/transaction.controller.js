@@ -55,11 +55,6 @@ const transaction = async (req, res) => {
                                     ld = 1;
                                 }
                             }
-
-                            console.log(process.env.REACT_APP_ICF)
-                            console.log(req.body.role)
-                            console.log(from)
-                            console.log(req.body.to)
                          
                             sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, `from`= ?, `to`= ?, comments = ? WHERE filename = ?", [ld, "None", null, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
                                 if (err) {

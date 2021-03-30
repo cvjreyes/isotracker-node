@@ -4,4 +4,5 @@ module.exports = app => {
     // Retrieve all tpipe
     app.get("/api/roles", role.findAll);
     app.post("/api/roles/user", role.findByUser);
+    app.get("/api/roles/acronyms", role.getAcronyms);
   };

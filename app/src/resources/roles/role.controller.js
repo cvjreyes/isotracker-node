@@ -63,5 +63,17 @@ exports.findByUser = async(req, res) => {
   });
 }
 
+exports.getAcronyms = async(req,res) =>{
+
+    sql.query('SELECT code, name FROM roles', async (err, results) => {
+      if (!results[0]){
+        res.status(401).send("Role not found");
+      }else{
+        res.send(results)
+      }
+    })
+
+}
+
 
 
