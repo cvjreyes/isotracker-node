@@ -158,13 +158,13 @@ const updateHis = async (req, res) => {
         }
 
         sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, last.from,"Updated", "Updated", username], (err, results) => {
+        [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
             console.log("created hisoctrls");
-            sql.query("UPDATE misoctrls SET `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-            [last.from, "Updated", "Updated", req.body.user, fileName], (err, results) => {
+            sql.query("UPDATE misoctrls SET `from` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
+            ["Updated", "Updated", username, fileName], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
