@@ -71,27 +71,34 @@ let updateStorage = multer.diskStorage({
     
     var exists = false;
     var where = "";
+    var extension = "";
+    var i = file.originalname.lastIndexOf('.');
+    if (i > 0) {
+      extension = file.originalname.substring(i+1);
+    }
 
-      console.log("entro a pdf master")
-      const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
-      './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
-      for(let i = 0; i < folders.length; i++){
-        const path = folders[i] + '/' + file.originalname;
-        if (fs.existsSync(path)) {
-          exists = true;
-          where = folders[i]
-        }
+    console.log("entro a pdf master")
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+    './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+    for(let i = 0; i < folders.length; i++){
+      const path = folders[i] + '/' + file.originalname.split('.').slice(0, -1);
+      if (fs.existsSync(path +'.pdf')) {
+        exists = true;
+        where = folders[i]
       }
+    }
 
-      if(exists){
-
+    if(exists){
+      if (extension == 'pdf'){
         await cb(null, where)
-
       }else{
-        cb("error", null)
+        await cb(null, where+'/attach')
       }
-    
+
+    }else{
+      cb("error", null)
+    }
+  
 
       /*
       console.log("entro a zip")
