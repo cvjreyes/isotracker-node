@@ -16,12 +16,16 @@ const upload = async (req, res) => {
     res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
     });
-    var extension = "";
     var i = req.file.originalname.lastIndexOf('.');
+    let cl = false
+    let extension = ""
     if (i > 0) {
       extension = req.file.originalname.substring(i+1);
+      if(req.file.originalname.substring(i-2) == 'CL.pdf'){
+        cl = true
+      }
     }
-    if (extension == 'pdf'){
+    if (extension == 'pdf' && !cl){
       
       fs.copyFile('./app/storage/isoctrl/design/' + req.file.originalname, './app/storage/isoctrl/design/attach/' + req.file.originalname.split('.').slice(0, -1).join('.') + '-CL.pdf', (err) => {
         if (err) throw err;
@@ -217,7 +221,6 @@ const updateHis = async (req, res) => {
 
 const getMaster = async(req, res) =>{
   fileName = req.params.fileName
-  
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
   './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
   for(let i = 0; i < folders.length; i++){
