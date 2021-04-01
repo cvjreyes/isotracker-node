@@ -5,8 +5,7 @@ const sql = require("../../db.js");
 
 const upload = async (req, res) => {
   try {
-    console.log(req.file)
-    await uploadFile(req, res);
+    await uploadFile.uploadFileMiddleware(req, res);
 
     if (req.file == undefined) {
       console.log("undef")
@@ -27,6 +26,28 @@ const upload = async (req, res) => {
         if (err) throw err;
       });
     }
+  } catch (err) {
+    console.log(err)
+    res.status(500).send({
+      message: err,
+    });
+  }
+};
+
+const update = async (req, res) => {
+  try {
+    console.log(req.file)
+    await uploadFile.updateFileMiddleware(req, res);
+
+    if (req.file == undefined) {
+      console.log("undef")
+      return res.status(400).send({ message: "Please upload a file!" });
+    }
+
+    res.status(200).send({
+      message: "Updated the file successfully: " + req.file.originalname,
+    });
+
   } catch (err) {
     console.log(err)
     res.status(500).send({
@@ -104,16 +125,64 @@ const uploadHis = async (req, res) => {
           console.log("error: ", err);
         }else{
           console.log("created misoctrls");
-          //res.status(200).send("uploaded to his")
+          res.status(200).send("uploaded to his")
         }
       });
     }
   });
 }
 
+const updateHis = async (req, res) => {
+
+  const fileName = req.body.file
+  var username = "";
+
+  console.log(fileName, req.body.user)
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+    }
+  });
+
+  sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+    if(!results[0]){
+        res.status(401).send("No files found");
+    }else{
+        let last = results[0]
+        for (let i = 1; i < results.length; i++){
+            if(results[i].updated_at > last.updated_at){
+                last = results[i]
+            }
+        }
+
+        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
+        [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
+          if (err) {
+            console.log("error: ", err);
+          }else{
+            console.log("created hisoctrls");
+            sql.query("UPDATE misoctrls SET `from` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
+            ["Updated", "Updated", username, fileName], (err, results) => {
+              if (err) {
+                console.log("error: ", err);
+              }else{
+                console.log("created misoctrls");
+                //res.status(200).send("uploaded to his")
+              }
+            });
+          }
+        });
+      }
+    })
+  }
+  
 module.exports = {
   upload,
+  update,
   getListFiles,
   download,
-  uploadHis
+  uploadHis,
+  updateHis
 };

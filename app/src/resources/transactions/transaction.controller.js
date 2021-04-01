@@ -23,10 +23,11 @@ const transaction = async (req, res) => {
                             console.log("error: ", err);
                         }else{
                             console.log("created transaction");
+                            let masterName = req.body.fileName.split('.').slice(0, -1)
                             let origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
                             let destiny_path = './app/storage/isoctrl/' + req.body.to + "/" + req.body.fileName
-                            let origin_attach_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '.zip'
-                            let destiny_attach_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '.zip'
+                            let origin_attach_path = './app/storage/isoctrl/' + from + "/attach/"
+                            let destiny_attach_path = './app/storage/isoctrl/' + req.body.to + "/attach/"
                             let origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                             let destiny_cl_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
@@ -35,18 +36,28 @@ const transaction = async (req, res) => {
                                     if (err) throw err
  
                                 })
-                                if(fs.existsSync(origin_attach_path)){
-                                    fs.rename(origin_attach_path, destiny_attach_path, function (err) {
-                                        if (err) throw err
 
-                                    })
-                                    if(fs.existsSync(origin_cl_path)){
-                                        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                                fs.readdir(origin_attach_path, (err, files) => {
+                                    files.forEach(file => {                          
+                                      let attachName = file.split('.').slice(0, -1)
+                                      console.log(masterName == attachName)
+                                      if(String(masterName).trim() == String(attachName).trim()){
+                                        fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
+                                            console.log("moved attach "+ file)
                                             if (err) throw err
-                                            console.log('Successfully renamed - AKA moved!')
+    
                                         })
-                                    }
+                                      }
+                                    });
+                                });
+
+                                if(fs.existsSync(origin_cl_path)){
+                                    fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                                        if (err) throw err
+                                        console.log('Successfully renamed - AKA moved!')
+                                    })
                                 }
+                                
                             }
 
                             let ld = 0;
