@@ -8,6 +8,7 @@ let routes = (app) => {
   router.post("/update", controller.update);
   router.post("/updateHis", controller.updateHis);
   router.post("/files", controller.getListFiles);
+  router.get("/getMaster/:fileName", controller.getMaster);
   router.get("/files/:name", controller.download);
 
   app.use(router);

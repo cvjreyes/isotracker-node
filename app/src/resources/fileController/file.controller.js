@@ -2,6 +2,7 @@ const uploadFile = require("../fileMiddleware/file.middleware");
 const fs = require("fs");
 const bodyParser = require('body-parser')
 const sql = require("../../db.js");
+const pathPackage = require("path")
 
 const upload = async (req, res) => {
   try {
@@ -213,6 +214,21 @@ const updateHis = async (req, res) => {
       }
     })
   }
+
+const getMaster = async(req, res) =>{
+  fileName = req.params.fileName
+  
+  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+  './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+  for(let i = 0; i < folders.length; i++){
+    let path = folders[i] + '/' + fileName;
+    if (fs.existsSync(path)) {
+      var file = fs.createReadStream(path);
+      file.pipe(res);
+    }
+  }
+
+}
   
 module.exports = {
   upload,
@@ -220,5 +236,6 @@ module.exports = {
   getListFiles,
   download,
   uploadHis,
-  updateHis
+  updateHis,
+  getMaster
 };
