@@ -44,10 +44,46 @@ const update = async (req, res) => {
       return res.status(400).send({ message: "Please upload a file!" });
     }
 
+    var extension = "";
+    var cl = false;
+    var i = req.file.originalname.lastIndexOf('.');
+    if (i > 0) {
+      extension = req.file.originalname.substring(i+1);
+      if (req.file.originalname.substring(i-2) == 'CL.pdf'){
+        cl = true
+      }
+    }
+    if(extension == 'pdf' && !cl){
+
+      const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        let path = null
+        if (cl){
+          path = folders[i] + '/' + req.file.originalname.split('.').slice(0, -1);
+          path = path.slice(0,-3);
+        }else{
+          path = folders[i] + '/' + req.file.originalname.split('.').slice(0, -1);
+        }
+        
+        if (fs.existsSync(path +'.pdf')) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+      
+      let currentDate = new Date();
+      currentDate = currentDate.getDate() + "-" + (currentDate.getMonth()+1)  + "-" + currentDate.getFullYear() + "_" +
+                    currentDate.getHours() + "-" + currentDate.getMinutes() + "-" + currentDate.getSeconds();
+      fs.copyFile(where + '/' + req.file.originalname, where +'/back/' + req.file.originalname.split('.').slice(0, -1).join('.')+currentDate+'.pdf', (err) => {
+        if (err) throw err;
+      });
+    }
+
     res.status(200).send({
       message: "Updated the file successfully: " + req.file.originalname,
     });
-
+  
   } catch (err) {
     console.log(err)
     res.status(500).send({
