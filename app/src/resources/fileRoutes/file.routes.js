@@ -7,6 +7,7 @@ let routes = (app) => {
   router.post("/uploadHis", controller.uploadHis);
   router.post("/update", controller.update);
   router.post("/updateHis", controller.updateHis);
+  router.get("/updateStatus", controller.updateStatus);
   router.post("/files", controller.getListFiles);
   router.get("/getMaster/:fileName", controller.getMaster);
   router.get("/files/:name", controller.download);
