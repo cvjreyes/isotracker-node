@@ -36,16 +36,21 @@ let storage = multer.diskStorage({
         masterName = file.originalname.split('.').slice(0, -1)
 
         fs.readdir(childPath, (err, files) => {
-          files.forEach(file => {                          
-            let attachName = file.split('.').slice(0, -1)
-            if(String(masterName).trim() == String(attachName).trim()){
-              fs.rename(childPath+file, newChildPath+file, function (err) {
-                  console.log("moved attach "+ file)
-                  if (err) throw err
-
-              })
-            }
-          });
+          try{
+            files.forEach(file => {                          
+              let attachName = file.split('.').slice(0, -1)
+              if(String(masterName).trim() == String(attachName).trim()){
+                fs.rename(childPath+file, newChildPath+file, function (err) {
+                    console.log("moved attach "+ file)
+                    if (err) throw err
+  
+                })
+              }
+            });
+          }catch(err){
+            console.log(err)
+          }
+          
       });
         console.log("Se añade")
         await cb(null, './app/storage/isoctrl/design')
