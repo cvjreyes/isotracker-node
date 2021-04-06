@@ -236,6 +236,45 @@ const getMaster = async(req, res) =>{
   }
 
 }
+
+
+const updateStatus = async(req,res) =>{
+  let designUploadedCount, designProgressCount, stressCount, supportsCount = 0
+  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `from` = ? AND claimed IS NULL", [""], (err, results) =>{
+    if(!results[0]){
+      res.status(500).send("Error")
+    }else{
+      designUploadedCount = results[0]["COUNT(id)"]
+      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND claimed IS NOT NULL", ["Design"], (err, results) =>{
+        if(!results[0]){
+          res.status(500).send("Error")
+        }else{
+          designProgressCount = results[0]["COUNT(id)"]
+          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Stress"], (err, results) =>{
+            if(!results[0]){
+              res.status(500).send("Error")
+            }else{
+              stressCount = results[0]["COUNT(id)"]
+              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Supports"], (err, results) =>{
+                if(!results[0]){
+                  res.status(500).send("Error")
+                }else{
+                  supportsCount = results[0]["COUNT(id)"]
+                  res.status(200).send({
+                    designUploaded: designUploadedCount,
+                    designProgress: designProgressCount,
+                    stress: stressCount,
+                    supports: supportsCount
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+}
   
 module.exports = {
   upload,
@@ -244,5 +283,6 @@ module.exports = {
   download,
   uploadHis,
   updateHis,
-  getMaster
+  getMaster,
+  updateStatus
 };
