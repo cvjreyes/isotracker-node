@@ -76,11 +76,15 @@ const update = async (req, res) => {
           where = folders[i]
         }
       }
+
+      if (!fs.existsSync(where +'/bak/')){
+        fs.mkdirSync(where +'/bak/');
+      }
       
       let currentDate = new Date();
       currentDate = currentDate.getDate() + "-" + (currentDate.getMonth()+1)  + "-" + currentDate.getFullYear() + "_" +
                     currentDate.getHours() + "-" + currentDate.getMinutes() + "-" + currentDate.getSeconds();
-      fs.copyFile(where + '/' + req.file.originalname, where +'/back/' + req.file.originalname.split('.').slice(0, -1).join('.')+currentDate+'.pdf', (err) => {
+      fs.copyFile(where + '/' + req.file.originalname, where +'/bak/' + req.file.originalname.split('.').slice(0, -1).join('.')+currentDate+'-bak.pdf', (err) => {
         if (err) throw err;
       });
     }
