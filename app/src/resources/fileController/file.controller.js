@@ -276,6 +276,69 @@ const updateStatus = async(req,res) =>{
   })
 }
   
+const restore = async(req,res) =>{
+  const fileName = req.body.fileName
+  sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+    if(!results[0]){
+        res.status(401).send("No files found");
+    }else{
+        let destiny = results[0].from
+        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
+        [fileName, 0, 0, 0, 0, "Recycle bin", destiny, "Restored", "None"], (err, results) => {
+          if (err) {
+            console.log("error: ", err);
+          }else{
+            sql.query("UPDATE misoctrls SET deleted = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
+            ["Recycle bin", destiny, "Restored", "None", fileName], (err, results) => {
+              if (err) {
+                console.log("error: ", err);
+              }else{
+                console.log("created misoctrls");
+                
+                let masterName = req.body.fileName.split('.').slice(0, -1)
+                let origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
+                let destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
+                let origin_attach_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/"
+                let destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
+                let origin_cl_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                let destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+
+                if(fs.existsSync(origin_path)){
+                  fs.rename(origin_path, destiny_path, function (err) {
+                      if (err) throw err
+
+                  })
+
+                  fs.readdir(origin_attach_path, (err, files) => {
+                      files.forEach(file => {                          
+                        let attachName = file.split('.').slice(0, -1)
+                        console.log(masterName == attachName)
+                        if(String(masterName).trim() == String(attachName).trim()){
+                          fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
+                              console.log("moved attach "+ file)
+                              if (err) throw err
+
+                          })
+                        }
+                      });
+                  });
+
+                  if(fs.existsSync(origin_cl_path)){
+                      fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                          if (err) throw err
+                          console.log('Successfully renamed - AKA moved!')
+                      })
+                  }
+                  
+              }
+              }
+            })
+          }
+        })
+      }
+    })
+}
+
 module.exports = {
   upload,
   update,
@@ -284,5 +347,6 @@ module.exports = {
   uploadHis,
   updateHis,
   getMaster,
-  updateStatus
+  updateStatus,
+  restore
 };
