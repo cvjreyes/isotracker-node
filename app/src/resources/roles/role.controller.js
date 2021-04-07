@@ -36,7 +36,7 @@ exports.findByUser = async(req, res) => {
               }else if(i === results.length - 1){
                 q += results[i].role_id + ")";                
               }else{
-                q += "," + results[i].role_id + ",";
+                q += "," + results[i].role_id;
               }
             }
           }

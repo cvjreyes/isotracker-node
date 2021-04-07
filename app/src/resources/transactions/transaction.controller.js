@@ -20,6 +20,7 @@ const transaction = async (req, res) => {
             res.status(401).send("File not found");
         }else{
             sql.query("SELECT `to` FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
+                console.log(results[0].deleted, results[0].onhold, results[0].to)
                 if (!results[0]){
                     res.status(401).send("File not found");
                 }else{
@@ -35,7 +36,12 @@ const transaction = async (req, res) => {
                             let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
                             masterName = req.body.fileName.split('.').slice(0, -1)
 
-                            if(req.body.to == "Recycle bin"){          
+                            if(req.body.to == "Recycle bin"){     
+                                
+                                if (!fs.existsSync('./app/storage/isoctrl/'+ from +'/TRASH')){
+                                    fs.mkdirSync('./app/storage/isoctrl/'+ from +'/TRASH');
+                                    fs.mkdirSync('./app/storage/isoctrl/'+ from +'/TRASH/tattach');
+                                }
 
                                 origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
                                 destiny_path = './app/storage/isoctrl/' + from + "/TRASH/" + req.body.fileName
@@ -45,6 +51,11 @@ const transaction = async (req, res) => {
                                 destiny_cl_path = './app/storage/isoctrl/' + from + "/TRASH/tattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
                             }else if(req.body.to == "On hold"){
+
+                                if (!fs.existsSync('./app/storage/isoctrl/' + from + '/HOLD')){
+                                    fs.mkdirSync('./app/storage/isoctrl/' + from +'/HOLD');
+                                    fs.mkdirSync('./app/storage/isoctrl/' + from +'/HOLD/hattach');
+                                }
                                 
                                 origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
                                 destiny_path = './app/storage/isoctrl/' + from + "/HOLD/" + req.body.fileName
@@ -105,7 +116,8 @@ const transaction = async (req, res) => {
                                 u = username
                                 r = req.body.role
                             }
-                            
+                            console.log("viene de ",from)
+                            console.log(req.body.deleted, req.body.onhold)
                             sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
                                 if (err) {
                                     console.log("error: ", err);
