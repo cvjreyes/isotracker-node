@@ -158,14 +158,14 @@ const uploadHis = async (req, res) => {
     }
   });
 
-  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", username], (err, results) => {
+  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
     if (err) {
       console.log("error: ", err);
     }else{
       console.log("created hisoctrls");
-      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username], (err, results) => {
+      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
         }else{
@@ -239,7 +239,7 @@ const getMaster = async(req, res) =>{
 
 
 const updateStatus = async(req,res) =>{
-  let designUploadedCount, designProgressCount, stressCount, supportsCount = 0
+  let designUploadedCount, designProgressCount, stressCount, supportsCount, onHoldCount, deletedCount = 0
   sql.query("SELECT COUNT(id) FROM misoctrls WHERE `from` = ? AND claimed IS NULL", [""], (err, results) =>{
     if(!results[0]){
       res.status(500).send("Error")
@@ -260,11 +260,27 @@ const updateStatus = async(req,res) =>{
                   res.status(500).send("Error")
                 }else{
                   supportsCount = results[0]["COUNT(id)"]
-                  res.status(200).send({
-                    designUploaded: designUploadedCount,
-                    designProgress: designProgressCount,
-                    stress: stressCount,
-                    supports: supportsCount
+                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["On hold"], (err, results) =>{
+                    if(!results[0]){
+                      res.status(500).send("Error")
+                    }else{
+                      onHoldCount = results[0]["COUNT(id)"]
+                      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Recycle bin"], (err, results) =>{
+                        if(!results[0]){
+                          res.status(500).send("Error")
+                        }else{
+                          deletedCount = results[0]["COUNT(id)"]
+                          res.status(200).send({
+                            designUploaded: designUploadedCount,
+                            designProgress: designProgressCount,
+                            stress: stressCount,
+                            supports: supportsCount,
+                            onHold: onHoldCount,
+                            deleted: deletedCount
+                          })
+                        }
+                      })
+                    }
                   })
                 }
               })
@@ -281,28 +297,43 @@ const restore = async(req,res) =>{
   sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
     if(!results[0]){
         res.status(401).send("No files found");
+    }else if((results[0].deleted == 0 || results[0].deleted == null) && (results[0].onhold == 0 || results[0].onhold == null)){   
+      console.log("asbfuidsbauihg")
+      res.status(401).send("This isometric has already been restored!");
     }else{
         let destiny = results[0].from
-        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, "Recycle bin", destiny, "Restored", "None"], (err, results) => {
+        let origin = results[0].to
+        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+        [fileName, 0, 0, 0, 0, origin, 0, 0, destiny, "Restored", "None"], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
-            sql.query("UPDATE misoctrls SET deleted = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-            ["Recycle bin", destiny, "Restored", "None", fileName], (err, results) => {
+            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
+            [origin, destiny, "Restored", "None", fileName], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
                 console.log("created misoctrls");
-                
-                let masterName = req.body.fileName.split('.').slice(0, -1)
-                let origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
-                let destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
-                let origin_attach_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/"
-                let destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
-                let origin_cl_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                let destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
+                let masterName = req.body.fileName.split('.').slice(0, -1)
+                let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
+
+                if (origin == "Recycle bin"){
+                  origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
+                  destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
+                  origin_attach_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/"
+                  destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
+                  origin_cl_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                  destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                }else{
+                  origin_path = './app/storage/isoctrl/' + destiny + "/HOLD/" + fileName
+                  destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
+                  origin_attach_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/"
+                  destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
+                  origin_cl_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                  destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                }
+              
                 if(fs.existsSync(origin_path)){
                   fs.rename(origin_path, destiny_path, function (err) {
                       if (err) throw err
