@@ -155,26 +155,27 @@ const uploadHis = async (req, res) => {
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-    }
-  });
-
-  sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-  [req.body.fileName, 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
-    if (err) {
-      console.log("error: ", err);
-    }else{
-      console.log("created hisoctrls");
-      sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
+      sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, 0, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
         }else{
-          console.log("created misoctrls");
-          res.status(200).send("uploaded to his")
+          console.log("created hisoctrls");
+          sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+          [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              console.log("created misoctrls");
+              res.status(200).send("uploaded to his")
+            }
+          });
         }
       });
     }
   });
+
+  
 }
 
 const updateHis = async (req, res) => {
@@ -188,43 +189,45 @@ const updateHis = async (req, res) => {
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-    }
-  });
-
-  sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
-    if(!results[0]){
-        res.status(401).send("No files found");
-    }else{
-        let last = results[0]
-        for (let i = 1; i < results.length; i++){
-            if(results[i].updated_at > last.updated_at){
-                last = results[i]
+      sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+        if(!results[0]){
+            res.status(401).send("No files found");
+        }else{
+            let last = results[0]
+            for (let i = 1; i < results.length; i++){
+                if(results[i].updated_at > last.updated_at){
+                    last = results[i]
+                }
             }
-        }
-
-        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
-          if (err) {
-            console.log("error: ", err);
-          }else{
-            console.log("created hisoctrls");
-            sql.query("UPDATE misoctrls SET `from` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-            ["Updated", "Updated", username, fileName], (err, results) => {
+    
+            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
+            [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
-                console.log("created misoctrls");
-                //res.status(200).send("uploaded to his")
+                console.log("created hisoctrls");
+                sql.query("UPDATE misoctrls SET `from` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
+                ["Updated", "Updated", username, fileName], (err, results) => {
+                  if (err) {
+                    console.log("error: ", err);
+                  }else{
+                    console.log("created misoctrls");
+                    //res.status(200).send("uploaded to his")
+                  }
+                });
               }
             });
           }
-        });
-      }
-    })
+        })
+    }
+  });
+
+  
   }
 
 const getMaster = async(req, res) =>{
   fileName = req.params.fileName
+  console.log(fileName)
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
   './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
   for(let i = 0; i < folders.length; i++){
@@ -304,7 +307,7 @@ const restore = async(req,res) =>{
         let destiny = results[0].from
         let origin = results[0].to
         sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, origin, 0, 0, destiny, "Restored", "None"], (err, results) => {
+        [fileName, 0, 0, 0, 0, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -370,6 +373,32 @@ const restore = async(req,res) =>{
     })
 }
 
+const statusFiles = (req,res) =>{
+  sql.query('SELECT * FROM misoctrls', (err, results) =>{
+    console.log("resultados:",results)
+    if(!results[0]){
+      res.status(401).send("No files found");
+    }else{
+      res.status(200).send({
+        rows : results
+      })
+    }
+  })
+}
+
+const historyFiles = (req,res) =>{
+  sql.query('SELECT * FROM hisoctrls', (err, results) =>{
+    console.log("resultados:",results)
+    if(!results[0]){
+      res.status(401).send("No files found");
+    }else{
+      res.status(200).send({
+        rows : results
+      })
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -379,5 +408,7 @@ module.exports = {
   updateHis,
   getMaster,
   updateStatus,
-  restore
+  restore,
+  statusFiles,
+  historyFiles
 };

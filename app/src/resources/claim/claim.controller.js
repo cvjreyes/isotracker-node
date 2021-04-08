@@ -16,7 +16,7 @@ const singleClaim = async (req, res) => {
         username  = results[0].name
       }
     });
-    console.log(username)
+
 
     sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
       if (!results[0]){
