@@ -201,7 +201,7 @@ const updateHis = async (req, res) => {
             }
     
             sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
+            [fileName, 0, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -307,7 +307,7 @@ const restore = async(req,res) =>{
         let destiny = results[0].from
         let origin = results[0].to
         sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        [fileName, 0, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -399,6 +399,80 @@ const historyFiles = (req,res) =>{
   })
 }
 
+const process = (req,res) =>{
+  let action = req.body.action
+  let fileName = req.body.file
+  console.log(fileName)
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
+        if(err){
+          res.status(401).send("No files found")
+        }else{
+          let file = results[0]
+          let prevProcess = file.spo
+          let nextProcess = 0
+          if (action === "Accept"){
+            nextProcess = 2
+          }else if(action === "Deny"){
+            nextProcess = 3
+          }else if(prevProcess == 2 || prevProcess == 3){
+            nextProcess = 4
+          }else{
+            nextProcess = 1
+          }
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, nextProcess, file.sit, "", 0, 0, "", "Process", username, req.body.role], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [nextProcess, fileName], (err, results) =>{
+                if (err) {
+                  console.log("error: ", err);
+                }else{
+                  console.log("Actualizado proceso")
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+}
+
+const instrument = (req,res) =>{
+
+}
+
+const filesProcInst = (req,res) =>{
+  let type = req.body.type
+  if(type == "Process"){
+    sql.query('SELECT * FROM misoctrls WHERE spo = 1', (err, results) =>{
+      if(err){
+        res.status(401).send("No files found")
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }else{
+    sql.query('SELECT * FROM misoctrls WHERE sit = 1', (err, results) =>{
+      if(err){
+        res.status(401).send("No files found")
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }
+}
+
 module.exports = {
   upload,
   update,
@@ -410,5 +484,8 @@ module.exports = {
   updateStatus,
   restore,
   statusFiles,
-  historyFiles
+  historyFiles,
+  process,
+  instrument,
+  filesProcInst
 };

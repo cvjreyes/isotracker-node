@@ -14,6 +14,9 @@ let routes = (app) => {
   router.get("/getMaster/:fileName", controller.getMaster);
   router.get("/files/:name", controller.download);
   router.post("/restore", controller.restore);
+  router.post("/process", controller.process);
+  router.post("/instrument", controller.instrument);
+  router.post("/filesProcInst", controller.filesProcInst);
 
   app.use(router);
 };

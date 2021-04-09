@@ -28,7 +28,7 @@ const transaction = async (req, res) => {
                     const from = results[0].to
                     let created_at = results[0].created_at
                     sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, 0, 0, 0, 0, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, username], (err, results) => {
+                    [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, username], (err, results) => {
                         if (err) {
                             console.log("error: ", err);
                         }else{

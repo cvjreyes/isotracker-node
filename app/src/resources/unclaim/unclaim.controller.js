@@ -52,6 +52,16 @@ const singleUnclaim = async (req, res) => {
     */
 }
 
+const singleUnclaimProc = async(req, res) =>{
+
+}
+
+const singleUnclaimInst = async(req, res) =>{
+  
+}
+
 module.exports = {
-    singleUnclaim
+    singleUnclaim,
+    singleUnclaimProc,
+    singleUnclaimInst
   };
