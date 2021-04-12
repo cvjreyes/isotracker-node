@@ -473,6 +473,38 @@ const filesProcInst = (req,res) =>{
   }
 }
 
+const uploadProcInst = async(req, res) =>{
+
+  await uploadFile.uploadFileProcMiddleware(req, res);
+  if (req.body.file == undefined) {
+    console.log("undef")
+    return res.status(400).send({ message: "Please upload a file!" });
+  }else{
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + req.file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
+      if ( err ) console.log('ERROR: ' + err);
+    });
+    sql.query('SELECT * FROM users WHERE email = ?', [req.user], (err, results) =>{
+      if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+      }else{   
+        username  = results[0].name
+        console.log(username)
+      }
+    })
+    //res.status(200).send("File uploaded")
+  }
+
+}
+
 module.exports = {
   upload,
   update,
@@ -487,5 +519,6 @@ module.exports = {
   historyFiles,
   process,
   instrument,
-  filesProcInst
+  filesProcInst,
+  uploadProcInst
 };

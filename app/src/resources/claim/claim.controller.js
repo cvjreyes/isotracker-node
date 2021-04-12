@@ -90,7 +90,7 @@ const singleClaimProc = async(req, res) =>{
                     console.log("error: ", err);
                 }else{
                     console.log("created claim in hisoctrls");
-                    sql.query("UPDATE misoctrls SET spoclaimed = 1, spouser = ?WHERE filename = ?", [username, fileName], (err, results) =>{
+                    sql.query("UPDATE misoctrls SET spoclaimed = 1, spouser = ? WHERE filename = ?", [username, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
