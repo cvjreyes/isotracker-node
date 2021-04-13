@@ -17,7 +17,8 @@ let routes = (app) => {
   router.post("/process", controller.process);
   router.post("/instrument", controller.instrument);
   router.post("/filesProcInst", controller.filesProcInst);
-  router.post("/uploadProcInst", controller.uploadProcInst)
+  router.post("/uploadProc", controller.uploadProc);
+  router.post("/uploadInst", controller.uploadInst);
 
   app.use(router);
 };

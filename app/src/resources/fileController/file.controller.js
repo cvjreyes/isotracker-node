@@ -408,6 +408,7 @@ const process = (req,res) =>{
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
+      let spoclaimed = 0
       sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
         if(err){
           res.status(401).send("No files found")
@@ -415,25 +416,29 @@ const process = (req,res) =>{
           let file = results[0]
           let prevProcess = file.spo
           let nextProcess = 0
-          if (action === "Accept"){
+          if (action === "accept"){
             nextProcess = 2
-          }else if(action === "Deny"){
+            username = "None"
+          }else if(action === "deny"){
             nextProcess = 3
+            username = "None"
           }else if(prevProcess == 2 || prevProcess == 3){
             nextProcess = 4
+            username = "None"
           }else{
             nextProcess = 1
           }
-          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, 0, nextProcess, file.sit, "", 0, 0, "", "Process", username, req.body.role], (err, results) => {
+          
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, spouser) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, file.from, file.to, "Process", username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
-              sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [nextProcess, fileName], (err, results) =>{
+              sql.query('UPDATE misoctrls SET spoclaimed = ?, spo = ?, spouser = ? WHERE filename = ?', [spoclaimed, nextProcess, username, fileName], (err, results) =>{
                 if (err) {
                   console.log("error: ", err);
                 }else{
-                  console.log("Actualizado proceso")
+                  res.status(200).send("Actualizado proceso")
                 }
               })
             }
@@ -445,13 +450,59 @@ const process = (req,res) =>{
 }
 
 const instrument = (req,res) =>{
-
+  let action = req.body.action
+  let fileName = req.body.file
+  console.log(fileName)
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      let sitclaimed = 0
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
+        if(err){
+          res.status(401).send("No files found")
+        }else{
+          let file = results[0]
+          let prevProcess = file.sit
+          let nextProcess = 0
+          if (action === "accept"){
+            nextProcess = 2
+            username = "None"
+          }else if(action === "deny"){
+            nextProcess = 3
+            username = "None"
+          }else if(prevProcess == 2 || prevProcess == 3){
+            nextProcess = 4
+            username = "None"
+          }else{
+            nextProcess = 1
+          }
+          
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, situser) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, file.from, file.to, "Process", username], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              sql.query('UPDATE misoctrls SET sitclaimed = ?, sit = ?, situser = ? WHERE filename = ?', [sitclaimed, nextProcess, username, fileName], (err, results) =>{
+                if (err) {
+                  console.log("error: ", err);
+                }else{
+                  res.status(200).send("Actualizado instrumentacion")
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
 }
 
 const filesProcInst = (req,res) =>{
   let type = req.body.type
   if(type == "Process"){
-    sql.query('SELECT * FROM misoctrls WHERE spo = 1', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE spo = 1 OR spo = 4', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
       }else{
@@ -461,7 +512,7 @@ const filesProcInst = (req,res) =>{
       }
     })
   }else{
-    sql.query('SELECT * FROM misoctrls WHERE sit = 1', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE sit = 1 OR sit = 4', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
       }else{
@@ -473,10 +524,10 @@ const filesProcInst = (req,res) =>{
   }
 }
 
-const uploadProcInst = async(req, res) =>{
+const uploadProc = async(req, res) =>{
 
   await uploadFile.uploadFileProcMiddleware(req, res);
-  if (req.body.file == undefined) {
+  if (req.file == undefined) {
     console.log("undef")
     return res.status(400).send({ message: "Please upload a file!" });
   }else{
@@ -492,18 +543,35 @@ const uploadProcInst = async(req, res) =>{
     fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
       if ( err ) console.log('ERROR: ' + err);
     });
-    sql.query('SELECT * FROM users WHERE email = ?', [req.user], (err, results) =>{
-      if (!results[0]){
-        res.status(401).send("Username or password incorrect");
-      }else{   
-        username  = results[0].name
-        console.log(username)
-      }
-    })
-    //res.status(200).send("File uploaded")
+    
+    res.status(200).send("File uploaded")
   }
 
 }
+
+const uploadInst = async(req, res) =>{
+  await uploadFile.uploadFileInstMiddleware(req, res);
+  if (req.file == undefined) {
+    console.log("undef")
+    return res.status(400).send({ message: "Please upload a file!" });
+  }else{
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + req.file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-INST.pdf', function(err) {
+      if ( err ) console.log('ERROR: ' + err);
+    });
+    
+    res.status(200).send("File uploaded")
+  }
+}
+
 
 module.exports = {
   upload,
@@ -520,5 +588,6 @@ module.exports = {
   process,
   instrument,
   filesProcInst,
-  uploadProcInst
+  uploadProc,
+  uploadInst
 };

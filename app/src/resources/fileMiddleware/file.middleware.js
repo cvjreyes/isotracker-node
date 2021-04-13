@@ -127,6 +127,29 @@ let updateStorage = multer.diskStorage({
 
 let uploadProcStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
+    console.log(req.user)
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+      
+      cb(null, where + '/attach')
+
+  },
+  filename: (req, file, cb) => {
+    //console.log(file.originalname);
+    cb(null, file.originalname);
+  }
+})
+
+let uploadInstStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    console.log(req.user)
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
       for(let i = 0; i < folders.length; i++){
@@ -161,12 +184,19 @@ let uploadFileProc = multer({
   limits: { fileSize: maxSize },
 }).single("file");
 
+let uploadFileInst = multer({
+  storage: uploadInstStorage,
+  limits: {fileSize: maxSize}
+}).single("file");
+
 let uploadFileMiddleware = util.promisify(uploadFile);
 let updateFileMiddleware = util.promisify(updateFile);
-let uploadFileProcMiddleware = util.promisify(uploadFileProc)
+let uploadFileProcMiddleware = util.promisify(uploadFileProc);
+let uploadFileInstMiddleware = util.promisify(uploadFileInst);
 
 module.exports = {
   uploadFileMiddleware,
   updateFileMiddleware,
-  uploadFileProcMiddleware
+  uploadFileProcMiddleware,
+  uploadFileInstMiddleware
 }

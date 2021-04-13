@@ -86,7 +86,36 @@ const singleUnclaimProc = async(req, res) =>{
 }
 
 const singleUnclaimInst = async(req, res) =>{
-  
+    const user = req.body.user
+    const fileName = req.body.file
+    sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+        if(!results[0]){
+            res.status(401).send("No files found");
+        }else{
+            let last = results[0]
+            for (let i = 1; i < results.length; i++){
+                if(results[i].updated_at > last.updated_at){
+                    last = results[i]
+                }
+            }
+            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, sitclaimed, `from`, `to`, comments, user, situser, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            [fileName, 0, 0, 0, 0, last.claimed, 0, last.from, last.to , last.comments, last.user, "None", last.created_at], (err, results) => {
+            if (err) {
+                console.log("error: ", err);
+            }else{
+                console.log("created unclaim in hisoctrls");
+                sql.query("UPDATE misoctrls SET sitclaimed = 0, situser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
+                    if (err) {
+                        console.log("error: ", err);
+                    }else{
+                      console.log("sit unclaimed iso " + fileName);
+                      res.status(200).send("unclaimed")
+                    }
+                })
+                }
+            })
+        }
+    })
 }
 
 module.exports = {

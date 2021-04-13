@@ -43,8 +43,15 @@ exports.getFilesByTray = async(req, res) => {
             }
             
           }
-          if(role == "Process" || role == "Instrument"){
+          if(role == "Process"){
             sql.query('SELECT * FROM misoctrls WHERE spouser = ? AND spoclaimed = 1', [username], async (err, results) => { 
+              res.json({
+                rows: results
+              })
+              console.log("fetch mytray")
+            })
+          }else if(role == "Instrument"){
+            sql.query('SELECT * FROM misoctrls WHERE situser = ? AND sitclaimed = 1', [username], async (err, results) => { 
               res.json({
                 rows: results
               })
