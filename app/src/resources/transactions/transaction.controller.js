@@ -72,6 +72,10 @@ const transaction = async (req, res) => {
                                 destiny_attach_path = './app/storage/isoctrl/' + req.body.to + "/attach/"
                                 origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                                 destiny_cl_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                origin_proc_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                destiny_proc_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                                destiny_inst_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
                             }
                             if(fs.existsSync(origin_path)){
@@ -96,6 +100,20 @@ const transaction = async (req, res) => {
 
                                 if(fs.existsSync(origin_cl_path)){
                                     fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                                        if (err) throw err
+                                        console.log('Successfully renamed - AKA moved!')
+                                    })
+                                }
+
+                                if(fs.existsSync(origin_proc_path)){
+                                    fs.rename(origin_proc_path, destiny_proc_path, function (err) {
+                                        if (err) throw err
+                                        console.log('Successfully renamed - AKA moved!')
+                                    })
+                                }
+
+                                if(fs.existsSync(origin_inst_path)){
+                                    fs.rename(origin_inst_path, destiny_inst_path, function (err) {
                                         if (err) throw err
                                         console.log('Successfully renamed - AKA moved!')
                                     })
