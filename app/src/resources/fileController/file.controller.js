@@ -416,21 +416,24 @@ const process = (req,res) =>{
           let file = results[0]
           let prevProcess = file.spo
           let nextProcess = 0
+          let from = file.to
+          let to = "Process"
           if (action === "accept"){
             nextProcess = 2
-            username = "None"
+            from = "Accepted Proc"
+            to = file.to
           }else if(action === "deny"){
             nextProcess = 3
-            username = "None"
+            from = "Denied Proc"
+            to = file.to
           }else if(prevProcess == 2 || prevProcess == 3){
             nextProcess = 4
-            username = "None"
           }else{
             nextProcess = 1
           }
           
-          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, spouser) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, file.from, file.to, "Process", username], (err, results) => {
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -451,8 +454,7 @@ const process = (req,res) =>{
 
 const instrument = (req,res) =>{
   let action = req.body.action
-  let fileName = req.body.file
-  console.log(fileName)
+  let fileName = req.body.fil
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
@@ -466,21 +468,27 @@ const instrument = (req,res) =>{
           let file = results[0]
           let prevProcess = file.sit
           let nextProcess = 0
+          let from = file.to
+          let to = "Instrument"
           if (action === "accept"){
             nextProcess = 2
             username = "None"
           }else if(action === "deny"){
             nextProcess = 3
             username = "None"
+            from = "Accepted Inst"
+            to = file.to
           }else if(prevProcess == 2 || prevProcess == 3){
             nextProcess = 4
             username = "None"
+            from = "Denied Inst"
+            to = file.to
           }else{
             nextProcess = 1
           }
           
-          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, situser) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, file.from, file.to, "Process", username], (err, results) => {
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{

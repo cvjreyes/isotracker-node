@@ -6,8 +6,7 @@ const singleClaim = async (req, res) => {
     const fileName = req.body.file
     const role = req.body.role
 
-    var username = "";
-
+    var username = ""
 
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
       if (!results[0]){
@@ -36,7 +35,7 @@ const singleClaim = async (req, res) => {
                   }
               }
               sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-              [fileName, last.revision, 0, last.spo, last.sit, 1, 0, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
+              [fileName, last.revision, 0, last.spo, last.sit, 1, 0, last.to, "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
               if (err) {
                   console.log("error: ", err);
               }else{
@@ -73,6 +72,8 @@ const singleClaimProc = async(req, res) =>{
       sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if (!results[0]){
           res.status(401).send("The file does not exist");
+        }else if (results[0].spoclaimed == 1){   
+          res.status(401).send("This isometric has already been claimed");
         }else{
           sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
             if(!results[0]){
@@ -84,8 +85,8 @@ const singleClaimProc = async(req, res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, spoclaimed, verifydesign, `from`, `to`, comments, spouser, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, last.from, last.to , last.comments, username, last.created_at], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, spoclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, "Process", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
@@ -124,6 +125,8 @@ const singleClaimInst = async(req, res) =>{
       sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if (!results[0]){
           res.status(401).send("The file does not exist");
+        }else if (results[0].sitclaimed == 1){   
+          res.status(401).send("This isometric has already been claimed");        
         }else{
           sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
             if(!results[0]){
@@ -135,8 +138,8 @@ const singleClaimInst = async(req, res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, sitclaimed, verifydesign, `from`, `to`, comments, situser, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, last.from, last.to , last.comments, username, last.created_at], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, sitclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, "Instrument", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
