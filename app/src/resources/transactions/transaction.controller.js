@@ -28,7 +28,7 @@ const transaction = async (req, res) => {
                     const from = results[0].to
                     let created_at = results[0].created_at
                     sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, 0, 0, 0, 0, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, username], (err, results) => {
+                    [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, username], (err, results) => {
                         if (err) {
                             console.log("error: ", err);
                         }else{
@@ -72,6 +72,10 @@ const transaction = async (req, res) => {
                                 destiny_attach_path = './app/storage/isoctrl/' + req.body.to + "/attach/"
                                 origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                                 destiny_cl_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                origin_proc_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                destiny_proc_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                                destiny_inst_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
                             }
                             if(fs.existsSync(origin_path)){
@@ -96,6 +100,20 @@ const transaction = async (req, res) => {
 
                                 if(fs.existsSync(origin_cl_path)){
                                     fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                                        if (err) throw err
+                                        console.log('Successfully renamed - AKA moved!')
+                                    })
+                                }
+
+                                if(fs.existsSync(origin_proc_path)){
+                                    fs.rename(origin_proc_path, destiny_proc_path, function (err) {
+                                        if (err) throw err
+                                        console.log('Successfully renamed - AKA moved!')
+                                    })
+                                }
+
+                                if(fs.existsSync(origin_inst_path)){
+                                    fs.rename(origin_inst_path, destiny_inst_path, function (err) {
                                         if (err) throw err
                                         console.log('Successfully renamed - AKA moved!')
                                     })
@@ -139,6 +157,40 @@ const transaction = async (req, res) => {
 
 }
 
+const returnLead = async(req, res) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+        if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+        }else{   
+        username  = results[0].name
+        sql.query("SELECT created_at FROM hisoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
+            if (!results[0]){
+                res.status(401).send("File not found");
+            }else{
+                const from = results[0].to
+                let created_at = results[0].created_at
+                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+                [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
+                    if (err) {
+                        console.log("error: ", err);
+                    }else{
+                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", req.body.fileName], (err, results) =>{
+                            if (err) {
+                                console.log("error: ", err);
+                            }else{
+                                console.log("iso moved" );
+                                res.status(200).send("moved")
+                            }
+                        })
+                    }
+                })
+            }
+        })
+        }
+    });
+}
+
 module.exports = {
-  transaction
+  transaction,
+  returnLead
 };

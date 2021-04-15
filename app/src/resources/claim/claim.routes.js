@@ -4,7 +4,8 @@ const controller = require("../claim/claim.controller");
 
 let routes = (app) => {
   router.post("/claim", controller.singleClaim);
-
+  router.post("/claimProc", controller.singleClaimProc);
+  router.post("/claimInst", controller.singleClaimInst);
 
   app.use(router);
 };

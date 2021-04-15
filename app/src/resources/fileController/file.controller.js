@@ -201,7 +201,7 @@ const updateHis = async (req, res) => {
             }
     
             sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, 0, "Updated", last.from, "Updated", username], (err, results) => {
+            [fileName, 0, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -307,7 +307,7 @@ const restore = async(req,res) =>{
         let destiny = results[0].from
         let origin = results[0].to
         sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, 0, 0, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        [fileName, 0, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -399,6 +399,188 @@ const historyFiles = (req,res) =>{
   })
 }
 
+const process = (req,res) =>{
+  let action = req.body.action
+  let fileName = req.body.file
+  console.log(fileName)
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      let spoclaimed = 0
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
+        if(err){
+          res.status(401).send("No files found")
+        }else{
+          let file = results[0]
+          let prevProcess = file.spo
+          let nextProcess = 0
+          let from = file.to
+          let to = "Process"
+          if (action === "accept"){
+            nextProcess = 2
+            from = "Accepted Proc"
+            to = file.to
+          }else if(action === "deny"){
+            nextProcess = 3
+            from = "Denied Proc"
+            to = file.to
+          }else if(prevProcess == 2 || prevProcess == 3){
+            nextProcess = 4
+          }else{
+            nextProcess = 1
+          }
+          
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              sql.query('UPDATE misoctrls SET spoclaimed = ?, spo = ?, spouser = ? WHERE filename = ?', [spoclaimed, nextProcess, username, fileName], (err, results) =>{
+                if (err) {
+                  console.log("error: ", err);
+                }else{
+                  res.status(200).send("Actualizado proceso")
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+}
+
+const instrument = (req,res) =>{
+  let action = req.body.action
+  let fileName = req.body.fil
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      let sitclaimed = 0
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
+        if(err){
+          res.status(401).send("No files found")
+        }else{
+          let file = results[0]
+          let prevProcess = file.sit
+          let nextProcess = 0
+          let from = file.to
+          let to = "Instrument"
+          if (action === "accept"){
+            nextProcess = 2
+            username = "None"
+          }else if(action === "deny"){
+            nextProcess = 3
+            username = "None"
+            from = "Accepted Inst"
+            to = file.to
+          }else if(prevProcess == 2 || prevProcess == 3){
+            nextProcess = 4
+            username = "None"
+            from = "Denied Inst"
+            to = file.to
+          }else{
+            nextProcess = 1
+          }
+          
+          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              sql.query('UPDATE misoctrls SET sitclaimed = ?, sit = ?, situser = ? WHERE filename = ?', [sitclaimed, nextProcess, username, fileName], (err, results) =>{
+                if (err) {
+                  console.log("error: ", err);
+                }else{
+                  res.status(200).send("Actualizado instrumentacion")
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+}
+
+const filesProcInst = (req,res) =>{
+  let type = req.body.type
+  if(type == "Process"){
+    sql.query('SELECT * FROM misoctrls WHERE spo = 1 OR spo = 4', (err, results) =>{
+      if(err){
+        res.status(401).send("No files found")
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }else{
+    sql.query('SELECT * FROM misoctrls WHERE sit = 1 OR sit = 4', (err, results) =>{
+      if(err){
+        res.status(401).send("No files found")
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }
+}
+
+const uploadProc = async(req, res) =>{
+
+  await uploadFile.uploadFileProcMiddleware(req, res);
+  if (req.file == undefined) {
+    console.log("undef")
+    return res.status(400).send({ message: "Please upload a file!" });
+  }else{
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + req.file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
+      if ( err ) console.log('ERROR: ' + err);
+    });
+    
+    res.status(200).send("File uploaded")
+  }
+
+}
+
+const uploadInst = async(req, res) =>{
+  await uploadFile.uploadFileInstMiddleware(req, res);
+  if (req.file == undefined) {
+    console.log("undef")
+    return res.status(400).send({ message: "Please upload a file!" });
+  }else{
+    const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      for(let i = 0; i < folders.length; i++){
+        const path = folders[i] + '/' + req.file.originalname;
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-INST.pdf', function(err) {
+      if ( err ) console.log('ERROR: ' + err);
+    });
+    
+    res.status(200).send("File uploaded")
+  }
+}
+
+
 module.exports = {
   upload,
   update,
@@ -410,5 +592,10 @@ module.exports = {
   updateStatus,
   restore,
   statusFiles,
-  historyFiles
+  historyFiles,
+  process,
+  instrument,
+  filesProcInst,
+  uploadProc,
+  uploadInst
 };
