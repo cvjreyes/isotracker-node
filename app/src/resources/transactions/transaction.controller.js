@@ -157,6 +157,40 @@ const transaction = async (req, res) => {
 
 }
 
+const returnLead = async(req, res) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+        if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+        }else{   
+        username  = results[0].name
+        sql.query("SELECT created_at FROM hisoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
+            if (!results[0]){
+                res.status(401).send("File not found");
+            }else{
+                const from = results[0].to
+                let created_at = results[0].created_at
+                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+                [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
+                    if (err) {
+                        console.log("error: ", err);
+                    }else{
+                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", req.body.fileName], (err, results) =>{
+                            if (err) {
+                                console.log("error: ", err);
+                            }else{
+                                console.log("iso moved" );
+                                res.status(200).send("moved")
+                            }
+                        })
+                    }
+                })
+            }
+        })
+        }
+    });
+}
+
 module.exports = {
-  transaction
+  transaction,
+  returnLead
 };
