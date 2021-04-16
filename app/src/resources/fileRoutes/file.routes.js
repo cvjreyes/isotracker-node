@@ -19,6 +19,7 @@ let routes = (app) => {
   router.post("/filesProcInst", controller.filesProcInst);
   router.post("/uploadProc", controller.uploadProc);
   router.post("/uploadInst", controller.uploadInst);
+  router.get("/download/:fileName", controller.download)
 
   app.use(router);
 };

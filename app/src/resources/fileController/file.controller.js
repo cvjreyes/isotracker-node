@@ -134,14 +134,24 @@ s
 };
 
 const download = (req, res) => {
-  const fileName = req.params.name;
-  const directoryPath = "./app/storage/isoctrl/Design";
-
-  res.download(directoryPath + fileName, fileName, (err) => {
+  const fileName = req.params.fileName;
+  let where, path = null
+  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+  for(let i = 0; i < folders.length; i++){
+    path = folders[i] + '/' + req.params.fileName
+    if (fs.existsSync(path)) {
+      exists = true;
+      where = folders[i]
+    }
+  }
+  res.download(where + '/' + fileName, fileName, (err) => {
     if (err) {
       res.status(500).send({
         message: "Could not download the file. " + err,
       });
+    }else{
+
     }
   });
 };
