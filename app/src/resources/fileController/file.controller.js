@@ -177,7 +177,7 @@ const uploadHis = async (req, res) => {
               console.log("error: ", err);
             }else{
               console.log("created misoctrls");
-              res.status(200).send("uploaded to his")
+              res.status(200)
             }
           });
         }
