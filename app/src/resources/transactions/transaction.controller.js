@@ -27,8 +27,8 @@ const transaction = async (req, res) => {
                     console.log(results[0])
                     const from = results[0].to
                     let created_at = results[0].created_at
-                    sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, username], (err, results) => {
+                    sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
                         if (err) {
                             console.log("error: ", err);
                         }else{
@@ -87,7 +87,6 @@ const transaction = async (req, res) => {
                                 fs.readdir(origin_attach_path, (err, files) => {
                                     files.forEach(file => {                          
                                       let attachName = file.split('.').slice(0, -1)
-                                      console.log(masterName == attachName)
                                       if(String(masterName).trim() == String(attachName).trim()){
                                         fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
                                             console.log("moved attach "+ file)
