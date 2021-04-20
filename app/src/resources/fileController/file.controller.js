@@ -465,7 +465,7 @@ const process = (req,res) =>{
 
 const instrument = (req,res) =>{
   let action = req.body.action
-  let fileName = req.body.fil
+  let fileName = req.body.file
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
