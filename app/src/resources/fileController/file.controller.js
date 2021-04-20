@@ -145,13 +145,14 @@ const download = (req, res) => {
       where = folders[i]
     }
   }
+  console.log(where + '/' + fileName)
   res.download(where + '/' + fileName, fileName, (err) => {
     if (err) {
       res.status(500).send({
         message: "Could not download the file. " + err,
       });
     }else{
-
+      console.log("Se descarga")
     }
   });
 };
