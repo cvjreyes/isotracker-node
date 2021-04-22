@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const sql = require("../../db.js");
 const pathPackage = require("path")
 
+
 const upload = async (req, res) => {
   try {
     await uploadFile.uploadFileMiddleware(req, res);
@@ -137,7 +138,8 @@ const download = (req, res) => {
   const fileName = req.params.fileName;
   let where, path = null
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
+      './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
   for(let i = 0; i < folders.length; i++){
     path = folders[i] + '/' + req.params.fileName
     if (fs.existsSync(path)) {
@@ -145,7 +147,6 @@ const download = (req, res) => {
       where = folders[i]
     }
   }
-  console.log(where + '/' + fileName)
   res.download(where + '/' + fileName, fileName, (err) => {
     if (err) {
       res.status(500).send({
@@ -156,6 +157,50 @@ const download = (req, res) => {
     }
   });
 };
+
+const getAttach = (req,res) =>{
+  const fileName = req.params.fileName;
+  let where, path = null
+  let allFiles = []
+  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+  for(let i = 0; i < folders.length; i++){
+    path = folders[i] + '/' + req.params.fileName
+    if (fs.existsSync(path)) {
+      exists = true;
+      where = folders[i]
+    }
+  }
+
+  let masterName = fileName.split('.').slice(0, -1)
+  let origin_attach_path = where + "/attach/"
+  let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+  let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+  let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
+  fs.readdir(origin_attach_path, (err, files) => {
+    files.forEach(file => {                          
+      let attachName = file.split('.').slice(0, -1)
+      if(String(masterName).trim() == String(attachName).trim()){
+        allFiles.push(file)
+      }
+    });
+    if(fs.existsSync(origin_cl_path)){
+      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+    }
+
+    if(fs.existsSync(origin_proc_path)){
+      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+    }
+
+    if(fs.existsSync(origin_inst_path)){
+      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+    }
+    res.status(200).json(allFiles)
+  });
+
+  
+}
 
 
 const uploadHis = async (req, res) => {
@@ -178,7 +223,6 @@ const uploadHis = async (req, res) => {
               console.log("error: ", err);
             }else{
               console.log("created misoctrls");
-              res.status(200).send("Done")
             }
           });
         }
@@ -386,7 +430,6 @@ const restore = async(req,res) =>{
 
 const statusFiles = (req,res) =>{
   sql.query('SELECT * FROM misoctrls', (err, results) =>{
-    console.log("resultados:",results)
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -399,7 +442,6 @@ const statusFiles = (req,res) =>{
 
 const historyFiles = (req,res) =>{
   sql.query('SELECT * FROM hisoctrls', (err, results) =>{
-    console.log("resultados:",results)
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -608,5 +650,6 @@ module.exports = {
   instrument,
   filesProcInst,
   uploadProc,
-  uploadInst
+  uploadInst,
+  getAttach
 };
