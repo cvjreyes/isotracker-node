@@ -20,7 +20,7 @@ const transaction = async (req, res) => {
             res.status(401).send("File not found");
         }else{
             sql.query("SELECT `to` FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
-                console.log(results[0].deleted, results[0].onhold, results[0].to)
+                console.log(results)
                 if (!results[0]){
                     res.status(401).send("File not found");
                 }else{
@@ -65,17 +65,20 @@ const transaction = async (req, res) => {
                                 destiny_cl_path = './app/storage/isoctrl/' + from + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
                             }else{
-
+                                let local_to = req.body.to
+                                if(local_to == "LDE/Isocontrol"){
+                                    local_to = "lde"
+                                }
                                 origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
-                                destiny_path = './app/storage/isoctrl/' + req.body.to + "/" + req.body.fileName
+                                destiny_path = './app/storage/isoctrl/' + local_to + "/" + req.body.fileName
                                 origin_attach_path = './app/storage/isoctrl/' + from + "/attach/"
-                                destiny_attach_path = './app/storage/isoctrl/' + req.body.to + "/attach/"
+                                destiny_attach_path = './app/storage/isoctrl/' + local_to + "/attach/"
                                 origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                                destiny_cl_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                destiny_cl_path = './app/storage/isoctrl/' + local_to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                                 origin_proc_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
-                                destiny_proc_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                destiny_proc_path = './app/storage/isoctrl/' + local_to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
                                 origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
-                                destiny_inst_path = './app/storage/isoctrl/' + req.body.to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                                destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
                             }
                             if(fs.existsSync(origin_path)){

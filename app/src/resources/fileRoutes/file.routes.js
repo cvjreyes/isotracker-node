@@ -11,6 +11,7 @@ let routes = (app) => {
   router.get("/api/statusFiles", controller.statusFiles);
   router.get("/api/historyFiles", controller.historyFiles)
   router.post("/files", controller.getListFiles);
+  router.get("/piStatus/:fileName", controller.piStatus)
   router.get("/getMaster/:fileName", controller.getMaster);
   router.get("/files/:name", controller.download);
   router.post("/restore", controller.restore);
