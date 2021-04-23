@@ -38,7 +38,7 @@ exports.getFilesByTray = async(req, res) => {
                 folder = "issuer";
                 break;
               case 6:
-                folder = "lde";
+                folder = "LDE/Isocontrol";
                 break;
             }
             

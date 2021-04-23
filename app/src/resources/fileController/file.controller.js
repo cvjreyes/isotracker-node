@@ -134,6 +134,20 @@ s
   */
 };
 
+const piStatus = (req, res) =>{
+  const fileName = req.params.fileName
+  sql.query("SELECT spo, sit FROM misoctrls WHERE filename = ?", fileName, (err, results) =>{
+    if(!results[0]){
+      res.status(400).send("File not found")
+    }else{
+      res.status(200).json({
+        spo : results[0].spo,
+        sit: results[0].sit
+      })
+    }
+  })
+}
+
 const download = (req, res) => {
   const fileName = req.params.fileName;
   let where, path = null
@@ -297,7 +311,7 @@ const getMaster = async(req, res) =>{
 
 
 const updateStatus = async(req,res) =>{
-  let designUploadedCount, designProgressCount, stressCount, supportsCount, onHoldCount, deletedCount = 0
+  let designUploadedCount, designProgressCount, stressCount, supportsCount, materialsCount, issuerCount, isoControlToIssueCount, onHoldCount, deletedCount = 0
   sql.query("SELECT COUNT(id) FROM misoctrls WHERE `from` = ? AND claimed IS NULL", [""], (err, results) =>{
     if(!results[0]){
       res.status(500).send("Error")
@@ -328,13 +342,37 @@ const updateStatus = async(req,res) =>{
                           res.status(500).send("Error")
                         }else{
                           deletedCount = results[0]["COUNT(id)"]
-                          res.status(200).send({
-                            designUploaded: designUploadedCount,
-                            designProgress: designProgressCount,
-                            stress: stressCount,
-                            supports: supportsCount,
-                            onHold: onHoldCount,
-                            deleted: deletedCount
+                          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Materials"], (err, results) =>{
+                            if(!results[0]){
+                              res.status(500).send("Error")
+                            }else{
+                              materialsCount = results[0]["COUNT(id)"]
+                              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Issuer"], (err, results) =>{
+                                if(!results[0]){
+                                  res.status(500).send("Error")
+                                }else{
+                                  issuerCount = results[0]["COUNT(id)"]
+                                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["LDE/Isocontrol"], (err, results) =>{
+                                    if(!results[0]){
+                                      res.status(500).send("Error")
+                                    }else{
+                                      isoControlToIssueCount = results[0]["COUNT(id)"]
+                                      res.status(200).send({
+                                        designUploaded: designUploadedCount,
+                                        designProgress: designProgressCount,
+                                        stress: stressCount,
+                                        supports: supportsCount,
+                                        materials: materialsCount,
+                                        issuer: issuerCount,
+                                        isocontrolToIssue: isoControlToIssueCount,
+                                        onHold: onHoldCount,
+                                        deleted: deletedCount
+                                      })
+                                    }
+                                  })
+                                }
+                              })
+                            }
                           })
                         }
                       })
@@ -507,7 +545,7 @@ const process = (req,res) =>{
 
 const instrument = (req,res) =>{
   let action = req.body.action
-  let fileName = req.body.fil
+  let fileName = req.body.file
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
@@ -651,5 +689,6 @@ module.exports = {
   filesProcInst,
   uploadProc,
   uploadInst,
-  getAttach
+  getAttach,
+  piStatus
 };
