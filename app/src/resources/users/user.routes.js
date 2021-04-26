@@ -13,6 +13,8 @@ module.exports = app => {
     // Retrieve a single user with email
     app.get("/api/userEmail/:userEmail", users.findOneByEmail);
 
+    app.get("/api/users/:tab", users.getUsersByTab)
+
     // Retrieve a single user with username
     app.post("/api/findByEmail", users.findOneByUsername);
 

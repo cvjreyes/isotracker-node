@@ -40,7 +40,6 @@ exports.findByUser = async(req, res) => {
               }
             }
           }
-          console.log(q)
           sql.query(q, async (err, results) =>{
             if(err){
               console.log(err)

@@ -1,4 +1,5 @@
 const User = require("./user.model.js");
+const sql = require("../../db.js");
 
 // Create and Save a new user
 exports.create = (req, res) => {
@@ -148,3 +149,82 @@ exports.deleteAll = (req, res) => {
         else res.send({ message: `All users were deleted successfully!` });
       });
 };
+
+exports.getUsersByTab = (req,res) =>{
+  const tab = req.params.tab
+  let ids = []
+  sql.query("SELECT id FROM roles WHERE name = ?", [tab], (err, results) =>{
+    if(results[0].id == 1){
+      ids.push(1)
+      ids.push(2)
+    }else if (results[0].id === 3){
+      ids.push(3)
+      ids.push(4)
+    }else if(results[0].id === 5){
+      ids.push(5)
+      ids.push(6)
+    }else{
+      ids.push(results[0].id)
+    }
+    let users_id = []
+    let ids_q = "("
+
+    if (ids.length === 1){
+      ids_q += ids[0] + ")";
+    }else if(ids.length === 2){
+      ids_q += ids[0] + "," + ids[1] + ")";
+    }else{
+      for (let i = 0; i < ids.length; i++){
+        if(i === 0){
+          ids_q += ids[i];
+        }else if(i === ids.length - 1){
+          ids_q += ids[i] + ")";                
+        }else{
+          ids_q += "," + ids[i];
+        }
+      }
+    }
+    console.log(ids_q)
+    let q = "SELECT DISTINCT model_id FROM model_has_roles WHERE role_id IN " + ids_q
+    sql.query(q, (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("Not found")
+      }else{
+        let users_ids_q = ""
+        ids_q = "("
+
+        if (results.length === 1){
+          ids_q += results[0].model_id + ")";
+        }else if(results.length === 2){
+          ids_q += results[0].model_id + "," + results[1].model_id + ")";
+        }else{
+          for (let i = 0; i < results.length; i++){
+            if(i === 0){
+              ids_q += results[i].model_id;
+            }else if(i === results.length - 1){
+              ids_q += "," + results[i].model_id + ")";                
+            }else{
+              ids_q += "," + results[i].model_id;
+            }
+          }
+        }
+        let q2 = "SELECT name FROM users WHERE id IN " + ids_q
+        sql.query(q2, (err, results) =>{
+          if(!results[0]){
+            res.status(401).send("No users with that role")
+          }else{
+            usernames = []
+            for(let i = 0; i < results.length; i++){
+              usernames.push(results[i].name)
+            }
+            res.json({
+              usernames: usernames
+            })
+          }
+        })
+      }
+      
+    })
+
+  })
+}
