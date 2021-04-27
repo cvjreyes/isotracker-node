@@ -184,8 +184,8 @@ exports.getUsersByTab = (req,res) =>{
         }
       }
     }
-    console.log(ids_q)
-    let q = "SELECT DISTINCT model_id FROM model_has_roles WHERE role_id IN " + ids_q
+
+    let q = "SELECT model_id FROM model_has_roles WHERE role_id IN " + ids_q
     sql.query(q, (err, results) =>{
       if(!results[0]){
         res.status(401).send("Not found")
