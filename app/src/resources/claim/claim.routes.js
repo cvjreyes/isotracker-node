@@ -6,6 +6,7 @@ let routes = (app) => {
   router.post("/claim", controller.singleClaim);
   router.post("/claimProc", controller.singleClaimProc);
   router.post("/claimInst", controller.singleClaimInst);
+  router.post("/forceClaim", controller.forceClaim);
 
   app.use(router);
 };
