@@ -671,6 +671,15 @@ const uploadInst = async(req, res) =>{
   }
 }
 
+const downloadHistory = async(req,res) =>{
+  sql.query("SELECT filename, `from`, `to`, created_at, comments, user FROM hisoctrls", (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
 
 module.exports = {
   upload,
@@ -690,5 +699,6 @@ module.exports = {
   uploadProc,
   uploadInst,
   getAttach,
-  piStatus
+  piStatus,
+  downloadHistory
 };

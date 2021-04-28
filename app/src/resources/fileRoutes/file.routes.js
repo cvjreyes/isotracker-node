@@ -22,6 +22,7 @@ let routes = (app) => {
   router.post("/uploadInst", controller.uploadInst);
   router.get("/download/:fileName", controller.download);
   router.get("/getAttach/:fileName", controller.getAttach);
+  router.get("/downloadHistory", controller.downloadHistory)
 
   app.use(router);
 };
