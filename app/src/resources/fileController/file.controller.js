@@ -490,7 +490,7 @@ const historyFiles = (req,res) =>{
   })
 }
 
-const process = (req,res) =>{
+const toProcess = (req,res) =>{
   let action = req.body.action
   let fileName = req.body.file
   console.log(fileName)
@@ -691,11 +691,71 @@ const uploadReport = async(req,res) =>{
     res.status(401).send("Missing columns!")
   }else{
     for(let i = 1; i < req.body.length; i++){
-      sql.query("INSERT INTO report_example(area, tag, diameter, calc_index) VALUES (?,?,?,?)", [req.body[i][area_index], req.body[i][tag_index], req.body[i][diameter_index], req.body[i][calc_index]], (err, results)=>{
-        if(err){
-          console.log(err)
+      sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+        const areaid = results[0].id
+        if(process.env.REACT_APP_MMDN == 0){
+          sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
+            if(!results[0]){
+              res.status(401).send("Invaid diameter in some lines")
+            }else{
+              const diameterid = results[0].id
+              let calc_notes = 0
+              if(req.body[i][calc_index] != null){
+                calc_notes = 1
+              }
+  
+              let tl = 0
+  
+              if(calc_notes == 0){
+                tl = 3
+              }else{
+                if(req.body[i][diameter_index] < 50){
+                  tl = 1
+                }else{
+                  tl = 2
+                }
+              }
+              sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          })
+        }else{
+          sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
+            if(!results[0]){
+              res.status(401).send("Invaid diameter in some lines")
+            }else{
+              const diameterid = results[0].id
+              let calc_notes = 0
+              if(req.body[i][calc_index] != null){
+                calc_notes = 1
+                
+              }
+  
+              let tl = 0
+  
+              if(calc_notes == 0){
+                tl = 3
+              }else{
+                if(req.body[i][diameter_index] < 2.00){
+                  tl = 1
+                }else{
+                  tl = 2
+                }
+              }
+              sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          })
         }
+        
       })
+      
     }
     res.status(200)
   }
@@ -714,7 +774,7 @@ module.exports = {
   restore,
   statusFiles,
   historyFiles,
-  process,
+  toProcess,
   instrument,
   filesProcInst,
   uploadProc,
