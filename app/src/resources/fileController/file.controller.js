@@ -681,6 +681,27 @@ const downloadHistory = async(req,res) =>{
   })
 }
 
+const uploadReport = async(req,res) =>{
+  const area_index = req.body[0].indexOf("area")
+  const tag_index = req.body[0].indexOf("tag")
+  const diameter_index = req.body[0].indexOf("diameter")
+  const calc_index = req.body[0].indexOf("calc_notes")
+  if(area_index == -1 || tag_index == -1 || diameter_index == -1 || calc_index == -1){
+    console.log("error",area_index,tag_index,diameter_index,calc_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    for(let i = 1; i < req.body.length; i++){
+      sql.query("INSERT INTO report_example(area, tag, diameter, calc_index) VALUES (?,?,?,?)", [req.body[i][area_index], req.body[i][tag_index], req.body[i][diameter_index], req.body[i][calc_index]], (err, results)=>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }
+    res.status(200)
+  }
+
+}
+
 module.exports = {
   upload,
   update,
@@ -700,5 +721,6 @@ module.exports = {
   uploadInst,
   getAttach,
   piStatus,
-  downloadHistory
+  downloadHistory,
+  uploadReport
 };
