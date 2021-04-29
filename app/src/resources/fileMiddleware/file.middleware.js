@@ -16,6 +16,7 @@ let storage = multer.diskStorage({
         cl = true
       }
     }
+
     if (extension == 'pdf' && !cl){
       console.log("entro a pdf")
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',

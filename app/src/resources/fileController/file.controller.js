@@ -13,7 +13,6 @@ const upload = async (req, res) => {
       console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
-
     res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
     });
@@ -762,6 +761,21 @@ const uploadReport = async(req,res) =>{
 
 }
 
+const checkPipe = async(req,res) =>{
+  const fileName = req.params.fileName.split('.').slice(0, -1)
+  sql.query("SELECT * FROM dpipes WHERE tag = ?", [fileName], (err, results) =>{
+    if(!results[0]){
+      res.json({
+        exists: false
+      }).status(200)
+    }else{
+      res.json({
+        exists: true
+      }).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -782,5 +796,6 @@ module.exports = {
   getAttach,
   piStatus,
   downloadHistory,
-  uploadReport
+  uploadReport,
+  checkPipe
 };
