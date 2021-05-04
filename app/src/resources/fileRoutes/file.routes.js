@@ -15,13 +15,19 @@ let routes = (app) => {
   router.get("/getMaster/:fileName", controller.getMaster);
   router.get("/files/:name", controller.download);
   router.post("/restore", controller.restore);
-  router.post("/process", controller.process);
+  router.post("/process", controller.toProcess);
   router.post("/instrument", controller.instrument);
   router.post("/filesProcInst", controller.filesProcInst);
   router.post("/uploadProc", controller.uploadProc);
   router.post("/uploadInst", controller.uploadInst);
   router.get("/download/:fileName", controller.download);
   router.get("/getAttach/:fileName", controller.getAttach);
+  router.get("/downloadHistory", controller.downloadHistory);
+  router.post("/uploadReport", controller.uploadReport);
+  router.get("/checkPipe/:fileName", controller.checkPipe);
+  router.get("/currentProgress", controller.currentProgress);
+  router.get("/getMaxProgress", controller.getMaxProgress);
+  router.get("/currentProgressISO", controller.currentProgressISO);
 
   app.use(router);
 };

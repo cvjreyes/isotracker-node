@@ -34,13 +34,13 @@ const singleClaim = async (req, res) => {
                       last = results[i]
                   }
               }
-              sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, claimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-              [fileName, last.revision, 0, last.spo, last.sit, 1, 0, last.to, "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
+              sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+              [fileName, last.revision, last.spo, last.sit, 1, 0, last.to, "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
               if (err) {
                   console.log("error: ", err);
               }else{
                   console.log("created claim in hisoctrls");
-                  sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                  sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, forced = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                       if (err) {
                           console.log("error: ", err);
                       }else{
@@ -85,8 +85,8 @@ const singleClaimProc = async(req, res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, spoclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, "Process", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, spoclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [fileName, last.revision, last.spo, last.sit, 1, last.verifydesign, "Process", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
@@ -138,8 +138,8 @@ const singleClaimInst = async(req, res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, sitclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [fileName, last.revision, 0, last.spo, last.sit, 1, last.verifydesign, "Instrument", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, sitclaimed, verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [fileName, last.revision, last.spo, last.sit, 1, last.verifydesign, "Instrument", "Claimed" , last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
@@ -163,8 +163,67 @@ const singleClaimInst = async(req, res) =>{
   });
 }
 
+const forceClaim = async(req,res) =>{
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.los], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("User not found");
+    }else{   
+      const los  = results[0].name
+      const fileName = req.body.file
+      const role_acr = req.body.user.substring(0,3)
+      const user = req.body.user.substring(6,req.body.user.length)
+      sql.query('SELECT name FROM roles WHERE code = ?', [role_acr], (err, results) =>{
+        if (!results[0]){
+          res.status(401).send("Role not found");
+        }else{
+          const role = results[0].name
+          sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+            if (!results[0]){
+              res.status(401).send("The file does not exist");
+            }else if (results[0].claimed == 1){   
+              res.status(401).send("This isometric has already been claimed");
+            }else{
+              sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+                if(!results[0]){
+                    res.status(401).send("No files found");
+                }else{
+                    let last = results[0]
+                    for (let i = 1; i < results.length; i++){
+                        if(results[i].updated_at > last.updated_at){
+                            last = results[i]
+                        }
+                    }
+                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, verifydesign, `from`, `to`, comments, user, role, forced, forceduser, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [fileName, last.revision, last.spo, last.sit, 1, 0, last.to, "Forced claim" , last.comments, user, role, 1, los,last.created_at], (err, results) => {
+                    if (err) {
+                        console.log("error: ", err);
+                    }else{
+                        console.log("created forced claim in hisoctrls");
+                        sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, user = ?, role = ?, forced = 1, forceduser = ? WHERE filename = ?", [user, role, los, fileName], (err, results) =>{
+                            if (err) {
+                                console.log("error: ", err);
+                            }else{
+                                console.log("forced claim iso " + fileName);
+                                res.status(200).send("claimed")
+                            }
+                        })
+                        }
+                    })
+                }
+            })
+            }
+          });
+        }
+      })
+    }
+  });
+}
+
+
+
 module.exports = {
     singleClaim,
     singleClaimProc,
-    singleClaimInst
+    singleClaimInst,
+    forceClaim,
   };

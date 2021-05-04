@@ -10,12 +10,12 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 
-
 // simple route
 app.get("/api", (req, res) => {
   res.json({ message: "Welcome to the isotracker api." });
 });
-require("dotenv").config();
+const dotenv = require('dotenv');
+dotenv.config();
 require("./resources/users/user.routes.js")(app);
 require("./resources/areas/area.routes.js")(app);
 require("./resources/dpipes/dpipe.routes.js")(app);
