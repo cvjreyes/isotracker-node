@@ -13,7 +13,6 @@ const upload = async (req, res) => {
       console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
-
     res.status(200).send({
       message: "Uploaded the file successfully: " + req.file.originalname,
     });
@@ -225,20 +224,60 @@ const uploadHis = async (req, res) => {
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-      sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, 0, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
+      sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
         }else{
           console.log("created hisoctrls");
-          sql.query("INSERT INTO misoctrls (filename, isoid, revision, tie, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-          [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, 0, " ","Design", "Uploaded", username, "Design"], (err, results) => {
-            if (err) {
-              console.log("error: ", err);
+          if(process.env.REACT_APP_PROGRESS == "1"){
+            let type = ""
+            if(process.env.REACT_APP_IFC == "0"){
+              type = "value_ifd"
             }else{
-              console.log("created misoctrls");
+              type = "value_ifc"
             }
-          });
+            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+              if(!results[0]){
+                res.status(401)
+              }else{
+                tl = results[0].tpipes_id
+                const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                sql.query(q, ["Design", tl], (err, results)=>{
+                  if(!results[0]){
+                    res.status(401)
+                  }else{
+                    let progress = null
+                    console.log(results[0])
+                    if(type == "value_ifc"){
+                      progress = results[0].value_ifc
+                    }else{
+                      progress = results[0].value_ifd
+                    }
+                    
+                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
+                      if (err) {
+                        console.log("error: ", err);
+                      }else{
+                        console.log("created misoctrls");
+                      }
+                    });
+                    
+                  }
+                })
+              }
+            })
+          }else{
+            sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+            [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
+              if (err) {
+                console.log("error: ", err);
+              }else{
+                console.log("created misoctrls");
+              }
+            });
+          }         
         }
       });
     }
@@ -269,8 +308,8 @@ const updateHis = async (req, res) => {
                 }
             }
     
-            sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?)", 
+            [fileName, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -399,8 +438,8 @@ const restore = async(req,res) =>{
     }else{
         let destiny = results[0].from
         let origin = results[0].to
-        sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+        [fileName, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -456,9 +495,13 @@ const restore = async(req,res) =>{
                           console.log('Successfully renamed - AKA moved!')
                       })
                   }
+
+                  
                   
               }
+              res.status(200).send("Restored")
               }
+              
             })
           }
         })
@@ -467,7 +510,7 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  sql.query('SELECT * FROM misoctrls', (err, results) =>{
+  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -523,8 +566,8 @@ const toProcess = (req,res) =>{
             nextProcess = 1
           }
           
-          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -578,8 +621,8 @@ const instrument = (req,res) =>{
             nextProcess = 1
           }
           
-          sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -762,6 +805,82 @@ const uploadReport = async(req,res) =>{
 
 }
 
+const checkPipe = async(req,res) =>{
+  const fileName = req.params.fileName.split('.').slice(0, -1)
+  sql.query("SELECT * FROM dpipes WHERE tag = ?", [fileName], (err, results) =>{
+    if(!results[0]){
+      res.json({
+        exists: false
+      }).status(200)
+    }else{
+      res.json({
+        exists: true
+      }).status(200)
+    }
+  })
+}
+
+const currentProgress = async(req,res) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls", (req, results) =>{
+    const progress = results[0]["SUM(progress)"]
+    sql.query("SELECT SUM(realprogress) FROM misoctrls", (req, results) =>{
+      const realprogress = results[0]["SUM(realprogress)"]
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              res.json({
+                progress: (progress/maxProgress * 100).toFixed(2),
+                realprogress: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const currentProgressISO = async(req,res) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+    const progress = results[0]["SUM(progress)"]
+    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+      const realprogress = results[0]["SUM(realprogress)"]
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              console.log((progress/maxProgress * 100).toFixed(2))
+              res.json({
+                progressISO: (progress/maxProgress * 100).toFixed(2),
+                realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const getMaxProgress = async(req,res) =>{
+        sql.query("SELECT weight FROM tpipes", (err, results) =>{
+          res.json({
+            weights: results
+          }).status(200)
+        })
+}
+
 module.exports = {
   upload,
   update,
@@ -782,5 +901,9 @@ module.exports = {
   getAttach,
   piStatus,
   downloadHistory,
-  uploadReport
+  uploadReport,
+  checkPipe,
+  currentProgress,
+  getMaxProgress,
+  currentProgressISO
 };

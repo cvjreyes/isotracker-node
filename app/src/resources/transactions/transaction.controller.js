@@ -27,13 +27,13 @@ const transaction = async (req, res) => {
                     console.log(results[0])
                     const from = results[0].to
                     let created_at = results[0].created_at
-                    sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
+                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, results[0].revision, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
                         if (err) {
                             console.log("error: ", err);
                         }else{
                             console.log("created transaction");
-                            let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
+                            let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                             masterName = req.body.fileName.split('.').slice(0, -1)
 
                             if(req.body.to == "Recycle bin"){     
@@ -138,14 +138,64 @@ const transaction = async (req, res) => {
                             }
                             console.log("viene de ",from)
                             console.log(req.body.deleted, req.body.onhold)
-                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
-                                if (err) {
-                                    console.log("error: ", err);
+                            if(process.env.REACT_APP_PROGRESS == "1" && req.body.to !== "Recycle bin" && req.body.to !== "On hold"){
+                                let type = ""
+                                if(process.env.REACT_APP_IFC == "0"){
+                                  type = "value_ifd"
                                 }else{
-                                    console.log("iso moved" );
-                                    res.status(200).send("moved")
+                                  type = "value_ifc"
                                 }
-                            })
+                                sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                                  if(!results[0]){
+                                    res.status(401)
+                                  }else{
+                                    tl = results[0].tpipes_id
+                                    const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                                    sql.query(q, [req.body.to, tl], (err, results)=>{
+                                      if(!results[0]){
+                                        res.status(401)
+                                      }else{
+                                        let newprogress = null
+                                        console.log(results[0])
+                                        if(type == "value_ifc"){
+                                          newprogress = results[0].value_ifc
+                                        }else{
+                                          newprogress = results[0].value_ifd
+                                        }
+                                        sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
+                                          if(!results[0]){
+                                            res.status(401).send("Iso without progress")
+                                          }else{
+                                            let progress = results[0].progress
+                                            if(newprogress > progress){
+                                              progress = newprogress
+                                            }
+                                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
+                                              if (err) {
+                                                  console.log("error: ", err);
+                                              }else{
+                                                  console.log("iso moved" );
+                                                  res.status(200).send("moved")
+                                              }
+                                            })
+                                          }
+                                        })
+                                                                               
+                                      }
+                                    })
+                                  }
+                                })
+                              }else{
+                                sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
+                                    if (err) {
+                                        console.log("error: ", err);
+                                    }else{
+                                        console.log("iso moved" );
+                                        res.status(200).send("moved")
+                                    }
+                                })
+                              }
+                            
                             
                         }
 
@@ -155,7 +205,6 @@ const transaction = async (req, res) => {
 
         }
     })
-
 
 }
 
@@ -171,19 +220,70 @@ const returnLead = async(req, res) =>{
             }else{
                 const from = results[0].to
                 let created_at = results[0].created_at
-                sql.query("INSERT INTO hisoctrls (filename, revision, tie, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                [req.body.fileName, results[0].revision, 0, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                [req.body.fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
                     if (err) {
                         console.log("error: ", err);
                     }else{
-                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", req.body.fileName], (err, results) =>{
-                            if (err) {
-                                console.log("error: ", err);
+                        if(process.env.REACT_APP_PROGRESS == "1"){
+                            let type = ""
+                            if(process.env.REACT_APP_IFC == "0"){
+                              type = "value_ifd"
                             }else{
-                                console.log("iso moved" );
-                                res.status(200).send("moved")
+                              type = "value_ifc"
                             }
-                        })
+                            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                              if(!results[0]){
+                                res.status(401)
+                              }else{
+                                tl = results[0].tpipes_id
+                                const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                                sql.query(q, [req.body.to, tl], (err, results)=>{
+                                  if(!results[0]){
+                                    res.status(401)
+                                  }else{
+                                    let newprogress = null
+                                    console.log(results[0])
+                                    if(type == "value_ifc"){
+                                      newprogress = results[0].value_ifc
+                                    }else{
+                                      newprogress = results[0].value_ifd
+                                    }
+                                    
+                                    sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
+                                      if(!results[0]){
+                                        res.status(401).send("Iso without progress")
+                                      }else{
+                                        let progress = results[0].progress
+                                        if(newprogress > progress){
+                                          progress = newprogress
+                                        }
+
+                                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", progress, newprogress, req.body.fileName], (err, results) =>{
+                                            if (err) {
+                                                console.log("error: ", err);
+                                            }else{
+                                                console.log("iso moved" );
+                                                res.status(200).send("moved")
+                                            }
+                                        })
+                                      }
+                                    })                              
+                                  }
+                                })
+                              }
+                            })
+                          }else{
+                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", req.body.fileName], (err, results) =>{
+                                if (err) {
+                                    console.log("error: ", err);
+                                }else{
+                                    console.log("iso moved" );
+                                    res.status(200).send("moved")
+                                }
+                            })
+                          }
+                        
                     }
                 })
             }
