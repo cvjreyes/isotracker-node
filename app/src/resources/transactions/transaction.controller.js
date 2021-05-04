@@ -155,23 +155,32 @@ const transaction = async (req, res) => {
                                       if(!results[0]){
                                         res.status(401)
                                       }else{
-                                        let progress = null
+                                        let newprogress = null
                                         console.log(results[0])
                                         if(type == "value_ifc"){
-                                          progress = results[0].value_ifc
+                                          newprogress = results[0].value_ifc
                                         }else{
-                                          progress = results[0].value_ifd
+                                          newprogress = results[0].value_ifd
                                         }
-                                        
-                                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, req.body.fileName], (err, results) =>{
-                                            if (err) {
-                                                console.log("error: ", err);
-                                            }else{
-                                                console.log("iso moved" );
-                                                res.status(200).send("moved")
+                                        sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
+                                          if(!results[0]){
+                                            res.status(401).send("Iso without progress")
+                                          }else{
+                                            let progress = results[0].progress
+                                            if(newprogress > progress){
+                                              progress = newprogress
                                             }
+                                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
+                                              if (err) {
+                                                  console.log("error: ", err);
+                                              }else{
+                                                  console.log("iso moved" );
+                                                  res.status(200).send("moved")
+                                              }
+                                            })
+                                          }
                                         })
-                                        
+                                                                               
                                       }
                                     })
                                   }
@@ -196,7 +205,6 @@ const transaction = async (req, res) => {
 
         }
     })
-
 
 }
 
@@ -234,23 +242,33 @@ const returnLead = async(req, res) =>{
                                   if(!results[0]){
                                     res.status(401)
                                   }else{
-                                    let progress = null
+                                    let newprogress = null
                                     console.log(results[0])
                                     if(type == "value_ifc"){
-                                      progress = results[0].value_ifc
+                                      newprogress = results[0].value_ifc
                                     }else{
-                                      progress = results[0].value_ifd
+                                      newprogress = results[0].value_ifd
                                     }
                                     
-                                    sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, progress = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", progress, req.body.fileName], (err, results) =>{
-                                        if (err) {
-                                            console.log("error: ", err);
-                                        }else{
-                                            console.log("iso moved" );
-                                            res.status(200).send("moved")
+                                    sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
+                                      if(!results[0]){
+                                        res.status(401).send("Iso without progress")
+                                      }else{
+                                        let progress = results[0].progress
+                                        if(newprogress > progress){
+                                          progress = newprogress
                                         }
-                                    })
-                                    
+
+                                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", progress, newprogress, req.body.fileName], (err, results) =>{
+                                            if (err) {
+                                                console.log("error: ", err);
+                                            }else{
+                                                console.log("iso moved" );
+                                                res.status(200).send("moved")
+                                            }
+                                        })
+                                      }
+                                    })                              
                                   }
                                 })
                               }

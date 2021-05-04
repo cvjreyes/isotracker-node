@@ -255,8 +255,8 @@ const uploadHis = async (req, res) => {
                       progress = results[0].value_ifd
                     }
                     
-                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress], (err, results) => {
+                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -510,7 +510,7 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  sql.query('SELECT * FROM misoctrls', (err, results) =>{
+  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -820,6 +820,67 @@ const checkPipe = async(req,res) =>{
   })
 }
 
+const currentProgress = async(req,res) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls", (req, results) =>{
+    const progress = results[0]["SUM(progress)"]
+    sql.query("SELECT SUM(realprogress) FROM misoctrls", (req, results) =>{
+      const realprogress = results[0]["SUM(realprogress)"]
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              res.json({
+                progress: (progress/maxProgress * 100).toFixed(2),
+                realprogress: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const currentProgressISO = async(req,res) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+    const progress = results[0]["SUM(progress)"]
+    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+      const realprogress = results[0]["SUM(realprogress)"]
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              console.log((progress/maxProgress * 100).toFixed(2))
+              res.json({
+                progressISO: (progress/maxProgress * 100).toFixed(2),
+                realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const getMaxProgress = async(req,res) =>{
+        sql.query("SELECT weight FROM tpipes", (err, results) =>{
+          res.json({
+            weights: results
+          }).status(200)
+        })
+}
+
 module.exports = {
   upload,
   update,
@@ -841,5 +902,8 @@ module.exports = {
   piStatus,
   downloadHistory,
   uploadReport,
-  checkPipe
+  checkPipe,
+  currentProgress,
+  getMaxProgress,
+  currentProgressISO
 };
