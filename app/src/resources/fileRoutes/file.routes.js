@@ -28,6 +28,7 @@ let routes = (app) => {
   router.get("/currentProgress", controller.currentProgress);
   router.get("/getMaxProgress", controller.getMaxProgress);
   router.get("/currentProgressISO", controller.currentProgressISO);
+  router.post("/toIssue", controller.toIssue);
 
   app.use(router);
 };
