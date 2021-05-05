@@ -881,6 +881,111 @@ const getMaxProgress = async(req,res) =>{
         })
 }
 
+const toIssue = async(req,res) =>{
+  const fileName = req.body.file
+  const transmittal = req.body.transmittal
+  const date = req.body.date
+  const user = req.body.user
+  const role = req.body.role
+
+
+
+  sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+    if(!results[0]){
+      res.status(401).send("File not found")
+    }else{
+      const revision = results[0].revision
+      const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
+
+      let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
+
+      if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
+        fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
+      }
+
+      masterName = fileName.split('.').slice(0, -1)
+
+      origin_path = './app/storage/isoctrl/lde/' + fileName
+      destiny_path = './app/storage/isoctrl/lde/' + newFileName
+      origin_attach_path = './app/storage/isoctrl/lde/attach/'
+      destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
+      origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
+
+      fs.rename(origin_path, destiny_path, function (err) {
+        if (err) throw err
+      })
+
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          const i = file.lastIndexOf('.');
+          const extension = file.substring(i+1);
+          if(String(masterName).trim() == String(attachName).trim()){
+            fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
+                console.log("moved attach to transmittal")
+                if (err) throw err
+
+            })
+          }
+        });
+      });
+
+    if(fs.existsSync(origin_cl_path)){
+        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+            if (err) throw err
+            console.log('Moved CL to transmittal')
+        })
+    }
+
+
+
+      sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+        if (!results[0]){
+          res.status(401).send("Username or password incorrect");
+        }else{   
+          username  = results[0].name
+          sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+            if(!results[0]){
+                res.status(401).send("No files found");
+            }else{
+                let last = results[0]
+                for (let i = 1; i < results.length; i++){
+                    if(results[i].updated_at > last.updated_at){
+                        last = results[i]
+                    }
+                }
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [newFileName, revision, last.spo, last.sit, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                  if (err) {
+                    console.log("error: ", err);
+                  }else{
+                    console.log("issued in hisoctrls");
+                    console.log(newFileName, revision, fileName)
+                    sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
+                      if (err) {
+                        console.log("error: ", err);
+                      }else{
+                        sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ? WHERE filename = ?", [revision + 1, "None", null, newFileName], (err, results)=>{
+                          if (err) {
+                            console.log("error: ", err);
+                          }else{
+                            console.log("issued in misoctrls");
+                          }
+                        })
+                      }
+                    })
+                  }
+                })
+            }
+          })
+        }
+      })
+    }
+  })
+
+}
+
 module.exports = {
   upload,
   update,
@@ -905,5 +1010,6 @@ module.exports = {
   checkPipe,
   currentProgress,
   getMaxProgress,
-  currentProgressISO
+  currentProgressISO,
+  toIssue
 };
