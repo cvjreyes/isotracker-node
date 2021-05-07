@@ -19,7 +19,7 @@ const transaction = async (req, res) => {
         if (!results[0]){
             res.status(401).send("File not found");
         }else{
-            sql.query("SELECT `to` FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
+            sql.query("SELECT * FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
                 console.log(results)
                 if (!results[0]){
                     res.status(401).send("File not found");

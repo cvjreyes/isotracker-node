@@ -309,7 +309,7 @@ const updateHis = async (req, res) => {
             }
     
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?)", 
-            [fileName, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
+            [fileName, last.revison, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -501,7 +501,7 @@ const restore = async(req,res) =>{
         let destiny = results[0].from
         let origin = results[0].to
         sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        [fileName, results.revision, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -629,7 +629,7 @@ const toProcess = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, last.revision, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -684,7 +684,7 @@ const instrument = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, last.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -1017,8 +1017,8 @@ const toIssue = async(req,res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [newFileName, revision, last.spo, last.sit, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
                   if (err) {
                     console.log("error: ", err);
                   }else{
@@ -1029,7 +1029,7 @@ const toIssue = async(req,res) =>{
                         console.log("error: ", err);
                       }else{
                         if(process.env.REACT_APP_PROGRESS == "0"){
-                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ? WHERE filename = ?", [revision + 1, "None", null, newFileName], (err, results)=>{
+                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
                             if (err) {
                               console.log("error: ", err);
                             }else{
@@ -1063,7 +1063,7 @@ const toIssue = async(req,res) =>{
                                       newprogress = results[0].value_ifd
                                     }
                                       console.log(newprogress)
-                                      sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, newFileName], (err, results)=>{
+                                      sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, newFileName], (err, results)=>{
                                         if (err) {
                                           console.log("error: ", err);
                                         }else{
@@ -1173,7 +1173,7 @@ const newRev = (req, res) =>{
                 const revision = results[0].revision
                 if(process.env.REACT_APP_PROGRESS == "0"){
                   sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                  [newFileName, 0, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                  [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
                     if (err) {
                       console.log("error: ", err);
                     }else{
