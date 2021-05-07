@@ -151,7 +151,11 @@ const transaction = async (req, res) => {
                                   }else{
                                     tl = results[0].tpipes_id
                                     const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
-                                    sql.query(q, [req.body.to, tl], (err, results)=>{
+                                    let level = req.body.to
+                                    if(level == "LDE/Isocontrol"){
+                                        level = "Issuer"
+                                    }
+                                    sql.query(q, [level, tl], (err, results)=>{
                                       if(!results[0]){
                                         res.status(401)
                                       }else{
@@ -165,6 +169,7 @@ const transaction = async (req, res) => {
                                         sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
                                           if(!results[0]){
                                             res.status(401).send("Iso without progress")
+                                            
                                           }else{
                                             let progress = results[0].progress
                                             if(newprogress > progress){
@@ -172,6 +177,7 @@ const transaction = async (req, res) => {
                                             }
                                             sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
                                               if (err) {
+                                                  res.status(401).send("cant update")
                                                   console.log("error: ", err);
                                               }else{
                                                   console.log("iso moved" );
