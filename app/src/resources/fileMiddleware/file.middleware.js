@@ -22,11 +22,16 @@ let storage = multer.diskStorage({
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
       for(let i = 0; i < folders.length; i++){
-        const path = folders[i] + '/' + file.originalname;
-        if (fs.existsSync(path)) {
-          exists = true;
-          where = folders[i]
-        }
+        const revisions = [".pdf", "-0.pdf", "-1.pdf", "-2.pdf", "-3.pdf", "-4.pdf"]
+        for(let j = 0; j < revisions.length; j++){
+          const path = folders[i] + '/' + file.originalname.split('.').slice(0, -1) + revisions[j];
+          console.log(path)
+          if (fs.existsSync(path)) {
+            exists = true;
+            where = folders[i]
+            console.log(exists)
+          }
+        }      
       }
 
       if(!exists){
