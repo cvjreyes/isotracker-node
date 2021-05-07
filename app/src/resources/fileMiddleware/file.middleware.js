@@ -60,7 +60,12 @@ let storage = multer.diskStorage({
       }
     }else{
       console.log("entro a zip")
-      const parentPath = './app/storage/isoctrl/design/' + file.originalname.split('.').slice(0, -1).join('.') + '.pdf'
+      let parentPath
+      if (cl){
+        parentPath = './app/storage/isoctrl/design/' + file.originalname.substring(0,file.originalname.length-7) + '.pdf'
+      }else{
+        parentPath = './app/storage/isoctrl/design/' + file.originalname.split('.').slice(0, -1).join('.') + '.pdf'
+      }
       console.log(parentPath)
       if (fs.existsSync(parentPath)) {
         await cb(null, './app/storage/isoctrl/design/attach')
