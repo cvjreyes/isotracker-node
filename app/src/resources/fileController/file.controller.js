@@ -629,7 +629,7 @@ const toProcess = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, last.revision, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, file.revision, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -1222,7 +1222,7 @@ const newRev = (req, res) =>{
                             newprogress = results[0].value_ifd
                           }
                             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                            [newFileName, 0, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                            [newFileName, revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
                               if (err) {
                                 console.log("error: ", err);
                               }else{
