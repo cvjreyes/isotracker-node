@@ -309,7 +309,7 @@ const updateHis = async (req, res) => {
             }
     
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?)", 
-            [fileName, 0, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
+            [fileName, last.revison, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -350,8 +350,8 @@ const getMaster = async(req, res) =>{
 
 
 const updateStatus = async(req,res) =>{
-  let designUploadedCount, designProgressCount, stressCount, supportsCount, materialsCount, issuerCount, isoControlToIssueCount, onHoldCount, deletedCount = 0
-  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `from` = ? AND claimed IS NULL", [""], (err, results) =>{
+  let designUploadedCount, designProgressCount, stressCount, supportsCount, materialsCount, issuerCount, isoControlToIssueCount, r0Count, r1Count, r2Count, onHoldCount, deletedCount, totalCount, modelCount = 0
+  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND claimed IS NULL", ["Design"], (err, results) =>{
     if(!results[0]){
       res.status(500).send("Error")
     }else{
@@ -391,22 +391,84 @@ const updateStatus = async(req,res) =>{
                                   res.status(500).send("Error")
                                 }else{
                                   issuerCount = results[0]["COUNT(id)"]
-                                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["LDE/Isocontrol"], (err, results) =>{
+                                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued IS NULL", ["LDE/Isocontrol"], (err, results) =>{
                                     if(!results[0]){
                                       res.status(500).send("Error")
                                     }else{
                                       isoControlToIssueCount = results[0]["COUNT(id)"]
-                                      res.status(200).send({
-                                        designUploaded: designUploadedCount,
-                                        designProgress: designProgressCount,
-                                        stress: stressCount,
-                                        supports: supportsCount,
-                                        materials: materialsCount,
-                                        issuer: issuerCount,
-                                        isocontrolToIssue: isoControlToIssueCount,
-                                        onHold: onHoldCount,
-                                        deleted: deletedCount
+                                      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 1", ["LDE/Isocontrol"],(err, results) =>{
+                                        if(!results[0]){
+                                          res.status(500).send("Error")
+                                        }else{
+                                          r0Count = results[0]["COUNT(id)"]
+                                          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 2", ["LDE/Isocontrol"],(err, results) =>{
+                                            if(!results[0]){
+                                              res.status(500).send("Error")
+                                            }else{
+                                              r1Count = results[0]["COUNT(id)"]
+                                              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 3", ["LDE/Isocontrol"],(err, results) =>{
+                                                if(!results[0]){
+                                                  res.status(500).send("Error")
+                                                }else{
+                                                  r2Count = results[0]["COUNT(id)"]
+                                                  sql.query("SELECT COUNT(DISTINCT(isoid)) FROM misoctrls", (err, results) =>{
+                                                    if(!results[0]){
+                                                      res.status(500).send("Error")
+                                                    }else{
+                                                      totalCount = results[0]["COUNT(DISTINCT(isoid))"]
+                                                      if(process.env.REACT_APP_PROGRESS == "0"){
+                                                        res.status(200).send({
+                                                          designUploaded: designUploadedCount,
+                                                          designProgress: designProgressCount,
+                                                          stress: stressCount,
+                                                          supports: supportsCount,
+                                                          materials: materialsCount,
+                                                          issuer: issuerCount,
+                                                          isocontrolToIssue: isoControlToIssueCount,
+                                                          r0: r0Count,
+                                                          r1: r1Count,
+                                                          r2: r2Count,
+                                                          onHold: onHoldCount,
+                                                          deleted: deletedCount,
+                                                          total: totalCount,
+                                                        })
+                                                      }else{
+                                                        sql.query("SELECT COUNT(id) FROM dpipes", (err, results) =>{
+                                                          if(!results[0]){
+                                                            res.status(500).send("Error")
+                                                          }else{
+                                                            modelCount = results[0]["COUNT(id)"]
+                                                            
+                                                            res.status(200).send({
+                                                              designUploaded: designUploadedCount,
+                                                              designProgress: designProgressCount,
+                                                              stress: stressCount,
+                                                              supports: supportsCount,
+                                                              materials: materialsCount,
+                                                              issuer: issuerCount,
+                                                              isocontrolToIssue: isoControlToIssueCount,
+                                                              r0: r0Count,
+                                                              r1: r1Count,
+                                                              r2: r2Count,
+                                                              onHold: onHoldCount,
+                                                              deleted: deletedCount,
+                                                              total: totalCount,
+                                                              model: modelCount
+                                                            })
+                                                          }
+                                                        })
+                                                      }
+                                                      
+                                                    }
+                                                  })
+                                                  
+                                                }
+                                              })
+                                            }
+                                          })
+                                        }
                                       })
+                                      
                                     }
                                   })
                                 }
@@ -439,7 +501,7 @@ const restore = async(req,res) =>{
         let destiny = results[0].from
         let origin = results[0].to
         sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, 0, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        [fileName, results.revision, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
@@ -567,7 +629,7 @@ const toProcess = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, file.revision, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -622,7 +684,7 @@ const instrument = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, 0, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, last.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -881,6 +943,327 @@ const getMaxProgress = async(req,res) =>{
         })
 }
 
+const toIssue = async(req,res) =>{
+  const fileName = req.body.file
+  const transmittal = req.body.transmittal
+  const date = req.body.date
+  const user = req.body.user
+  const role = req.body.role
+
+
+
+  sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+    if(!results[0]){
+      res.status(401).send("File not found")
+    }else{
+      const revision = results[0].revision
+      const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
+
+      let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
+
+      if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
+        fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
+      }
+
+      masterName = fileName.split('.').slice(0, -1)
+
+      origin_path = './app/storage/isoctrl/lde/' + fileName
+      destiny_path = './app/storage/isoctrl/lde/' + newFileName
+      origin_attach_path = './app/storage/isoctrl/lde/attach/'
+      destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
+      origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
+
+      fs.rename(origin_path, destiny_path, function (err) {
+        if (err) throw err
+      })
+
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          const i = file.lastIndexOf('.');
+          const extension = file.substring(i+1);
+          if(String(masterName).trim() == String(attachName).trim()){
+            fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
+                console.log("moved attach to transmittal")
+                if (err) throw err
+
+            })
+          }
+        });
+      });
+
+    if(fs.existsSync(origin_cl_path)){
+        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+            if (err) throw err
+            console.log('Moved CL to transmittal')
+        })
+    }
+
+
+
+      sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+        if (!results[0]){
+          res.status(401).send("Username or password incorrect");
+        }else{   
+          username  = results[0].name
+          sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+            if(!results[0]){
+                res.status(401).send("No files found");
+            }else{
+                let last = results[0]
+                for (let i = 1; i < results.length; i++){
+                    if(results[i].updated_at > last.updated_at){
+                        last = results[i]
+                    }
+                }
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                  if (err) {
+                    console.log("error: ", err);
+                  }else{
+                    console.log("issued in hisoctrls");
+                    console.log(newFileName, revision, fileName)
+                    sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
+                      if (err) {
+                        console.log("error: ", err);
+                      }else{
+                        if(process.env.REACT_APP_PROGRESS == "0"){
+                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
+                            if (err) {
+                              console.log("error: ", err);
+                            }else{
+                              console.log("issued in misoctrls");
+                            }
+                          })
+                        }else{
+                            let type = ""
+                            if(process.env.REACT_APP_IFC == "0"){
+                              type = "value_ifd"
+                            }else{
+                              type = "value_ifc"
+                            }
+                            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                              if(!results[0]){
+                                res.status(401)
+                              }else{
+                                tl = results[0].tpipes_id
+                                const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                                let level = "Transmittal"
+                                console.log(tl)
+                                sql.query(q, [level, tl], (err, results)=>{
+                                  if(!results[0]){
+                                    res.status(401)
+                                  }else{
+                                    let newprogress = null
+                                    console.log(results[0])
+                                    if(type == "value_ifc"){
+                                      newprogress = results[0].value_ifc
+                                    }else{
+                                      newprogress = results[0].value_ifd
+                                    }
+                                      console.log(newprogress)
+                                      sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, newFileName], (err, results)=>{
+                                        if (err) {
+                                          console.log("error: ", err);
+                                        }else{
+                                          console.log("issued in misoctrls");
+                                          res.status(200).send("issued")
+                                        }
+                                      })
+                                    }
+
+                                  })
+                                }
+                              })
+                            }
+                        }
+                        
+                      })
+                    }
+                  })
+                }
+            })
+          }
+        })
+      }
+    
+  })
+
+}
+const request = (req,res) =>{
+
+  const fileName = req.body.file
+  const user = req.body.user
+  const role = req.body.role
+
+  sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+        if(!results[0]){
+            res.status(401).send("No files found");
+        }else{
+            let last = results[0]
+            for (let i = 1; i < results.length; i++){
+                if(results[i].updated_at > last.updated_at){
+                    last = results[i]
+                }
+            }
+            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+            [fileName, last.revision, last.spo, last.sit, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Requested", "Requested", role, username], (err, results) => {
+              if (err) {
+                console.log("error: ", err);
+              }else{
+                console.log("issued in hisoctrls");
+                sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+                  if(results[0].requested !== null){
+                    res.status(401).send("Isometric already requested")
+                  }else{
+                    sql.query("UPDATE misoctrls SET requested = 1  WHERE filename = ?", [fileName], (err, results)=>{
+                      if (err) {
+                        console.log("error: ", err);
+                      }else{
+                        res.status(200).send("Requested")
+                      }
+                    })
+                  }
+                })
+                
+              }
+            })
+        }
+      })
+    }
+  })
+}
+
+const newRev = (req, res) =>{
+  
+  const fileName = req.body.file
+  const user = req.body.user
+  const role = req.body.role
+
+  const newFileName = fileName.substring(0,fileName.length-6) + ".pdf"
+
+  const origin_path = './app/storage/isoctrl/lde/' + fileName
+  const destiny_path = './app/storage/isoctrl/design/' + newFileName
+
+  sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("file not found")
+    }else{
+      if(results[0].requested == 2){
+        res.status(401).send("Already sent for revision")
+      }else{
+        fs.copyFile(origin_path, destiny_path, (err) => {
+          if (err) throw err;
+        });
+        sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+          if (!results[0]){
+            res.status(401).send("Username or password incorrect");
+          }else{   
+            username  = results[0].name
+            sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send("File not found")
+              }else{
+                const revision = results[0].revision
+                if(process.env.REACT_APP_PROGRESS == "0"){
+                  sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+                  [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                    if (err) {
+                      console.log("error: ", err);
+                    }else{
+                      console.log("created hisoctrls");
+                      sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+                      [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", null], (err, results) => {
+                        if (err) {
+                          console.log("error: ", err);
+                        }else{
+                          console.log("created misoctrls");
+                          sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
+                            if(err){
+                              res.status(401).send(err)
+                            }else{
+                              res.status(200).send("Sent for revision")
+                            }
+                          })             
+                        }
+                      });
+        
+                    }
+                  })
+                }else{
+                  let type = ""
+                  if(process.env.REACT_APP_IFC == "0"){
+                    type = "value_ifd"
+                  }else{
+                    type = "value_ifc"
+                  }
+                  sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
+                    if(!results[0]){
+                      res.status(401)
+                    }else{
+                      tl = results[0].tpipes_id
+                      const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                      let level = req.body.to
+                      level = "Design"
+                      sql.query(q, [level, tl], (err, results)=>{
+                        if(!results[0]){
+                          res.status(401)
+                        }else{
+                          let newprogress = null
+                          if(type == "value_ifc"){
+                            newprogress = results[0].value_ifc
+                          }else{
+                            newprogress = results[0].value_ifd
+                          }
+                            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+                            [newFileName, revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                              if (err) {
+                                console.log("error: ", err);
+                              }else{
+                                console.log("created hisoctrls");
+                                sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                                [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", newprogress, newprogress], (err, results) => {
+                                  if (err) {
+                                    console.log("error: ", err);
+                                  }else{
+                                    console.log("created misoctrls");
+                                    sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
+                                      if(err){
+                                        res.status(401).send(err)
+                                      }else{
+                                        res.status(200).send("Sent for revision")
+                                      }
+                                    })             
+                                  }
+                                });
+        
+                              }
+                            })
+                          }
+                        })
+                      }
+                    })
+                  }
+                }
+                
+              })
+            }
+            
+          })
+        }
+      }
+    })
+  }
+
+  
+
+
 module.exports = {
   upload,
   update,
@@ -905,5 +1288,8 @@ module.exports = {
   checkPipe,
   currentProgress,
   getMaxProgress,
-  currentProgressISO
+  currentProgressISO,
+  toIssue,
+  request,
+  newRev
 };
