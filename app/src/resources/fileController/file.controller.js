@@ -786,6 +786,34 @@ const downloadHistory = async(req,res) =>{
   })
 }
 
+const downloadStatus = async(req,res) =>{
+  sql.query("SELECT deleted, onhold, issued FROM misoctrls", (err, results)=>{
+    const delhold = results
+    sql.query("SELECT isoid, created_at, updated_at, revision FROM misoctrls", (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("El historial esta vacio")
+      }else{
+        for(let i = 0; i < results.length; i++){
+  
+          if(delhold[i].issued == null){
+            results[i].revision = "ON GOING R" + results[i].revision
+          }else{
+            results[i].revision = "ISSUED"
+          }
+          if(delhold[i].deleted == 1){
+            results[i].revision = "DELETED"
+          }else if (delhold[i].onhold == 1){
+            results[i].revision = "ON HOLD"
+          }
+  
+        }
+        res.json(JSON.stringify(results)).status(200)
+      }
+    })
+  })
+  
+}
+
 const uploadReport = async(req,res) =>{
   const area_index = req.body[0].indexOf("area")
   const tag_index = req.body[0].indexOf("tag")
@@ -1284,6 +1312,7 @@ module.exports = {
   getAttach,
   piStatus,
   downloadHistory,
+  downloadStatus,
   uploadReport,
   checkPipe,
   currentProgress,
