@@ -23,6 +23,8 @@ let routes = (app) => {
   router.get("/download/:fileName", controller.download);
   router.get("/getAttach/:fileName", controller.getAttach);
   router.get("/downloadHistory", controller.downloadHistory);
+  router.get("/downloadStatus", controller.downloadStatus);
+  router.get("/downloadPI", controller.downloadPI);
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
   router.get("/currentProgress", controller.currentProgress);

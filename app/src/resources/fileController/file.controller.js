@@ -3,6 +3,7 @@ const fs = require("fs");
 const bodyParser = require('body-parser')
 const sql = require("../../db.js");
 const pathPackage = require("path")
+var format = require('date-format');
 
 
 const upload = async (req, res) => {
@@ -684,7 +685,7 @@ const instrument = (req,res) =>{
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, last.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, file.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -784,6 +785,69 @@ const downloadHistory = async(req,res) =>{
       res.json(JSON.stringify(results)).status(200)
     }
   })
+}
+
+const downloadStatus = async(req,res) =>{
+  sql.query("SELECT deleted, onhold, issued FROM misoctrls", (err, results)=>{
+    const delhold = results
+    sql.query("SELECT isoid, created_at, updated_at, revision FROM misoctrls", (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("El historial esta vacio")
+      }else{
+        pattern = "MM/dd/yyyy hh:mm:ss";
+        for(let i = 0; i < results.length; i++){
+  
+          if(delhold[i].issued == null){
+            results[i].revision = "ON GOING R" + results[i].revision
+          }else{
+            results[i].revision = "ISSUED"
+          }
+          if(delhold[i].deleted == 1){
+            results[i].revision = "DELETED"
+          }else if (delhold[i].onhold == 1){
+            results[i].revision = "ON HOLD"
+          }
+          
+          results[i].created_at = format(pattern, results[i].created_at)
+          results[i].updated_at = format(pattern, results[i].updated_at)
+        }
+        
+        res.json(JSON.stringify(results)).status(200)
+      }
+    })
+  })
+  
+}
+
+const downloadPI = async(req,res) =>{
+  sql.query("SELECT deleted, onhold, issued FROM misoctrls", (err, results)=>{
+    const delhold = results
+    sql.query("SELECT isoid, spo, sit, updated_at FROM misoctrls WHERE spo != 0 OR sit != 0", (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("El historial esta vacio")
+      }else{
+        pattern = "MM/dd/yyyy hh:mm:ss";
+        for(let i = 0; i < results.length; i++){
+  
+          if(delhold[i].issued == null){
+            results[i].revision = "ON GOING R" + results[i].revision
+          }else{
+            results[i].revision = "ISSUED"
+          }
+          if(delhold[i].deleted == 1){
+            results[i].revision = "DELETED"
+          }else if (delhold[i].onhold == 1){
+            results[i].revision = "ON HOLD"
+          }
+          
+          results[i].created_at = format(pattern, results[i].created_at)
+        }
+        
+        res.json(JSON.stringify(results)).status(200)
+      }
+    })
+  })
+  
 }
 
 const uploadReport = async(req,res) =>{
@@ -1284,6 +1348,8 @@ module.exports = {
   getAttach,
   piStatus,
   downloadHistory,
+  downloadStatus,
+  downloadPI,
   uploadReport,
   checkPipe,
   currentProgress,
