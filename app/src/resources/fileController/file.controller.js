@@ -3,6 +3,7 @@ const fs = require("fs");
 const bodyParser = require('body-parser')
 const sql = require("../../db.js");
 const pathPackage = require("path")
+var format = require('date-format');
 
 
 const upload = async (req, res) => {
@@ -793,6 +794,7 @@ const downloadStatus = async(req,res) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
+        pattern = "MM/dd/yyyy hh:mm:ss";
         for(let i = 0; i < results.length; i++){
   
           if(delhold[i].issued == null){
@@ -805,8 +807,11 @@ const downloadStatus = async(req,res) =>{
           }else if (delhold[i].onhold == 1){
             results[i].revision = "ON HOLD"
           }
-  
+          
+          results[i].created_at = format(pattern, results[i].created_at)
+          results[i].updated_at = format(pattern, results[i].updated_at)
         }
+        
         res.json(JSON.stringify(results)).status(200)
       }
     })
