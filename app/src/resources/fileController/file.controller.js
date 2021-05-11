@@ -820,8 +820,6 @@ const downloadStatus = async(req,res) =>{
 }
 
 const downloadPI = async(req,res) =>{
-  sql.query("SELECT deleted, onhold, issued FROM misoctrls", (err, results)=>{
-    const delhold = results
     sql.query("SELECT isoid, spo, sit, updated_at FROM misoctrls WHERE spo != 0 OR sit != 0", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
@@ -829,24 +827,37 @@ const downloadPI = async(req,res) =>{
         pattern = "MM/dd/yyyy hh:mm:ss";
         for(let i = 0; i < results.length; i++){
   
-          if(delhold[i].issued == null){
-            results[i].revision = "ON GOING R" + results[i].revision
+          if(results[i].spo == 0){
+            results[i].spo = "---"
+          }else if(results[i].spo == 1){
+            results[i].spo = "TO CHECK"
+          }else if(results[i].spo == 2){
+            results[i].spo = "ACCEPTED"
+          }else if(results[i].spo == 3){
+            results[i].spo = "REJECTED"
           }else{
-            results[i].revision = "ISSUED"
+            results[i].spo = "TO CHECK (+)"
           }
-          if(delhold[i].deleted == 1){
-            results[i].revision = "DELETED"
-          }else if (delhold[i].onhold == 1){
-            results[i].revision = "ON HOLD"
+
+          if(results[i].sit == 0){
+            results[i].sit = "---"
+          }else if(results[i].sit == 1){
+            results[i].sit = "TO CHECK"
+          }else if(results[i].sit == 2){
+            results[i].sit = "ACCEPTED"
+          }else if(results[i].sit == 3){
+            results[i].sit = "REJECTED"
+          }else{
+            results[i].sit = "TO CHECK (+)"
           }
           
-          results[i].created_at = format(pattern, results[i].created_at)
+          results[i].updated_at = format(pattern, results[i].updated_at)
         }
         
         res.json(JSON.stringify(results)).status(200)
       }
     })
-  })
+
   
 }
 
