@@ -30,7 +30,7 @@ const transaction = async (req, res) => {
                     const from = results[0].to
                     let created_at = results[0].created_at
                     if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && req.body.to == "LDE/Isocontrol"){
-                      res.status(401).send("Missing clean!")
+                      res.status(401)
                     }else{
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
                       [req.body.fileName, results[0].revision, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
@@ -151,7 +151,7 @@ const transaction = async (req, res) => {
                                   }else{
                                     type = "value_ifc"
                                   }
-                                  sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                                  sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
                                     if(!results[0]){
                                       res.status(401)
                                     }else{
@@ -187,7 +187,7 @@ const transaction = async (req, res) => {
                                                     console.log("error: ", err);
                                                 }else{
                                                     console.log("iso moved" );
-                                                    res.status(200).send("moved")
+                                                    res.status(200).send({"moved": 1})
                                                 }
                                               })
                                             }
@@ -246,7 +246,7 @@ const returnLead = async(req, res) =>{
                             }else{
                               type = "value_ifc"
                             }
-                            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
                               if(!results[0]){
                                 res.status(401)
                               }else{
