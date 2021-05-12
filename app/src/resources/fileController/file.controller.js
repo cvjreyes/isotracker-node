@@ -106,7 +106,6 @@ const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   console.log("fetch de archivos")
   sql.query('SELECT * FROM misoctrls WHERE `to` = ?', [tab], (err, results) =>{
-
       res.json({
         rows: results
       })
@@ -218,7 +217,7 @@ const getAttach = (req,res) =>{
 
 
 const uploadHis = async (req, res) => {
-
+  console.log("Empieza el uploadhis de  " , req.body.fileName)
   var username = "";
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
@@ -229,6 +228,7 @@ const uploadHis = async (req, res) => {
       [req.body.fileName, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
+          res.status(401)
         }else{
           console.log("created hisoctrls");
           if(process.env.REACT_APP_PROGRESS == "1"){
@@ -238,8 +238,9 @@ const uploadHis = async (req, res) => {
             }else{
               type = "value_ifc"
             }
-            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
               if(!results[0]){
+                console.log("No se encuentra isoid")
                 res.status(401)
               }else{
                 tl = results[0].tpipes_id
@@ -260,8 +261,10 @@ const uploadHis = async (req, res) => {
                     [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
+                        res.status(401)
                       }else{
                         console.log("created misoctrls");
+                        res.status(200).send("created misoctrls")
                       }
                     });
                     
@@ -274,8 +277,10 @@ const uploadHis = async (req, res) => {
             [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
               if (err) {
                 console.log("error: ", err);
+                res.status(401)
               }else{
                 console.log("created misoctrls");
+                res.status(200).send("created misoctrls")
               }
             });
           }         
@@ -573,7 +578,7 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag', (err, results) =>{
+  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -820,8 +825,6 @@ const downloadStatus = async(req,res) =>{
 }
 
 const downloadPI = async(req,res) =>{
-  sql.query("SELECT deleted, onhold, issued FROM misoctrls", (err, results)=>{
-    const delhold = results
     sql.query("SELECT isoid, spo, sit, updated_at FROM misoctrls WHERE spo != 0 OR sit != 0", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
@@ -829,25 +832,94 @@ const downloadPI = async(req,res) =>{
         pattern = "MM/dd/yyyy hh:mm:ss";
         for(let i = 0; i < results.length; i++){
   
-          if(delhold[i].issued == null){
-            results[i].revision = "ON GOING R" + results[i].revision
+          if(results[i].spo == 0){
+            results[i].spo = "---"
+          }else if(results[i].spo == 1){
+            results[i].spo = "TO CHECK"
+          }else if(results[i].spo == 2){
+            results[i].spo = "ACCEPTED"
+          }else if(results[i].spo == 3){
+            results[i].spo = "REJECTED"
           }else{
-            results[i].revision = "ISSUED"
+            results[i].spo = "TO CHECK (+)"
           }
-          if(delhold[i].deleted == 1){
-            results[i].revision = "DELETED"
-          }else if (delhold[i].onhold == 1){
-            results[i].revision = "ON HOLD"
+
+          if(results[i].sit == 0){
+            results[i].sit = "---"
+          }else if(results[i].sit == 1){
+            results[i].sit = "TO CHECK"
+          }else if(results[i].sit == 2){
+            results[i].sit = "ACCEPTED"
+          }else if(results[i].sit == 3){
+            results[i].sit = "REJECTED"
+          }else{
+            results[i].sit = "TO CHECK (+)"
           }
           
-          results[i].created_at = format(pattern, results[i].created_at)
+          results[i].updated_at = format(pattern, results[i].updated_at)
         }
         
         res.json(JSON.stringify(results)).status(200)
       }
     })
+}
+const downloadIssued = async(req,res) =>{
+  sql.query("SELECT filename FROM misoctrls", (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      sql.query("SELECT isoid, revision, issued, updated_at FROM misoctrls", (err, results) =>{
+        if(!results[0]){
+          res.status(401).send("El historial esta vacio")
+        }else{
+          const pattern = "MM/dd/yyyy hh:mm:ss";
+          let isos_index = []
+          let isos = []
+          for(let i = 0; i < results.length; i++){
+
+            if(results[i].isoid in isos_index){
+              index = isos_index.indexOf(results[i].isoid)
+            }else{
+              isos_index.push(results[i].isoid)
+              isos.push({isoid: results[i].isoid, rev0: "", rev1: "", rev2: "", rev3: "", rev4: ""})
+              index = isos.length-1
+            }
+
+            if(results[i].revision == 1){
+              if(results[i].issued == 1){
+                isos[index].rev0 = results[i].updated_at
+              }
+            }
+            if(results[i].revision == 2){
+              if(results[i].issued == 1){
+                isos[index].rev1 = results[i].updated_at
+              }
+            }
+            if(results[i].revision == 3){
+              if(results[i].issued == 1){
+                isos[index].rev2 = results[i].updated_at
+              }
+            }
+            if(results[i].revision == 4){
+              if(results[i].issued == 1){
+                isos[index].rev3 = results[i].updated_at
+              }
+            }
+            if(results[i].revision == 5){
+              if(results[i].issued == 1){
+                isos[index].rev4 = results[i].updated_at
+              }
+            }
+
+          }
+        }
+        res.json(JSON.stringify(isos)).status(200)
+      })
+      
+      
+      
+    }
   })
-  
 }
 
 const uploadReport = async(req,res) =>{
@@ -859,6 +931,11 @@ const uploadReport = async(req,res) =>{
     console.log("error",area_index,tag_index,diameter_index,calc_index)
     res.status(401).send("Missing columns!")
   }else{
+    sql.query("TRUNCATE dpipes", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
     for(let i = 1; i < req.body.length; i++){
       sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
         const areaid = results[0].id
@@ -932,8 +1009,10 @@ const uploadReport = async(req,res) =>{
 }
 
 const checkPipe = async(req,res) =>{
+  console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
   const fileName = req.params.fileName.split('.').slice(0, -1)
-  sql.query("SELECT * FROM dpipes WHERE tag = ?", [fileName], (err, results) =>{
+  console.log("Se comprueba si existe ", fileName)
+  sql.query("SELECT * FROM dpipes_view WHERE isoid = ?", [fileName], (err, results) =>{
     if(!results[0]){
       res.json({
         exists: false
@@ -960,6 +1039,7 @@ const currentProgress = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              console.log(maxProgress)
               res.json({
                 progress: (progress/maxProgress * 100).toFixed(2),
                 realprogress: (realprogress/maxProgress * 100).toFixed(2)
@@ -973,15 +1053,15 @@ const currentProgress = async(req,res) =>{
 }
 
 const currentProgressISO = async(req,res) =>{
-  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid", (req, results) =>{
     const progress = results[0]["SUM(progress)"]
-    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes.tag", (req, results) =>{
+    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid", (req, results) =>{
       const realprogress = results[0]["SUM(realprogress)"]
-      sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1", (err, results) =>{
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1", (err, results) =>{
         const tp1 = results[0]["COUNT(tpipes_id)"]
-        sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2", (err, results) =>{
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2", (err, results) =>{
           const tp2 = results[0]["COUNT(tpipes_id)"]
-          sql.query("SELECT COUNT(tpipes_id) FROM dpipes INNER JOIN misoctrls ON dpipes.tag COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3", (err, results) =>{
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3", (err, results) =>{
             const tp3 = results[0]["COUNT(tpipes_id)"]
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
@@ -1107,7 +1187,7 @@ const toIssue = async(req,res) =>{
                             }else{
                               type = "value_ifc"
                             }
-                            sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                               if(!results[0]){
                                 res.status(401)
                               }else{
@@ -1267,7 +1347,7 @@ const newRev = (req, res) =>{
                   }else{
                     type = "value_ifc"
                   }
-                  sql.query("SELECT tpipes_id FROM dpipes WHERE tag = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
+                  sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
                     if(!results[0]){
                       res.status(401)
                     }else{
@@ -1350,6 +1430,7 @@ module.exports = {
   downloadHistory,
   downloadStatus,
   downloadPI,
+  downloadIssued,
   uploadReport,
   checkPipe,
   currentProgress,
