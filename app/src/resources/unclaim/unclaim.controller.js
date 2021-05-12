@@ -36,7 +36,7 @@ const singleUnclaim = async (req, res) => {
                                         console.log("error: ", err);
                                     }else{
                                       console.log("unclaimed iso " + fileName);
-                                      res.status(200).send("unclaimed")
+                                      res.status(200).send({"unclaimed": true})
                                     }
                                 })
                                 }
@@ -82,7 +82,7 @@ const forceUnclaim = async(req,res) =>{
                                 console.log("error: ", err);
                             }else{
                             console.log("unclaimed iso " + fileName);
-                            res.status(200).send("unclaimed")
+                            res.status(200).send({"unclaimed": true})
                             }
                         })
                         }

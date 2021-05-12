@@ -217,7 +217,7 @@ const getAttach = (req,res) =>{
 
 
 const uploadHis = async (req, res) => {
-
+  console.log("Empieza el uploadhis de  " , req.body.fileName)
   var username = "";
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
@@ -228,6 +228,7 @@ const uploadHis = async (req, res) => {
       [req.body.fileName, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
+          res.status(401)
         }else{
           console.log("created hisoctrls");
           if(process.env.REACT_APP_PROGRESS == "1"){
@@ -239,6 +240,7 @@ const uploadHis = async (req, res) => {
             }
             sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
               if(!results[0]){
+                console.log("No se encuentra isoid")
                 res.status(401)
               }else{
                 tl = results[0].tpipes_id
@@ -259,8 +261,10 @@ const uploadHis = async (req, res) => {
                     [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
+                        res.status(401)
                       }else{
                         console.log("created misoctrls");
+                        res.status(200).send("created misoctrls")
                       }
                     });
                     
@@ -273,8 +277,10 @@ const uploadHis = async (req, res) => {
             [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
               if (err) {
                 console.log("error: ", err);
+                res.status(401)
               }else{
                 console.log("created misoctrls");
+                res.status(200).send("created misoctrls")
               }
             });
           }         
@@ -1003,8 +1009,10 @@ const uploadReport = async(req,res) =>{
 }
 
 const checkPipe = async(req,res) =>{
+  console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
   const fileName = req.params.fileName.split('.').slice(0, -1)
-  sql.query("SELECT * FROM iquoxe_db.dpipes_view WHERE isoid = ?", [fileName], (err, results) =>{
+  console.log("Se comprueba si existe ", fileName)
+  sql.query("SELECT * FROM dpipes_view WHERE isoid = ?", [fileName], (err, results) =>{
     if(!results[0]){
       res.json({
         exists: false
@@ -1031,6 +1039,7 @@ const currentProgress = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              console.log(maxProgress)
               res.json({
                 progress: (progress/maxProgress * 100).toFixed(2),
                 realprogress: (realprogress/maxProgress * 100).toFixed(2)
