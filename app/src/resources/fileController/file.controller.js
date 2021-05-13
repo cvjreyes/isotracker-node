@@ -517,6 +517,9 @@ const restore = async(req,res) =>{
                 console.log("error: ", err);
               }else{
                 console.log("created misoctrls");
+                if(destiny == "LDE/Isocontrol"){
+                  destiny = "lde"
+                }
 
                 let masterName = req.body.fileName.split('.').slice(0, -1)
                 let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
@@ -877,8 +880,9 @@ const downloadIssued = async(req,res) =>{
           let isos = []
           for(let i = 0; i < results.length; i++){
 
-            if(results[i].isoid in isos_index){
+            if(isos_index.includes(results[i].isoid)){
               index = isos_index.indexOf(results[i].isoid)
+              console.log("ya existe")
             }else{
               isos_index.push(results[i].isoid)
               isos.push({isoid: results[i].isoid, rev0: "", rev1: "", rev2: "", rev3: "", rev4: ""})
@@ -887,33 +891,34 @@ const downloadIssued = async(req,res) =>{
 
             if(results[i].revision == 1){
               if(results[i].issued == 1){
-                isos[index].rev0 = results[i].updated_at
+                isos[index].rev0 = format(pattern, results[i].updated_at)
               }
             }
             if(results[i].revision == 2){
               if(results[i].issued == 1){
-                isos[index].rev1 = results[i].updated_at
+                isos[index].rev1 = format(pattern, results[i].updated_at)
               }
             }
             if(results[i].revision == 3){
               if(results[i].issued == 1){
-                isos[index].rev2 = results[i].updated_at
+                isos[index].rev2 = format(pattern, results[i].updated_at)
               }
             }
             if(results[i].revision == 4){
               if(results[i].issued == 1){
-                isos[index].rev3 = results[i].updated_at
+                isos[index].rev3 = format(pattern, results[i].updated_at)
               }
             }
             if(results[i].revision == 5){
               if(results[i].issued == 1){
-                isos[index].rev4 = results[i].updated_at
+                isos[index].rev4 = format(pattern, results[i].updated_at)
               }
             }
-
+            
           }
+          res.json(JSON.stringify(isos)).status(200)
         }
-        res.json(JSON.stringify(isos)).status(200)
+        
       })
       
       
