@@ -11,9 +11,11 @@ const singleUnclaim = async (req, res) => {
         res.status(401).send("Username or password incorrect");
         }else{
             username  = results[0].name
-            sql.query("SELECT forced FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
+            sql.query("SELECT forced, returned FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
                 if(results[0].forced == 1){
-                    res.status(401).send("Iso is forced")
+                    res.status(401).send({"error": "forced"})
+                }else if(results[0].returned == 1){
+                    res.status(401).send({"error": "returned"})
                 }else{
                     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
                         if(!results[0]){
