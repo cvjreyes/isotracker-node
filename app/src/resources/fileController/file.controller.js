@@ -356,142 +356,200 @@ const getMaster = async(req, res) =>{
 
 
 const updateStatus = async(req,res) =>{
-  let designUploadedCount, designProgressCount, stressCount, supportsCount, materialsCount, issuerCount, isoControlToIssueCount, r0Count, r1Count, r2Count, onHoldCount, deletedCount, totalCount, modelCount = 0
-  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND claimed IS NULL", ["Design"], (err, results) =>{
+  let designR0 = 0, designR1 = 0, designR2 = 0, designHold = 0, designDeleted = 0, designStock = 0, stressR0 = 0, stressR1 = 0, stressR2 = 0, stressHold = 0, stressDeleted = 0, stressStock = 0, supportsR0 = 0, supportsR1 = 0, supportsR2 = 0, supportsHold = 0, supportsDeleted = 0, supportsStock = 0, materialsR0 = 0, materialsR1 = 0, materialsR2 = 0, materialsHold = 0, materialsDeleted = 0, materialsStock = 0, issuerR0 = 0, issuerR1 = 0, issuerR2 = 0, issuerHold = 0, issuerDeleted = 0, issuerStock = 0, toIssueR0 = 0, toIssueR1 = 0, toIssueR2 = 0, toIssueHold = 0, toIssueDeleted = 0, toIssueStock = 0, issuedR0 = 0, issuedR1 = 0, issuedR2 = 0, issuedDeleted = 0, issuedStock = 0, totalR0 = 0, totalR1 = 0, totalR2 = 0, totalHold = 0, totalDeleted = 0, totalStock = 0, modelCount = 0
+  sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE revision = 0 OR revision = 1", (err, results) =>{
     if(!results[0]){
-      res.status(500).send("Error")
-    }else{
-      designUploadedCount = results[0]["COUNT(id)"]
-      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND claimed IS NOT NULL", ["Design"], (err, results) =>{
-        if(!results[0]){
-          res.status(500).send("Error")
-        }else{
-          designProgressCount = results[0]["COUNT(id)"]
-          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Stress"], (err, results) =>{
-            if(!results[0]){
-              res.status(500).send("Error")
-            }else{
-              stressCount = results[0]["COUNT(id)"]
-              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Supports"], (err, results) =>{
-                if(!results[0]){
-                  res.status(500).send("Error")
-                }else{
-                  supportsCount = results[0]["COUNT(id)"]
-                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["On hold"], (err, results) =>{
-                    if(!results[0]){
-                      res.status(500).send("Error")
-                    }else{
-                      onHoldCount = results[0]["COUNT(id)"]
-                      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Recycle bin"], (err, results) =>{
-                        if(!results[0]){
-                          res.status(500).send("Error")
-                        }else{
-                          deletedCount = results[0]["COUNT(id)"]
-                          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Materials"], (err, results) =>{
-                            if(!results[0]){
-                              res.status(500).send("Error")
-                            }else{
-                              materialsCount = results[0]["COUNT(id)"]
-                              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ?", ["Issuer"], (err, results) =>{
-                                if(!results[0]){
-                                  res.status(500).send("Error")
-                                }else{
-                                  issuerCount = results[0]["COUNT(id)"]
-                                  sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued IS NULL", ["LDE/Isocontrol"], (err, results) =>{
-                                    if(!results[0]){
-                                      res.status(500).send("Error")
-                                    }else{
-                                      isoControlToIssueCount = results[0]["COUNT(id)"]
-                                      sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 1", ["LDE/Isocontrol"],(err, results) =>{
-                                        if(!results[0]){
-                                          res.status(500).send("Error")
-                                        }else{
-                                          r0Count = results[0]["COUNT(id)"]
-                                          sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 2", ["LDE/Isocontrol"],(err, results) =>{
-                                            if(!results[0]){
-                                              res.status(500).send("Error")
-                                            }else{
-                                              r1Count = results[0]["COUNT(id)"]
-                                              sql.query("SELECT COUNT(id) FROM misoctrls WHERE `to` = ? AND issued = 1 AND revision = 3", ["LDE/Isocontrol"],(err, results) =>{
-                                                if(!results[0]){
-                                                  res.status(500).send("Error")
-                                                }else{
-                                                  r2Count = results[0]["COUNT(id)"]
-                                                  sql.query("SELECT COUNT(DISTINCT(isoid)) FROM misoctrls", (err, results) =>{
-                                                    if(!results[0]){
-                                                      res.status(500).send("Error")
-                                                    }else{
-                                                      totalCount = results[0]["COUNT(DISTINCT(isoid))"]
-                                                      if(process.env.REACT_APP_PROGRESS == "0"){
-                                                        res.status(200).send({
-                                                          designUploaded: designUploadedCount,
-                                                          designProgress: designProgressCount,
-                                                          stress: stressCount,
-                                                          supports: supportsCount,
-                                                          materials: materialsCount,
-                                                          issuer: issuerCount,
-                                                          isocontrolToIssue: isoControlToIssueCount,
-                                                          r0: r0Count,
-                                                          r1: r1Count,
-                                                          r2: r2Count,
-                                                          onHold: onHoldCount,
-                                                          deleted: deletedCount,
-                                                          total: totalCount,
-                                                        })
-                                                      }else{
-                                                        sql.query("SELECT COUNT(id) FROM dpipes", (err, results) =>{
-                                                          if(!results[0]){
-                                                            res.status(500).send("Error")
-                                                          }else{
-                                                            modelCount = results[0]["COUNT(id)"]
-                                                            
-                                                            res.status(200).send({
-                                                              designUploaded: designUploadedCount,
-                                                              designProgress: designProgressCount,
-                                                              stress: stressCount,
-                                                              supports: supportsCount,
-                                                              materials: materialsCount,
-                                                              issuer: issuerCount,
-                                                              isocontrolToIssue: isoControlToIssueCount,
-                                                              r0: r0Count,
-                                                              r1: r1Count,
-                                                              r2: r2Count,
-                                                              onHold: onHoldCount,
-                                                              deleted: deletedCount,
-                                                              total: totalCount,
-                                                              model: modelCount
-                                                            })
-                                                          }
-                                                        })
-                                                      }
-                                                      
-                                                    }
-                                                  })
-                                                  
-                                                }
-                                              })
-                                            }
-                                          })
-                                        }
-                                      })
-                                      
-                                    }
-                                  })
-                                }
-                              })
-                            }
-                          })
-                        }
-                      })
-                    }
-                  })
-                }
-              })
-            }
-          })
-        }
-      })
+      results = []
     }
+      for(let i = 0; i < results.length; i++){
+        if(results[i].to == "Design" && results[i].revision == 0){
+          designR0 = designR0 + 1
+        }else if((results[i].to == "Stress" || results[i].to == "stress") && results[i].revision == 0){
+          stressR0 += 1
+        }else if(results[i].to == "Supports" && results[i].revision == 0){
+          supportsR0 += 1
+        }else if(results[i].to == "Materials" && results[i].revision == 0){
+          materialsR0 += 1
+        }else if(results[i].to == "Issuer" && results[i].revision == 0){
+          issuerR0 += 1
+        }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 0 && results[i].issued == null){
+          toIssueR0 += 1
+        }else if(results[i].to == "LDE/Isocontrol" && results[i].issued == 1 && results[i].revision == 1){
+          issuedR0 += 1
+        }
+      }
+
+
+      totalR0 = designR0 + stressR0 + supportsR0 + materialsR0 + issuerR0 + toIssueR0 + issuedR0
+      sql.query("SELECT `to`,issued, revision FROM misoctrls WHERE revision = 1 OR revision = 2", (err, results) =>{
+        if(!results[0]){
+          results = []
+        }
+          for(let i = 0; i < results.length; i++){
+            if(results[i].to == "Design" && results[i].revision == 1){
+              designR1 += 1
+            }else if((results[i].to == "Stress" || results[i].to == "stress") && results[i].revision == 1){
+              stressR1 += 1
+            }else if(results[i].to == "Supports" && results[i].revision == 1){
+              supportsR1 += 1
+            }else if(results[i].to == "Materials" && results[i].revision == 1){
+              materialsR1 += 1
+            }else if(results[i].to == "Issuer" && results[i].revision == 1){
+              issuerR1 += 1
+            }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 1 && results[i].issued == null){
+              toIssueR1 += 1
+            }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 2 && results[i].issued == 1){
+              issuedR1 += 1
+            }
+          }
+    
+          totalR1 = designR1 + stressR1 + supportsR1 + materialsR1 + issuerR1 + toIssueR1 + issuedR1
+    
+        
+          sql.query("SELECT `to` FROM misoctrls WHERE revision = 2 OR revision = 3", (err, results) =>{
+            if(!results[0]){
+              results = []
+            }
+              for(let i = 0; i < results.length; i++){
+                if(results[i].to == "Design" && results[i].revision == 2){
+                  designR2 += 1
+                }else if((results[i].to == "Stress" || results[i].to == "stress") && results[i].revision == 2){
+                  stressR2 += 1
+                }else if(results[i].to == "Supports" && results[i].revision == 2){
+                  supportsR2 += 1
+                }else if(results[i].to == "Materials" && results[i].revision == 2){
+                  materialsR2 += 1
+                }else if(results[i].to == "Issuer" && results[i].revision == 2){
+                  issuerR2 += 1
+                }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 2 && results[i].issued == null){
+                  toIssueR2 += 1
+                }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 3 && results[i].issued == 1){
+                  issuedR2 += 1
+                }
+              }
+        
+              totalR2 = designR2 + stressR2 + supportsR2 + materialsR2 + issuerR2 + toIssueR2 + issuedR2
+              sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?", ["On hold"], (err, results) =>{
+                if(!results[0]){
+                  results = []
+                }
+                  for(let i = 0; i < results.length; i++){
+                    if(results[i].from == "Design"){
+                      designHold += 1
+                    }else if(results[i].from == "Stress" || results[i].from == "stress"){
+                      stressHold += 1
+                    }else if(results[i].from == "Supports"){
+                      supportsHold += 1
+                    }else if(results[i].from == "Materials"){
+                      materialsHold += 1
+                    }else if(results[i].from == "Issuer"){
+                      issuerHold += 1
+                    }else if(results[i].to == "LDE/Isocontrol"){
+                      toIssueHold += 1
+                    }
+                  }
+            
+                  totalHold = designHold + stressHold + supportsHold + materialsHold + issuerHold + toIssueHold
+                  sql.query("SELECT `from` FROM misoctrls WHERE `to` = Deleted", (err, results) =>{
+                    if(!results[0]){
+                      results = []
+                    }
+                      for(let i = 0; i < results.length; i++){
+                        if(results[i].from == "Design"){
+                          designDeleted += 1
+                        }else if(results[i].from == "Stress" || results[i].from == "stress"){
+                          stressDeleted += 1
+                        }else if(results[i].from == "Supports"){
+                          supportsDeleted += 1
+                        }else if(results[i].from == "Materials"){
+                          materialsDeleted += 1
+                        }else if(results[i].from == "Issuer"){
+                          issuerDeleted += 1
+                        }else if(results[i].to == "LDE/Isocontrol"){
+                          toIssueDeleted += 1
+                        }else if(results[i].to == "LDE/Isocontrol"){
+                          issuedDeleted += 1
+                        }
+                      }
+                      sql.query("SELECT COUNT(id) FROM dpipes", (err, results) =>{
+                        if(!results[0]){
+                          results = []
+                        }
+                          modelCount = results[0]["COUNT(id)"]
+
+                          totalDeleted = designDeleted + stressDeleted + supportsDeleted + materialsDeleted + issuerDeleted + toIssueDeleted + issuedDeleted
+                          designStock = designR0 + designR1 + designR2 + designHold 
+                          stressStock = stressR0 + stressR1 + stressR2 + stressHold 
+                          supportsStock = supportsR0 + supportsR1 + supportsR2 + supportsHold 
+                          materialsStock = materialsR0 + materialsR1 + materialsR2 + materialsHold
+                          issuerStock = issuerR0 + issuerR1 + issuerR2 + issuerHold
+                          toIssueStock = toIssueR0 + toIssueR1 + toIssueR2 + toIssueHold
+                          issuedStock = issuedR0 + issuedR1 + issuedR2
+                          totalStock = designStock + stressStock + supportsStock + materialsStock + issuerStock + toIssueStock + issuedStock
+    
+    
+                          res.status(200).json({
+                            designR0: designR0,
+                            designR1: designR1, 
+                            designR2: designR2,
+                            designHold: designHold, 
+                            designDeleted: designDeleted, 
+                            designStock: designStock, 
+                            stressR0: stressR0, 
+                            stressR1: stressR1, 
+                            stressR2: stressR2, 
+                            stressHold: stressHold, 
+                            stressDeleted: stressDeleted, 
+                            stressStock: stressStock, 
+                            supportsR0: supportsR0, 
+                            supportsR1: supportsR1, 
+                            supportsR2: supportsR2, 
+                            supportsHold: supportsHold, 
+                            supportsDeleted: supportsDeleted, 
+                            supportsStock: supportsStock, 
+                            materialsR0: materialsR0, 
+                            materialsR1: materialsR1, 
+                            materialsR2: materialsR2, 
+                            materialsHold: materialsHold, 
+                            materialsDeleted: materialsDeleted, 
+                            materialsStock: materialsStock, 
+                            issuerR0: issuerR0, 
+                            issuerR1: issuerR1, 
+                            issuerR2: issuerR2, 
+                            issuerHold: issuerHold, 
+                            issuerDeleted: issuerDeleted, 
+                            issuerStock: issuerStock, 
+                            toIssueR0: toIssueR0, 
+                            toIssueR1: toIssueR1, 
+                            toIssueR2: toIssueR2, 
+                            toIssueHold: toIssueHold, 
+                            toIssueDeleted: toIssueDeleted, 
+                            toIssueStock: toIssueStock, 
+                            issuedR0: issuedR0, 
+                            issuedR1: issuedR1,
+                            issuedR2: issuedR2, 
+                            issuedDeleted: issuedDeleted, 
+                            issuedStock: issuedStock, 
+                            totalR0: totalR0, 
+                            totalR1: totalR1, 
+                            totalR2: totalR2, 
+                            totalHold: totalHold, 
+                            totalDeleted: totalDeleted, 
+                            totalStock: totalStock,
+                            modelCount: modelCount
+                          })
+                        })
+                        
+                      })
+                
+                      
+                    
+                  })
+                
+              })
+            
+          })
+    
   })
 }
   
@@ -501,7 +559,6 @@ const restore = async(req,res) =>{
     if(!results[0]){
         res.status(401).send("No files found");
     }else if((results[0].deleted == 0 || results[0].deleted == null) && (results[0].onhold == 0 || results[0].onhold == null)){   
-      console.log("asbfuidsbauihg")
       res.status(401).send("This isometric has already been restored!");
     }else{
         let destiny = results[0].from
