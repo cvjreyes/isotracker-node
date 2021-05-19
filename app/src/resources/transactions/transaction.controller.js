@@ -4,7 +4,6 @@ const sql = require("../../db.js");
 
 const transaction = async (req, res) => {
 
-    console.log("Empieza la transaccion")
 
     let username = "";
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
@@ -30,7 +29,7 @@ const transaction = async (req, res) => {
                     const from = results[0].to
                     let created_at = results[0].created_at
                     if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && req.body.to == "LDE/Isocontrol"){
-                      res.status(401)
+                      res.status(401).send({"error": "error"})
                     }else{
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
                       [req.body.fileName, results[0].revision, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
@@ -41,33 +40,39 @@ const transaction = async (req, res) => {
                               let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                               masterName = req.body.fileName.split('.').slice(0, -1)
 
-                              if(req.body.to == "Recycle bin"){     
-                                  
-                                  if (!fs.existsSync('./app/storage/isoctrl/'+ from +'/TRASH')){
-                                      fs.mkdirSync('./app/storage/isoctrl/'+ from +'/TRASH');
-                                      fs.mkdirSync('./app/storage/isoctrl/'+ from +'/TRASH/tattach');
+                              if(req.body.to == "Recycle bin"){   
+                                  let fromR = from  
+                                  if(from == "LDE/Isocontrol"){
+                                    fromR = "lde"
+                                  }
+                                  if (!fs.existsSync('./app/storage/isoctrl/'+ fromR +'/TRASH')){
+                                      fs.mkdirSync('./app/storage/isoctrl/'+ fromR +'/TRASH');
+                                      fs.mkdirSync('./app/storage/isoctrl/'+ fromR +'/TRASH/tattach');
                                   }
 
-                                  origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
-                                  destiny_path = './app/storage/isoctrl/' + from + "/TRASH/" + req.body.fileName
-                                  origin_attach_path = './app/storage/isoctrl/' + from + "/attach/"
-                                  destiny_attach_path = './app/storage/isoctrl/' + from + "/TRASH/tattach/"
-                                  origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                                  destiny_cl_path = './app/storage/isoctrl/' + from + "/TRASH/tattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                  origin_path = './app/storage/isoctrl/' + fromR + "/" + req.body.fileName
+                                  destiny_path = './app/storage/isoctrl/' + fromR + "/TRASH/" + req.body.fileName
+                                  origin_attach_path = './app/storage/isoctrl/' + fromR + "/attach/"
+                                  destiny_attach_path = './app/storage/isoctrl/' + fromR + "/TRASH/tattach/"
+                                  origin_cl_path = './app/storage/isoctrl/' + fromR + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                  destiny_cl_path = './app/storage/isoctrl/' + fromR + "/TRASH/tattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
                               }else if(req.body.to == "On hold"){
-
-                                  if (!fs.existsSync('./app/storage/isoctrl/' + from + '/HOLD')){
-                                      fs.mkdirSync('./app/storage/isoctrl/' + from +'/HOLD');
-                                      fs.mkdirSync('./app/storage/isoctrl/' + from +'/HOLD/hattach');
+                                let fromH = from  
+                                if(from == "LDE/Isocontrol"){
+                                  fromH = "lde"
+                                }
+                                  if (!fs.existsSync('./app/storage/isoctrl/' + fromH + '/HOLD')){
+                                      fs.mkdirSync('./app/storage/isoctrl/' + fromH +'/HOLD');
+                                      fs.mkdirSync('./app/storage/isoctrl/' + fromH +'/HOLD/hattach');
                                   }
                                   
-                                  origin_path = './app/storage/isoctrl/' + from + "/" + req.body.fileName
-                                  destiny_path = './app/storage/isoctrl/' + from + "/HOLD/" + req.body.fileName
-                                  origin_attach_path = './app/storage/isoctrl/' + from + "/attach/"
-                                  destiny_attach_path = './app/storage/isoctrl/' + from + "/HOLD/hattach/"
-                                  origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                                  destiny_cl_path = './app/storage/isoctrl/' + from + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                  origin_path = './app/storage/isoctrl/' + fromH + "/" + req.body.fileName
+                                  destiny_path = './app/storage/isoctrl/' + fromH + "/HOLD/" + req.body.fileName
+                                  origin_attach_path = './app/storage/isoctrl/' + fromH + "/attach/"
+                                  destiny_attach_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/"
+                                  origin_cl_path = './app/storage/isoctrl/' + fromH + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                  destiny_cl_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
 
                               }else{
                                   let local_to = req.body.to
