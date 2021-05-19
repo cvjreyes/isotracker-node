@@ -37,5 +37,5 @@ require("./resources/verify/verify.routes.js")(app);
 
 // set port, listen for requests
 app.listen(process.env.REACT_APP_DB_PORT, () => {
-  console.log("Server is running on port "+REACT_APP_DB_PORT+".");
+  console.log("Server is running on port "+process.env.REACT_APP_DB_PORT+".");
 });
