@@ -224,8 +224,8 @@ const uploadHis = async (req, res) => {
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-      sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, 0, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
+      sql.query("INSERT INTO hisoctrls (filename, revision, claimed, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+      [req.body.fileName, 0, 1, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
           res.status(401)
@@ -257,8 +257,8 @@ const uploadHis = async (req, res) => {
                       progress = results[0].value_ifd
                     }
                     
-                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
+                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                         res.status(401)
