@@ -228,22 +228,86 @@ const transaction = async (req, res) => {
 }
 
 const returnLead = async(req, res) =>{
+  const fileName = req.body.fileName
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
-        if (!results[0]){
+      if (!results[0]){
         res.status(401).send("Username or password incorrect");
-        }else{   
+      }else{   
         username  = results[0].name
-        sql.query("SELECT created_at FROM hisoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
+        sql.query("SELECT `from` FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
             if (!results[0]){
                 res.status(401).send("File not found");
             }else{
-                const from = results[0].to
-                let created_at = results[0].created_at
+                const from = results[0].from
+                console.log("FROM", from, req.body.to)
                 sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
                 [req.body.fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
                     if (err) {
                         console.log("error: ", err);
                     }else{
+                      let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
+                      masterName = fileName.split('.').slice(0, -1)
+
+                  
+                      let local_to = req.body.to
+                      if(local_to == "LDE/Isocontrol"){
+                          local_to = "lde"
+                      }
+                      origin_path = './app/storage/isoctrl/' + from + "/" + fileName
+                      destiny_path = './app/storage/isoctrl/' + local_to + "/" + fileName
+                      origin_attach_path = './app/storage/isoctrl/' + from + "/attach/"
+                      destiny_attach_path = './app/storage/isoctrl/' + local_to + "/attach/"
+                      origin_cl_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                      destiny_cl_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                      origin_proc_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                      destiny_proc_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                      origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                      destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
+                     console.log(origin_path, destiny_path)
+                      
+                      if(fs.existsSync(origin_path)){
+                          fs.rename(origin_path, destiny_path, function (err) {
+                              if (err) throw err
+
+                          })
+
+                          fs.readdir(origin_attach_path, (err, files) => {
+                              files.forEach(file => {                          
+                                let attachName = file.split('.').slice(0, -1)
+                                if(String(masterName).trim() == String(attachName).trim()){
+                                  fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
+                                      console.log("moved attach "+ file)
+                                      if (err) throw err
+
+                                  })
+                                }
+                              });
+                          });
+
+                          if(fs.existsSync(origin_cl_path)){
+                              fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                                  if (err) throw err
+                                  console.log('Successfully renamed - AKA moved!')
+                              })
+                          }
+
+                          if(fs.existsSync(origin_proc_path)){
+                              fs.rename(origin_proc_path, destiny_proc_path, function (err) {
+                                  if (err) throw err
+                                  console.log('Successfully renamed - AKA moved!')
+                              })
+                          }
+
+                          if(fs.existsSync(origin_inst_path)){
+                              fs.rename(origin_inst_path, destiny_inst_path, function (err) {
+                                  if (err) throw err
+                                  console.log('Successfully renamed - AKA moved!')
+                              })
+                          }
+                                      
+                        }
+    
                         if(process.env.REACT_APP_PROGRESS == "1"){
                             let type = ""
                             if(process.env.REACT_APP_IFC == "0"){
@@ -278,7 +342,7 @@ const returnLead = async(req, res) =>{
                                           progress = newprogress
                                         }
 
-                                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", progress, newprogress, req.body.fileName], (err, results) =>{
+                                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, progress = ?, realprogress = ?, `to` = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", progress, newprogress,req.body.to, req.body.fileName], (err, results) =>{
                                             if (err) {
                                                 console.log("error: ", err);
                                             }else{
@@ -293,7 +357,7 @@ const returnLead = async(req, res) =>{
                               }
                             })
                           }else{
-                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ? WHERE filename = ?", ["None", null, "Unclaimed by leader", req.body.fileName], (err, results) =>{
+                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, comments = ?, `to` = ? WHERE filename = ?", ["None", null, "Unclaimed by leader",req.body.to, req.body.fileName], (err, results) =>{
                                 if (err) {
                                     console.log("error: ", err);
                                 }else{
@@ -317,16 +381,18 @@ const returnIso = async(req, res) =>{
   const fileName = req.body.file
   const role = req.body.role
   const comments = req.body.comments
-  
   let username = "";
+  let dest_role = destiny;
+
   sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
       if (!results[0]){
       res.status(401).send("Username or password incorrect");
       }else{   
       username  = results[0].name
       }
-      sql.query('SELECT user, role FROM hisoctrls WHERE filename = ? AND `from` = ? ORDER BY id DESC LIMIT 1', [fileName, destiny], (err, results)=>{
+      sql.query('SELECT user, role FROM hisoctrls WHERE filename = ? AND `from` = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, destiny, dest_role], (err, results)=>{
         if(!results[0]){
+          
           sql.query("SELECT created_at FROM hisoctrls WHERE filename = ?", fileName, (err, results) => {
             if (!results[0]){
                 res.status(401).send("File not found");
@@ -458,7 +524,7 @@ const returnIso = async(req, res) =>{
                                                   if(newprogress > progress){
                                                     progress = newprogress
                                                   }
-                                                  sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ? WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, progress, newprogress, fileName], (err, results) =>{
+                                                  sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 0 WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, progress, newprogress, fileName], (err, results) =>{
                                                     if (err) {
                                                         res.status(401).send("cant update")
                                                         console.log("error: ", err);
@@ -475,7 +541,7 @@ const returnIso = async(req, res) =>{
                                         }
                                       })
                                     }else{
-                                      sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ? WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, fileName], (err, results) =>{
+                                      sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 0 WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, fileName], (err, results) =>{
                                           if (err) {
                                               console.log("error: ", err);
                                           }else{
