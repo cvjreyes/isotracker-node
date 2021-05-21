@@ -225,7 +225,7 @@ const uploadHis = async (req, res) => {
     }else{   
       username  = results[0].name
       sql.query("INSERT INTO hisoctrls (filename, revision, claimed, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, 0, 1, 0, 0, "Upload","Design", "Uploaded", username, "Design"], (err, results) => {
+      [req.body.fileName, 0, 1, 0, 0, "Design","Design", "Uploaded", username, "Design"], (err, results) => {
         if (err) {
           console.log("error: ", err);
           res.status(401)
@@ -313,22 +313,14 @@ const updateHis = async (req, res) => {
                     last = results[i]
                 }
             }
+            console.log(last, req.body.role)
     
-            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?)", 
-            [fileName, last.revison, last.spo, last.sit, "Updated", last.from, "Updated", username], (err, results) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+            [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
                 console.log("created hisoctrls");
-                sql.query("UPDATE misoctrls SET `from` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-                ["Updated", "Updated", username, fileName], (err, results) => {
-                  if (err) {
-                    console.log("error: ", err);
-                  }else{
-                    console.log("created misoctrls");
-                    //res.status(200).send("uploaded to his")
-                  }
-                });
               }
             });
           }
