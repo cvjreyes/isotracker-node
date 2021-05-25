@@ -24,7 +24,6 @@ exports.findByUser = async(req, res) => {
         if (err){
           res.status(401).send("Roles not found");
         }else{
-          console.log(results)
           var q = 'SELECT name FROM roles WHERE id IN (';
           if (results.length === 1){
             q += results[0].role_id + ")";
@@ -41,7 +40,6 @@ exports.findByUser = async(req, res) => {
               }
             }
           }
-          console.log(q)
           sql.query(q, async (err, results) =>{
             if(err){
               console.log(err)

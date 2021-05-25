@@ -26,6 +26,7 @@ let routes = (app) => {
   router.get("/downloadStatus", controller.downloadStatus);
   router.get("/downloadPI", controller.downloadPI);
   router.get("/downloadIssued", controller.downloadIssued);
+  router.get("/downloadStatus3D", controller.downloadStatus3D);
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
   router.get("/currentProgress", controller.currentProgress);
