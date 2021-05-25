@@ -976,6 +976,35 @@ const downloadIssued = async(req,res) =>{
   })
 }
 
+const downloadStatus3D = async(req, res) =>{
+  sql.query('SELECT tag, tpipes_id, `to`, `from`, claimed, issued FROM dpipes_view RIGHT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results) =>{
+    
+    let log = []
+    let ifc_ifd = ""
+    let status = ""
+    if(process.env.REACT_APP_IFC == 0){
+      ifc_ifd = "IFD"
+    }else{
+      ifc_ifd = "IFC"
+    }
+    for(let i = 0; i < results.length;i++){
+      log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
+      status = results[i].to
+      if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
+        status = "New"
+      }else if(status == "LDE/Isocontrol" && results[i].issued == 0){
+        status = "Isoctrl"
+      }else if(results[i].issued == 1){
+        status = "Transmittal"
+      }
+      log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+    }
+    res.json({
+      log : log
+    }).status(200)
+  })
+}
+
 const uploadReport = async(req,res) =>{
   const area_index = req.body[0].indexOf("area")
   const tag_index = req.body[0].indexOf("tag")
@@ -1485,6 +1514,7 @@ module.exports = {
   downloadStatus,
   downloadPI,
   downloadIssued,
+  downloadStatus3D,
   uploadReport,
   checkPipe,
   currentProgress,
