@@ -32,8 +32,12 @@ const singleUnclaim = async (req, res) => {
                             if (err) {
                                 console.log("error: ", err);
                             }else{
+                                let ld = 0;
+                                if(req.body.role == "DesignLead" || req.body.role == "SupportsLead" || req.body.role == "StressLead"){
+                                    ld = 1
+                                }
                                 console.log("created unclaim in hisoctrls");
-                                sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
+                                sql.query("UPDATE misoctrls SET claimed = 0, verifyDesign = ?, user = ?, role = ? WHERE filename = ?", [ld,"None", null, fileName], (err, results) =>{
                                     if (err) {
                                         console.log("error: ", err);
                                     }else{

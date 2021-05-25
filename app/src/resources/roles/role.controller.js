@@ -20,10 +20,11 @@ exports.findByUser = async(req, res) => {
       res.status(401).send("Username or password incorrect");
     }else{
       const user_id = results[0].id;
-      sql.query('SELECT * FROM model_has_roles WHERE model_id = ?', [user_id], async (err, results) =>{
+      sql.query('SELECT role_id FROM model_has_roles WHERE model_id = ?', [user_id], async (err, results) =>{
         if (err){
           res.status(401).send("Roles not found");
         }else{
+          console.log(results)
           var q = 'SELECT name FROM roles WHERE id IN (';
           if (results.length === 1){
             q += results[0].role_id + ")";
@@ -34,12 +35,13 @@ exports.findByUser = async(req, res) => {
               if(i === 0){
                 q += results[i].role_id;
               }else if(i === results.length - 1){
-                q += results[i].role_id + ")";                
+                q += "," + results[i].role_id + ")";                
               }else{
                 q += "," + results[i].role_id;
               }
             }
           }
+          console.log(q)
           sql.query(q, async (err, results) =>{
             if(err){
               console.log(err)
