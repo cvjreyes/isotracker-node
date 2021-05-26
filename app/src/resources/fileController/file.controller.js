@@ -436,13 +436,13 @@ const updateStatus = async(req,res) =>{
                       materialsHold += 1
                     }else if(results[i].from == "Issuer"){
                       issuerHold += 1
-                    }else if(results[i].to == "LDE/Isocontrol"){
+                    }else if(results[i].from == "LDE/Isocontrol"){
                       toIssueHold += 1
                     }
                   }
             
                   totalHold = designHold + stressHold + supportsHold + materialsHold + issuerHold + toIssueHold
-                  sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?",["Recycle bin"], (err, results) =>{
+                  sql.query("SELECT `from`, issued FROM misoctrls WHERE `to` = ?",["Recycle bin"], (err, results) =>{
                     if(!results[0]){
                       results = []
                     }
@@ -457,9 +457,9 @@ const updateStatus = async(req,res) =>{
                           materialsDeleted += 1
                         }else if(results[i].from == "Issuer"){
                           issuerDeleted += 1
-                        }else if(results[i].to == "LDE/Isocontrol"){
+                        }else if(results[i].from == "LDE/Isocontrol" && results[i].issued == null){
                           toIssueDeleted += 1
-                        }else if(results[i].to == "LDE/Isocontrol"){
+                        }else if(results[i].from == "LDE/Isocontrol" && results[i].issued == 1){
                           issuedDeleted += 1
                         }
                       }
@@ -547,6 +547,7 @@ const updateStatus = async(req,res) =>{
   
 const restore = async(req,res) =>{
   const fileName = req.body.fileName
+  const role = req.body.role
   sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
     if(!results[0]){
         res.status(401).send("No files found");
@@ -555,13 +556,13 @@ const restore = async(req,res) =>{
     }else{
         let destiny = results[0].from
         let origin = results[0].to
-        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, results.revision, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+        [fileName, results.revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", req.body.user, role], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
-            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-            [origin, destiny, "Restored", "None", fileName], (err, results) => {
+            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ?, role = ? WHERE filename = ?", 
+            [origin, destiny, "Restored", "None", role, fileName], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{

@@ -40,7 +40,7 @@ const singleClaim = async (req, res) => {
                   console.log("error: ", err);
               }else{
                   console.log("created claim in hisoctrls");
-                  sql.query("UPDATE misoctrls SET claimed = 1, returned = 0, verifydesign = 0, forced = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                  sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, forced = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                       if (err) {
                           console.log("error: ", err);
                       }else{
