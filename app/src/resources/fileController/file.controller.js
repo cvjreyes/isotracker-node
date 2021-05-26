@@ -442,7 +442,7 @@ const updateStatus = async(req,res) =>{
                   }
             
                   totalHold = designHold + stressHold + supportsHold + materialsHold + issuerHold + toIssueHold
-                  sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?",["Deleted"], (err, results) =>{
+                  sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?",["Recycle bin"], (err, results) =>{
                     if(!results[0]){
                       results = []
                     }
