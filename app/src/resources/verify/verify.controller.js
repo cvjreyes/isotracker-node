@@ -29,7 +29,7 @@ const verify = async(req, res) => {
                     console.log("error: ", err);
                 }else{
                     console.log("verified in hisoctrls")
-                    sql.query("UPDATE misoctrls SET verifydesign = 1, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                    sql.query("UPDATE misoctrls SET verifydesign = 1, returned = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
