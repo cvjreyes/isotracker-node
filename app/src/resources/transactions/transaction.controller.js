@@ -19,15 +19,15 @@ const transaction = async (req, res) => {
             res.status(401).send("File not found");
         }else{
             sql.query("SELECT * FROM misoctrls WHERE filename = ?", req.body.fileName, (err, results) => {
-                console.log(results)
                 if (!results[0]){
                     res.status(401).send("File not found");
                 }else{
                     if(results[0].returned == 1 && req.body.to == "Supports" && req.body.role == "StressLead"){
-                      sql.query('SELECT user, role FROM hisoctrls WHERE filename = ? AND `from` = ? AND role = ? ORDER BY id DESC LIMIT 1', [req.body.fileName, "Claimed", "SupportsLead"], (err, results)=>{
+                      sql.query('SELECT user, role FROM hisoctrls WHERE filename = ? AND `to` = ? AND role = ? ORDER BY id DESC LIMIT 1', [req.body.fileName, "Claimed", "SupportsLead"], (err, results)=>{
                         if(!results[0]){
                           res.status(401).send("File not found");
                         }else{
+                          console.log(results)
                           const dest_user = results[0].user
                           const dest_role = results[0].role
                           let destiny = "Supports"
