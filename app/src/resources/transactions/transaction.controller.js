@@ -675,7 +675,7 @@ const returnLeadStress = async(req, res) =>{
                                             if(newprogress > progress){
                                               progress = newprogress
                                             }
-                                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 0 WHERE filename = ?", [u, r, 0, 0, from, destiny, comments, progress, newprogress, fileName], (err, results) =>{
+                                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 1, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [u, r, 0, 0, from, destiny, comments, progress, newprogress, fileName], (err, results) =>{
                                               if (err) {
                                                   res.status(401).send("cant update")
                                                   console.log("error: ", err);
@@ -692,7 +692,7 @@ const returnLeadStress = async(req, res) =>{
                                   }
                                 })
                               }else{
-                                sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 0 WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, fileName], (err, results) =>{
+                                sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [ld, u, r, 0, 0, from, destiny, comments, fileName], (err, results) =>{
                                     if (err) {
                                         console.log("error: ", err);
                                     }else{
