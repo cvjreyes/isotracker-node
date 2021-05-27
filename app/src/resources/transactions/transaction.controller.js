@@ -143,7 +143,7 @@ const transaction = async (req, res) => {
                                                   if(newprogress > progress){
                                                     progress = newprogress
                                                   }
-                                                  sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, fileName], (err, results) =>{
+                                                  sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, fileName], (err, results) =>{
                                                     if (err) {
                                                         res.status(401).send("cant update")
                                                         console.log("error: ", err);
@@ -160,7 +160,7 @@ const transaction = async (req, res) => {
                                         }
                                       })
                                     }else{
-                                      sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
+                                      sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
                                           if (err) {
                                               console.log("error: ", err);
                                           }else{
@@ -340,7 +340,7 @@ const transaction = async (req, res) => {
                                                 if(newprogress > progress){
                                                   progress = newprogress
                                                 }
-                                                sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
+                                                sql.query("UPDATE misoctrls SET claimed = 0, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
                                                   if (err) {
                                                       res.status(401).send("cant update")
                                                       console.log("error: ", err);
@@ -357,7 +357,7 @@ const transaction = async (req, res) => {
                                       }
                                     })
                                   }else{
-                                    sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
+                                    sql.query("UPDATE misoctrls SET claimed = 0, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.fileName], (err, results) =>{
                                         if (err) {
                                             console.log("error: ", err);
                                         }else{
