@@ -1037,8 +1037,13 @@ const downloadStatus3D = async(req, res) =>{
         status = "Isoctrl"
       }else if(results[i].issued == 1){
         status = "Transmittal"
+      }else if(status == "On hold"){
+        status = results[i].from
       }
-      log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+
+      if(status != "Recycle bin"){
+        log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+      }
     }
     res.json({
       log : log
