@@ -398,7 +398,7 @@ const updateStatus = async(req,res) =>{
           totalR1 = designR1 + stressR1 + supportsR1 + materialsR1 + issuerR1 + toIssueR1 + issuedR1
     
         
-          sql.query("SELECT `to` FROM misoctrls WHERE revision = 2 OR revision = 3", (err, results) =>{
+          sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE revision = 2 OR revision = 3", (err, results) =>{
             if(!results[0]){
               results = []
             }
@@ -436,13 +436,13 @@ const updateStatus = async(req,res) =>{
                       materialsHold += 1
                     }else if(results[i].from == "Issuer"){
                       issuerHold += 1
-                    }else if(results[i].to == "LDE/Isocontrol"){
+                    }else if(results[i].from == "LDE/Isocontrol"){
                       toIssueHold += 1
                     }
                   }
             
                   totalHold = designHold + stressHold + supportsHold + materialsHold + issuerHold + toIssueHold
-                  sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?",["Deleted"], (err, results) =>{
+                  sql.query("SELECT `from`, issued FROM misoctrls WHERE `to` = ?",["Recycle bin"], (err, results) =>{
                     if(!results[0]){
                       results = []
                     }
@@ -457,9 +457,9 @@ const updateStatus = async(req,res) =>{
                           materialsDeleted += 1
                         }else if(results[i].from == "Issuer"){
                           issuerDeleted += 1
-                        }else if(results[i].to == "LDE/Isocontrol"){
+                        }else if(results[i].from == "LDE/Isocontrol" && results[i].issued == null){
                           toIssueDeleted += 1
-                        }else if(results[i].to == "LDE/Isocontrol"){
+                        }else if(results[i].from == "LDE/Isocontrol" && results[i].issued == 1){
                           issuedDeleted += 1
                         }
                       }
@@ -527,7 +527,7 @@ const updateStatus = async(req,res) =>{
                             totalR2: totalR2, 
                             totalHold: totalHold, 
                             totalDeleted: totalDeleted, 
-                            totalStock: totalStock,
+                            totalStock: totalR0,
                             modelCount: modelCount
                           })
                         })
@@ -547,6 +547,7 @@ const updateStatus = async(req,res) =>{
   
 const restore = async(req,res) =>{
   const fileName = req.body.fileName
+  const role = req.body.role
   sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
     if(!results[0]){
         res.status(401).send("No files found");
@@ -555,13 +556,13 @@ const restore = async(req,res) =>{
     }else{
         let destiny = results[0].from
         let origin = results[0].to
-        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, results.revision, results[0].spo, results[0].sit, origin, 0, 0, destiny, "Restored", req.body.user], (err, results) => {
+        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+        [fileName, results.revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", req.body.user, role], (err, results) => {
           if (err) {
             console.log("error: ", err);
           }else{
-            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ? WHERE filename = ?", 
-            [origin, destiny, "Restored", "None", fileName], (err, results) => {
+            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ?, role = ? WHERE filename = ?", 
+            [origin, destiny, "Restored", "None", role, fileName], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
@@ -681,9 +682,9 @@ const toProcess = (req,res) =>{
             from = "Denied Proc"
             to = file.to
           }else if(prevProcess == 2 || prevProcess == 3){
-            nextProcess = 4
+            nextProcess = 5
           }else{
-            nextProcess = 1
+            nextProcess = 5
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
@@ -726,23 +727,20 @@ const instrument = (req,res) =>{
           let to = "Instrument"
           if (action === "accept"){
             nextProcess = 2
-            username = "None"
-          }else if(action === "deny"){
-            nextProcess = 3
-            username = "None"
             from = "Accepted Inst"
             to = file.to
-          }else if(prevProcess == 2 || prevProcess == 3){
-            nextProcess = 4
-            username = "None"
+          }else if(action === "deny"){
+            nextProcess = 3
             from = "Denied Inst"
             to = file.to
+          }else if(prevProcess == 2 || prevProcess == 3){
+            nextProcess = 5
           }else{
-            nextProcess = 1
+            nextProcess = 5
           }
           
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, sitclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, file.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Process", req.body.role, username], (err, results) => {
+          [fileName, file.revision, file.spo, nextProcess, file.deleted, file.onhold, sitclaimed, from, to, "Instrument", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
@@ -761,10 +759,53 @@ const instrument = (req,res) =>{
   })
 }
 
+const cancelProc = (req, res) =>{
+  const fileName = req.body.file
+  let prev = 0
+  sql.query('SELECT `from`,id FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Process"], (err, results) =>{
+    if(!results[0]){
+      prev = 0
+    }else if(results[0].from == "Accepted Proc"){
+      prev = 2
+    }else{
+      prev = 3
+    }
+    console.log(results)
+    sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [prev, fileName], (err, results) =>{
+      if(err){
+        res.status(401)
+      }else{
+        res.status(200).send("cancelado proc")
+      }
+    })
+  })
+}
+
+const cancelInst = (req,res) =>{
+  const fileName = req.body.file
+  let prev = 0
+  sql.query('SELECT `from` FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Instrument"], (err, results) =>{
+    if(!results[0]){
+      prev = 0
+    }else if(results[0].from == "Accepted Inst"){
+      prev = 2
+    }else{
+      prev = 3
+    }
+    sql.query('UPDATE misoctrls SET sit = ? WHERE filename = ?', [prev, fileName], (err, results) =>{
+      if(err){
+        res.status(401)
+      }else{
+        res.status(200).send("cancelado inst")
+      }
+    })
+  })
+}
+
 const filesProcInst = (req,res) =>{
   let type = req.body.type
   if(type == "Process"){
-    sql.query('SELECT * FROM misoctrls WHERE spo = 1 OR spo = 4', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE spo = 1 OR spo = 4 or spo = 5', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
       }else{
@@ -774,7 +815,7 @@ const filesProcInst = (req,res) =>{
       }
     })
   }else{
-    sql.query('SELECT * FROM misoctrls WHERE sit = 1 OR sit = 4', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE sit = 1 OR sit = 4 or sit = 5', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
       }else{
@@ -996,8 +1037,13 @@ const downloadStatus3D = async(req, res) =>{
         status = "Isoctrl"
       }else if(results[i].issued == 1){
         status = "Transmittal"
+      }else if(status == "On hold"){
+        status = results[i].from
       }
-      log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+
+      if(status != "Recycle bin"){
+        log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+      }
     }
     res.json({
       log : log
@@ -1109,9 +1155,9 @@ const checkPipe = async(req,res) =>{
 }
 
 const currentProgress = async(req,res) =>{
-  sql.query("SELECT SUM(progress) FROM misoctrls", (req, results) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
     const progress = results[0]["SUM(progress)"]
-    sql.query("SELECT SUM(realprogress) FROM misoctrls", (req, results) =>{
+    sql.query("SELECT SUM(realprogress) FROM misoctrls WHERE requested is null OR requested = 1", (req, results) =>{
       const realprogress = results[0]["SUM(realprogress)"]
       sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
         const tp1 = results[0]["COUNT(tpipes_id)"]
@@ -1122,7 +1168,7 @@ const currentProgress = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-              console.log(maxProgress)
+              console.log(progress , realprogress)
               res.json({
                 progress: (progress/maxProgress * 100).toFixed(2),
                 realprogress: (realprogress/maxProgress * 100).toFixed(2)
@@ -1136,15 +1182,15 @@ const currentProgress = async(req,res) =>{
 }
 
 const currentProgressISO = async(req,res) =>{
-  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid", (req, results) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
     const progress = results[0]["SUM(progress)"]
-    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid", (req, results) =>{
+    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE requested is null OR requested = 1", (req, results) =>{
       const realprogress = results[0]["SUM(realprogress)"]
-      sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1", (err, results) =>{
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
         const tp1 = results[0]["COUNT(tpipes_id)"]
-        sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2", (err, results) =>{
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
           const tp2 = results[0]["COUNT(tpipes_id)"]
-          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3", (err, results) =>{
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
             const tp3 = results[0]["COUNT(tpipes_id)"]
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
@@ -1505,6 +1551,8 @@ module.exports = {
   historyFiles,
   toProcess,
   instrument,
+  cancelProc,
+  cancelInst,
   filesProcInst,
   uploadProc,
   uploadInst,

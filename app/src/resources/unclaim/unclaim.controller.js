@@ -145,7 +145,7 @@ const singleUnclaimInst = async(req, res) =>{
         if(!results[0]){
             res.status(401).send("No files found");
         }else{
-            sql.query("SELECT forced FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
+            sql.query("SELECT * FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
                 if(results[0].forced == 1){
                     res.status(401).send("Iso is forced")
                 }else{

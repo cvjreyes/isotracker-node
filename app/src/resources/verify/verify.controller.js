@@ -24,12 +24,12 @@ const verify = async(req, res) => {
                 }
             }
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, last.claimed, 1, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
+            [fileName, 0, 0, 0, last.claimed, 1, last.from, "Verify" , last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
                     console.log("verified in hisoctrls")
-                    sql.query("UPDATE misoctrls SET verifydesign = 1, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                    sql.query("UPDATE misoctrls SET verifydesign = 1, returned = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
@@ -67,7 +67,7 @@ const cancelVerify = async(req, res) => {
                 }
             }
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, last.claimed, 0, last.from, last.to , last.comments, username, role, last.created_at], (err, results) => {
+            [fileName, 0, 0, 0, last.claimed, 0,  "Cancel verify" , last.to, last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{

@@ -40,7 +40,7 @@ const singleClaim = async (req, res) => {
                   console.log("error: ", err);
               }else{
                   console.log("created claim in hisoctrls");
-                  sql.query("UPDATE misoctrls SET claimed = 1, returned = 0, verifydesign = 0, forced = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                  sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                       if (err) {
                           console.log("error: ", err);
                       }else{
@@ -75,6 +75,7 @@ const singleClaimProc = async(req, res) =>{
         }else if (results[0].spoclaimed == 1){   
           res.status(401).send("This isometric has already been claimed");
         }else{
+          let spouser = results[0].spouser
           sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
             if(!results[0]){
                 res.status(401).send("No files found");
@@ -91,7 +92,11 @@ const singleClaimProc = async(req, res) =>{
                     console.log("error: ", err);
                 }else{
                     console.log("created claim in hisoctrls");
-                    sql.query("UPDATE misoctrls SET spoclaimed = 1, spouser = ? WHERE filename = ?", [username, fileName], (err, results) =>{
+                    let spo = 1
+                    if(spouser){
+                      spo = 4
+                    }
+                    sql.query("UPDATE misoctrls SET spoclaimed = 1, spouser = ?, spo = ? WHERE filename = ?", [username, spo, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
@@ -128,6 +133,7 @@ const singleClaimInst = async(req, res) =>{
         }else if (results[0].sitclaimed == 1){   
           res.status(401).send("This isometric has already been claimed");        
         }else{
+          situser = results[0].situser
           sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
             if(!results[0]){
                 res.status(401).send("No files found");
@@ -145,7 +151,11 @@ const singleClaimInst = async(req, res) =>{
                 }else{
                     console.log("created claim in hisoctrls");
                     console.log("el usuario es ", username)
-                    sql.query("UPDATE misoctrls SET sitclaimed = 1, situser = ? WHERE filename = ?", [username, fileName], (err, results) =>{
+                    let sit = 1
+                    if(situser){
+                      sit = 4
+                    }
+                    sql.query("UPDATE misoctrls SET sitclaimed = 1, situser = ?, sit = ? WHERE filename = ?", [username, sit, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
