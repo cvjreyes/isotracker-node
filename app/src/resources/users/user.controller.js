@@ -1,5 +1,6 @@
 const User = require("./user.model.js");
 const sql = require("../../db.js");
+const md5 = require("md5");
 
 // Create and Save a new user
 exports.create = (req, res) => {
@@ -226,5 +227,37 @@ exports.getUsersByTab = (req,res) =>{
       
     })
 
+  })
+}
+
+exports.getPassword = (req,res) =>{
+  sql.query("SELECT password FROM users WHERE email = ?", [req.body.email], (err,results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const password = results[0].password
+      const introduced = md5(req.body.password)
+      if(password == introduced){
+        res.json({
+          password: "correct"
+        }).status(200)
+      }else{
+        res.json({
+          password: "incorrect"
+        }).status(200)
+      }
+    }
+  })
+} 
+exports.changePassword = (req,res) =>{
+  const email = req.body.email
+  const newPassword = md5(req.body.newPassword)
+  sql.query("UPDATE users SET password = ? WHERE email = ?", [newPassword, email], (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      console.log("password changed")
+      res.status(200).send({changed: true})
+    }
   })
 }
