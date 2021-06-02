@@ -1235,144 +1235,151 @@ const toIssue = async(req,res) =>{
   const user = req.body.user
   const role = req.body.role
 
-
-
-  sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
     if(!results[0]){
-      res.status(401).send("File not found")
-    }else{
-      const revision = results[0].revision
-      const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
-
-      let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
-
-      if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
-        fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
-      }
-
-      masterName = fileName.split('.').slice(0, -1)
-
-      origin_path = './app/storage/isoctrl/lde/' + fileName
-      destiny_path = './app/storage/isoctrl/lde/' + newFileName
-      origin_attach_path = './app/storage/isoctrl/lde/attach/'
-      destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
-      origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-      destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
-
-      fs.rename(origin_path, destiny_path, function (err) {
-        if (err) throw err
+      sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
+        res.status(200).send({blocked:"1"})
+        
       })
+    }else{
+      sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+        if(!results[0]){
+          res.status(401).send("File not found")
+        }else{
+          const revision = results[0].revision
+          const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
 
-      fs.readdir(origin_attach_path, (err, files) => {
-        files.forEach(file => {                          
-          let attachName = file.split('.').slice(0, -1)
-          const i = file.lastIndexOf('.');
-          const extension = file.substring(i+1);
-          if(String(masterName).trim() == String(attachName).trim()){
-            fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
-                console.log("moved attach to transmittal")
-                if (err) throw err
+          let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
 
-            })
+          if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
+            fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
           }
-        });
-      });
 
-    if(fs.existsSync(origin_cl_path)){
-        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+          masterName = fileName.split('.').slice(0, -1)
+
+          origin_path = './app/storage/isoctrl/lde/' + fileName
+          destiny_path = './app/storage/isoctrl/lde/' + newFileName
+          origin_attach_path = './app/storage/isoctrl/lde/attach/'
+          destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
+          origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+          destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
+
+          fs.rename(origin_path, destiny_path, function (err) {
             if (err) throw err
-            console.log('Moved CL to transmittal')
-        })
-    }
+          })
+
+          fs.readdir(origin_attach_path, (err, files) => {
+            files.forEach(file => {                          
+              let attachName = file.split('.').slice(0, -1)
+              const i = file.lastIndexOf('.');
+              const extension = file.substring(i+1);
+              if(String(masterName).trim() == String(attachName).trim()){
+                fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
+                    console.log("moved attach to transmittal")
+                    if (err) throw err
+
+                })
+              }
+            });
+          });
+
+        if(fs.existsSync(origin_cl_path)){
+            fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                if (err) throw err
+                console.log('Moved CL to transmittal')
+            })
+        }
 
 
 
-      sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
-        if (!results[0]){
-          res.status(401).send("Username or password incorrect");
-        }else{   
-          username  = results[0].name
-          sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
-            if(!results[0]){
-                res.status(401).send("No files found");
-            }else{
-                let last = results[0]
-                for (let i = 1; i < results.length; i++){
-                    if(results[i].updated_at > last.updated_at){
-                        last = results[i]
+          sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+            if (!results[0]){
+              res.status(401).send("Username or password incorrect");
+            }else{   
+              username  = results[0].name
+              sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+                if(!results[0]){
+                    res.status(401).send("No files found");
+                }else{
+                    let last = results[0]
+                    for (let i = 1; i < results.length; i++){
+                        if(results[i].updated_at > last.updated_at){
+                            last = results[i]
+                        }
                     }
-                }
-                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
-                  if (err) {
-                    console.log("error: ", err);
-                  }else{
-                    console.log("issued in hisoctrls");
-                    console.log(newFileName, revision, fileName)
-                    sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
+                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
-                        if(process.env.REACT_APP_PROGRESS == "0"){
-                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
-                            if (err) {
-                              console.log("error: ", err);
+                        console.log("issued in hisoctrls");
+                        console.log(newFileName, revision, fileName)
+                        sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
+                          if (err) {
+                            console.log("error: ", err);
+                          }else{
+                            if(process.env.REACT_APP_PROGRESS == "0"){
+                              sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
+                                if (err) {
+                                  console.log("error: ", err);
+                                }else{
+                                  console.log("issued in misoctrls");
+                                }
+                              })
                             }else{
-                              console.log("issued in misoctrls");
-                            }
-                          })
-                        }else{
-                            let type = ""
-                            if(process.env.REACT_APP_IFC == "0"){
-                              type = "value_ifd"
-                            }else{
-                              type = "value_ifc"
-                            }
-                            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
-                              if(!results[0]){
-                                res.status(401)
-                              }else{
-                                tl = results[0].tpipes_id
-                                const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
-                                let level = "Transmittal"
-                                console.log(tl)
-                                sql.query(q, [level, tl], (err, results)=>{
+                                let type = ""
+                                if(process.env.REACT_APP_IFC == "0"){
+                                  type = "value_ifd"
+                                }else{
+                                  type = "value_ifc"
+                                }
+                                sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                                   if(!results[0]){
                                     res.status(401)
                                   }else{
-                                    let newprogress = null
-                                    console.log(results[0])
-                                    if(type == "value_ifc"){
-                                      newprogress = results[0].value_ifc
-                                    }else{
-                                      newprogress = results[0].value_ifd
-                                    }
-                                      console.log(newprogress)
-                                      sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, newFileName], (err, results)=>{
-                                        if (err) {
-                                          console.log("error: ", err);
+                                    tl = results[0].tpipes_id
+                                    const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                                    let level = "Transmittal"
+                                    console.log(tl)
+                                    sql.query(q, [level, tl], (err, results)=>{
+                                      if(!results[0]){
+                                        res.status(401)
+                                      }else{
+                                        let newprogress = null
+                                        console.log(results[0])
+                                        if(type == "value_ifc"){
+                                          newprogress = results[0].value_ifc
                                         }else{
-                                          console.log("issued in misoctrls");
-                                          res.status(200).send("issued")
+                                          newprogress = results[0].value_ifd
                                         }
+                                          console.log(newprogress)
+                                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, newFileName], (err, results)=>{
+                                            if (err) {
+                                              console.log("error: ", err);
+                                            }else{
+                                              console.log("issued in misoctrls");
+                                              res.status(200).send("issued")
+                                            }
+                                          })
+                                        }
+
                                       })
                                     }
-
                                   })
                                 }
-                              })
                             }
+                            
+                          })
                         }
-                        
                       })
                     }
-                  })
-                }
+                })
+              }
             })
           }
-        })
-      }
-    
+        
+      })
+    }
   })
 
 }
@@ -1546,7 +1553,17 @@ const newRev = (req, res) =>{
     })
   }
 
-  
+  const unlock = (req, res) =>{
+    fileName = req.body.fileName
+    sql.query('UPDATE misoctrls SET blocked = 0 WHERE filename = ?', [fileName],(err, results)=>{
+      if(err){
+        res.status(401)
+      }else{
+        console.log("unlocked")
+        res.status(200)
+      }
+    })
+  }
 
 
 module.exports = {
@@ -1583,5 +1600,6 @@ module.exports = {
   currentProgressISO,
   toIssue,
   request,
-  newRev
+  newRev,
+  unlock
 };

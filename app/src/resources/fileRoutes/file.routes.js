@@ -38,6 +38,7 @@ let routes = (app) => {
   router.post("/toIssue", controller.toIssue);
   router.post("/request", controller.request);
   router.post("/newRev", controller.newRev);
+  router.post("/unlock", controller.unlock)
 
   app.use(router);
 };
