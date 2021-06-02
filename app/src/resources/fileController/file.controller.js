@@ -654,6 +654,18 @@ const historyFiles = (req,res) =>{
   })
 }
 
+const modelled = (req,res) =>{
+  sql.query('SELECT tag, isoid, code FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.status(200).send({
+        rows : results
+      })
+    }
+  })
+}
+
 const toProcess = (req,res) =>{
   let action = req.body.action
   let fileName = req.body.file
@@ -1549,6 +1561,7 @@ module.exports = {
   restore,
   statusFiles,
   historyFiles,
+  modelled,
   toProcess,
   instrument,
   cancelProc,
