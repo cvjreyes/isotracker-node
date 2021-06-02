@@ -9,7 +9,8 @@ let routes = (app) => {
   router.post("/updateHis", controller.updateHis);
   router.get("/updateStatus", controller.updateStatus);
   router.get("/api/statusFiles", controller.statusFiles);
-  router.get("/api/historyFiles", controller.historyFiles)
+  router.get("/api/historyFiles", controller.historyFiles);
+  router.get("/api/modelled", controller.modelled);
   router.post("/files", controller.getListFiles);
   router.get("/piStatus/:fileName", controller.piStatus)
   router.get("/getMaster/:fileName", controller.getMaster);
