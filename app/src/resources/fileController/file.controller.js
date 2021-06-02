@@ -548,86 +548,93 @@ const updateStatus = async(req,res) =>{
 const restore = async(req,res) =>{
   const fileName = req.body.fileName
   const role = req.body.role
-  sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
-    if(!results[0]){
-        res.status(401).send("No files found");
-    }else if((results[0].deleted == 0 || results[0].deleted == null) && (results[0].onhold == 0 || results[0].onhold == null)){   
-      res.status(401).send("This isometric has already been restored!");
-    }else{
-        let destiny = results[0].from
-        let origin = results[0].to
-        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-        [fileName, results.revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", req.body.user, role], (err, results) => {
-          if (err) {
-            console.log("error: ", err);
-          }else{
-            sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ?, role = ? WHERE filename = ?", 
-            [origin, destiny, "Restored", "None", role, fileName], (err, results) => {
-              if (err) {
-                console.log("error: ", err);
-              }else{
-                console.log("created misoctrls");
-                if(destiny == "LDE/Isocontrol"){
-                  destiny = "lde"
-                }
-
-                let masterName = req.body.fileName.split('.').slice(0, -1)
-                let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
-
-                if (origin == "Recycle bin"){
-                  origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
-                  destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
-                  origin_attach_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/"
-                  destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
-                  origin_cl_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                  destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    if (!results[0]){
+      res.status(401).send("Username or password incorrect");
+    }else{   
+      username  = results[0].name
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+      if(!results[0]){
+          res.status(401).send("No files found");
+      }else if((results[0].deleted == 0 || results[0].deleted == null) && (results[0].onhold == 0 || results[0].onhold == null)){   
+        res.status(401).send("This isometric has already been restored!");
+      }else{
+          let destiny = results[0].from
+          let origin = results[0].to
+          sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+          [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", username, role], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+            }else{
+              sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ?, role = ? WHERE filename = ?", 
+              [origin, destiny, "Restored", "None", role, fileName], (err, results) => {
+                if (err) {
+                  console.log("error: ", err);
                 }else{
-                  origin_path = './app/storage/isoctrl/' + destiny + "/HOLD/" + fileName
-                  destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
-                  origin_attach_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/"
-                  destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
-                  origin_cl_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                  destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                }
-              
-                if(fs.existsSync(origin_path)){
-                  fs.rename(origin_path, destiny_path, function (err) {
-                      if (err) throw err
-
-                  })
-
-                  fs.readdir(origin_attach_path, (err, files) => {
-                      files.forEach(file => {                          
-                        let attachName = file.split('.').slice(0, -1)
-                        console.log(masterName == attachName)
-                        if(String(masterName).trim() == String(attachName).trim()){
-                          fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
-                              console.log("moved attach "+ file)
-                              if (err) throw err
-
-                          })
-                        }
-                      });
-                  });
-
-                  if(fs.existsSync(origin_cl_path)){
-                      fs.rename(origin_cl_path, destiny_cl_path, function (err) {
-                          if (err) throw err
-                          console.log('Successfully renamed - AKA moved!')
-                      })
+                  console.log("created misoctrls");
+                  if(destiny == "LDE/Isocontrol"){
+                    destiny = "lde"
                   }
 
-                  
-                  
-              }
-              res.status(200).send("Restored")
-              }
-              
-            })
-          }
-        })
-      }
-    })
+                  let masterName = req.body.fileName.split('.').slice(0, -1)
+                  let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
+
+                  if (origin == "Recycle bin"){
+                    origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
+                    destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
+                    origin_attach_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/"
+                    destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
+                    origin_cl_path = './app/storage/isoctrl/' + destiny + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                    destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                  }else{
+                    origin_path = './app/storage/isoctrl/' + destiny + "/HOLD/" + fileName
+                    destiny_path = './app/storage/isoctrl/' + destiny + "/" + fileName
+                    origin_attach_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/"
+                    destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
+                    origin_cl_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                    destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                  }
+                
+                  if(fs.existsSync(origin_path)){
+                    fs.rename(origin_path, destiny_path, function (err) {
+                        if (err) throw err
+
+                    })
+
+                    fs.readdir(origin_attach_path, (err, files) => {
+                        files.forEach(file => {                          
+                          let attachName = file.split('.').slice(0, -1)
+                          console.log(masterName == attachName)
+                          if(String(masterName).trim() == String(attachName).trim()){
+                            fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
+                                console.log("moved attach "+ file)
+                                if (err) throw err
+
+                            })
+                          }
+                        });
+                    });
+
+                    if(fs.existsSync(origin_cl_path)){
+                        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                            if (err) throw err
+                            console.log('Successfully renamed - AKA moved!')
+                        })
+                    }
+
+                    
+                    
+                }
+                res.status(200).send("Restored")
+                }
+                
+              })
+            }
+          })
+        }
+      })
+    }
+  })
 }
 
 const statusFiles = (req,res) =>{
