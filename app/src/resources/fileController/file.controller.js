@@ -1056,8 +1056,11 @@ const downloadStatus3D = async(req, res) =>{
     }else{
       ifc_ifd = "IFC"
     }
+    log.push("ONERROR CONTINUE")
     for(let i = 0; i < results.length;i++){
       log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
+      log.push("HANDLE ANY")
+      log.push("ENDHANDLE")
       status = results[i].to
       if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
         status = "New"
@@ -1079,11 +1082,27 @@ const downloadStatus3D = async(req, res) =>{
   })
 }
 
+const downloadModelled = async(req, res) =>{
+  
+  sql.query('SELECT tag, isoid, tpipes_id FROM dpipes_view', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
 const uploadReport = async(req,res) =>{
   const area_index = req.body[0].indexOf("area")
   const tag_index = req.body[0].indexOf("tag")
   const diameter_index = req.body[0].indexOf("diameter")
   const calc_index = req.body[0].indexOf("calc_notes")
+ 
   if(area_index == -1 || tag_index == -1 || diameter_index == -1 || calc_index == -1){
     console.log("error",area_index,tag_index,diameter_index,calc_index)
     res.status(401).send("Missing columns!")
@@ -1094,73 +1113,76 @@ const uploadReport = async(req,res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
-        const areaid = results[0].id
-        if(process.env.REACT_APP_MMDN == 0){
-          sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
-            if(!results[0]){
-              res.status(401).send("Invaid diameter in some lines")
-            }else{
-              const diameterid = results[0].id
-              let calc_notes = 0
-              if(req.body[i][calc_index] != null){
-                calc_notes = 1
-              }
-  
-              let tl = 0
-  
-              if(calc_notes == 0){
-                tl = 3
+      if(req.body[i] != ''){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+          if(process.env.REACT_APP_MMDN == 0){
+            sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: "Invaid diameter in some lines"})
               }else{
-                if(req.body[i][diameter_index] < 50){
-                  tl = 1
+                const diameterid = results[0].id
+                let calc_notes = 0
+                if(req.body[i][calc_index] != null){
+                  calc_notes = 1
+                }
+    
+                let tl = 0
+    
+                if(calc_notes == 0){
+                  tl = 3
                 }else{
-                  tl = 2
+                  if(req.body[i][diameter_index] < 50){
+                    tl = 1
+                  }else{
+                    tl = 2
+                  }
                 }
+                sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
               }
-              sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
-                if(err){
-                  console.log(err)
-                }
-              })
-            }
-          })
-        }else{
-          sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
-            if(!results[0]){
-              res.status(401).send("Invaid diameter in some lines")
-            }else{
-              const diameterid = results[0].id
-              let calc_notes = 0
-              if(req.body[i][calc_index] != null){
-                calc_notes = 1
+            })
+          }else{
+            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
+              if(!results[0]){
                 
-              }
-  
-              let tl = 0
-  
-              if(calc_notes == 0){
-                tl = 3
+                res.status(401).send("Invaid diameter in some lines")
               }else{
-                if(req.body[i][diameter_index] < 2.00){
-                  tl = 1
+                const diameterid = results[0].id
+                let calc_notes = 0
+                if(req.body[i][calc_index] != null){
+                  calc_notes = 1
+                  
+                }
+    
+                let tl = 0
+    
+                if(calc_notes == 0){
+                  tl = 3
                 }else{
-                  tl = 2
+                  if(req.body[i][diameter_index] < 2.00){
+                    tl = 1
+                  }else{
+                    tl = 2
+                  }
                 }
+                sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
               }
-              sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
-                if(err){
-                  console.log(err)
-                }
-              })
-            }
-          })
-        }
+            })
+          }
+          
+        })
         
-      })
-      
+      }
+      res.status(200)
     }
-    res.status(200)
   }
 
 }
@@ -1727,6 +1749,7 @@ module.exports = {
   downloadPI,
   downloadIssued,
   downloadStatus3D,
+  downloadModelled,
   uploadReport,
   checkPipe,
   currentProgress,
