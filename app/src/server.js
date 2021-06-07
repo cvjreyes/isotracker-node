@@ -40,3 +40,4 @@ require("./resources/progress/progress.routes.js")(app);
 app.listen(process.env.REACT_APP_DB_PORT, () => {
   console.log("Server is running on port "+process.env.REACT_APP_DB_PORT+".");
 });
+

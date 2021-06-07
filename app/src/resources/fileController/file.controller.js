@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const sql = require("../../db.js");
 const pathPackage = require("path")
 var format = require('date-format');
+var cron = require('node-cron');
 
 
 const upload = async (req, res) => {
@@ -1113,7 +1114,7 @@ const uploadReport = async(req,res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != ''){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
           if(process.env.REACT_APP_MMDN == 0){
@@ -1600,8 +1601,12 @@ const newRev = (req, res) =>{
   }
 
   const rename = (req, res) =>{
-    const newName = req.body.newName
+    let newName = req.body.newName
     const oldName = req.body.oldName
+
+    if(!newName.includes(".pdf")){
+      newName+=".pdf"
+    }
     
     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [oldName], (err, results) =>{
       if(!results[0]){
@@ -1720,6 +1725,61 @@ const newRev = (req, res) =>{
       }
     })
   }
+
+  
+cron.schedule('0 0 0 * * *', () => {
+  downloadStatus3DPeriod()
+})
+
+cron.schedule('0 0 12 * * *', () => {
+  downloadStatus3DPeriod()
+})
+
+function downloadStatus3DPeriod(){
+  sql.query('SELECT tag, tpipes_id, `to`, `from`, claimed, issued FROM dpipes_view RIGHT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results) =>{
+    
+    let log = []
+    let ifc_ifd = ""
+    let status = ""
+    if(process.env.REACT_APP_IFC == 0){
+      ifc_ifd = "IFD"
+    }else{
+      ifc_ifd = "IFC"
+    }
+    log.push("ONERROR CONTINUE")
+    for(let i = 0; i < results.length;i++){
+      log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
+      log.push("HANDLE ANY")
+      log.push("ENDHANDLE")
+      status = results[i].to
+      if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
+        status = "New"
+      }else if(status == "LDE/Isocontrol" && results[i].issued == 0){
+        status = "Isoctrl"
+      }else if(results[i].issued == 1){
+        status = "Transmittal"
+      }else if(status == "On hold"){
+        status = results[i].from
+      }
+
+      if(status != "Recycle bin"){
+        log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+      }
+    }
+    logToText = ""
+    for(let i = 0; i < log.length; i++){
+      logToText += log[i]+"\n"
+    }
+    fs.writeFile("statusprogresspipe.pmlmac", logToText, function (err) {
+      if (err) return console.log(err);
+      console.log('downloaded');
+      fs.copyFile('./statusprogresspipe.pmlmac', process.env.NODE_STATUS_ROUTE, (err) => {
+        if (err) throw err;
+      });
+    });
+
+  })
+}
 
 
 module.exports = {
