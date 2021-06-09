@@ -1124,7 +1124,7 @@ const uploadReport = async(req,res) =>{
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
-                if(req.body[i][calc_index] != ""){
+                if(req.body[i][calc_index] != "" && req.body[i][calc_index] != null){
                   calc_notes = 1
                 }
     
