@@ -1839,6 +1839,41 @@ const equipSteps = (req, res) =>{
   })
 }
 
+const equipWeight = (req,res) =>{
+  sql.query('SELECT SUM(weight) as w FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const weight = results[0].w
+      sql.query('SELECT SUM(weight) as w FROM dequis RIGHT JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          const dweight = results[0].w
+          const progress = (dweight/weight * 100).toFixed(2)
+          res.json({
+            weight: weight,
+            progress: progress
+          })
+        }
+      })
+      
+    }
+  })
+}
+
+const equipModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM iquoxe_db.dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
 const uploadEquisModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -1928,5 +1963,7 @@ module.exports = {
   unlock,
   equipEstimated,
   equipSteps,
+  equipWeight,
+  equipModelled,
   uploadEquisModelledReport
 };
