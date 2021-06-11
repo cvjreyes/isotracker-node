@@ -1840,6 +1840,42 @@ const equipSteps = (req, res) =>{
 }
 
 const equipWeight = (req,res) =>{
+
+  sql.query('SELECT qty, weight FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dequis RIGHT JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dequis JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+              console.log(dweight)
+            }
+           
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+  /*
   sql.query('SELECT SUM(weight) as w FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
     if(!results[0]){
       res.status(401)
@@ -1849,17 +1885,13 @@ const equipWeight = (req,res) =>{
         if(!results[0]){
           res.status(401)
         }else{
-          const dweight = results[0].w
-          const progress = (dweight/weight * 100).toFixed(2)
-          res.json({
-            weight: weight,
-            progress: progress
-          })
+          
         }
       })
       
     }
   })
+  */
 }
 
 const equipModelled = (req, res) =>{
