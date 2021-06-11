@@ -1820,7 +1820,7 @@ async function uploadReportPeriod(){
           console.log(err)
         }
       })
-      for(let i = 1; i < csv.length; i++){
+      for(let i = 0; i < csv.length; i++){
         if(csv[i].area != '' && csv[i].area != null && !csv[i].tag.includes("/") && !csv[i].tag.includes("=") && !csv[i].diameter != null){
           sql.query("SELECT id FROM areas WHERE name = ?", [csv[i].area], (err, results) =>{
             if(!results[0]){
