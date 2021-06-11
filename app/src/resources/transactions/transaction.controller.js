@@ -141,16 +141,18 @@ const transaction = async (req, res) => {
                                                 }else{
                                                   newprogress = results[0].value_ifd
                                                 }
-                                                sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                                                sql.query("SELECT progress, max_tray FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
                                                   if(!results[0]){
                                                     res.status(401).send("Iso without progress")
                                                     
                                                   }else{
                                                     let progress = results[0].progress
+                                                    let max_tray = results[0].max_tray
                                                     if(newprogress > progress){
                                                       progress = newprogress
+                                                      max_tray = destiny
                                                     }
-                                                    sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, fileName], (err, results) =>{
+                                                    sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, max_tray = ? returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, max_tray, fileName], (err, results) =>{
                                                       if (err) {
                                                           res.status(401).send("cant update")
                                                           console.log("error: ", err);
@@ -338,16 +340,18 @@ const transaction = async (req, res) => {
                                               }else{
                                                 newprogress = results[0].value_ifd
                                               }
-                                              sql.query("SELECT progress FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
+                                              sql.query("SELECT progress, max_tray FROM misoctrls WHERE filename = ?", [req.body.fileName], (err, results) =>{
                                                 if(!results[0]){
                                                   res.status(401).send("Iso without progress")
                                                   
                                                 }else{
                                                   let progress = results[0].progress
+                                                  let max_tray = results[0].max_tray
                                                   if(newprogress > progress){
                                                     progress = newprogress
+                                                    max_tray = level
                                                   }
-                                                  sql.query("UPDATE misoctrls SET claimed = 0, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, req.body.fileName], (err, results) =>{
+                                                  sql.query("UPDATE misoctrls SET claimed = 0, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, max_tray = ?, returned = 0 WHERE filename = ?", [ld, u, r, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, progress, newprogress, max_tray, req.body.fileName], (err, results) =>{
                                                     if (err) {
                                                         res.status(401).send("cant update")
                                                         console.log("error: ", err);
