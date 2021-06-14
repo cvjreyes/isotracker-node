@@ -10,6 +10,16 @@ const gpipes = async(req,res) =>{
     })
 }
 
+const gequips = async(req,res) =>{
+    sql.query('SELECT * FROM gequips', (err, results)=>{
+        console.log(results)
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
 module.exports = {
-    gpipes
+    gpipes,
+    gequips
   };

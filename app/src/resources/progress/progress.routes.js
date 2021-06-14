@@ -3,4 +3,5 @@ module.exports = app => {
 
     // Retrieve all tpipe
     app.get("/gpipes", progress.gpipes);
+    app.get("/gequips", progress.gequips);
   };

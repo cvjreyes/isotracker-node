@@ -1781,6 +1781,174 @@ function downloadStatus3DPeriod(){
   })
 }
 
+const equipEstimated = (req, res) =>{
+
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT eequisfullview.area, eequisfullview.type_equi, eequisfullview.qty, dequismodelled.modelled FROM iquoxe_db.eequisfullview LEFT JOIN dequismodelled ON eequisfullview.area = dequismodelled.area AND eequisfullview.type_equi = dequismodelled.type_equi', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pequis', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_equi, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfullview group by area, type_equi, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_equi == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              console.log(rows)
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const equipSteps = (req, res) =>{
+  sql.query('SELECT percentage FROM pequis', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+}
+
+const equipWeight = (req,res) =>{
+
+  sql.query('SELECT qty, weight FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dequis RIGHT JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dequis JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+              console.log(dweight)
+            }
+           
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const equipTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tequis', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const equipModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM iquoxe_db.dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const uploadEquisModelledReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE dequis", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: "Invaid type in some lines"})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    res.status(401).send({invalid: "Invaid percentage in some lines"})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO dequis(areas_id, tag, pequis_id, tequis_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
 
 module.exports = {
   upload,
@@ -1819,5 +1987,11 @@ module.exports = {
   request,
   newRev,
   rename,
-  unlock
+  unlock,
+  equipEstimated,
+  equipSteps,
+  equipWeight,
+  equipTypes,
+  equipModelled,
+  uploadEquisModelledReport
 };
