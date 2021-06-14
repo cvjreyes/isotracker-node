@@ -1875,23 +1875,18 @@ const equipWeight = (req,res) =>{
     })
       
   })
-  /*
-  sql.query('SELECT SUM(weight) as w FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
+}
+
+const equipTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tequis', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
-      const weight = results[0].w
-      sql.query('SELECT SUM(weight) as w FROM dequis RIGHT JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
-        if(!results[0]){
-          res.status(401)
-        }else{
-          
-        }
-      })
-      
+      res.json({
+        rows: results
+      }).status(200)
     }
   })
-  */
 }
 
 const equipModelled = (req, res) =>{
@@ -1996,6 +1991,7 @@ module.exports = {
   equipEstimated,
   equipSteps,
   equipWeight,
+  equipTypes,
   equipModelled,
   uploadEquisModelledReport
 };
