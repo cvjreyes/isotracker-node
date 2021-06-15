@@ -2188,6 +2188,127 @@ const uploadEquisEstimatedReport = (req,res) =>{
   }
 }
 
+const instSteps = (req, res) =>{
+
+  sql.query('SELECT percentage FROM pinsts', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+
+}
+
+
+const instEstimated = (req, res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT einstsfull_view.area, einstsfull_view.type_inst, einstsfull_view.qty, dinstsmodelled_view.modelled FROM iquoxe_db.einstsfull_view LEFT JOIN dinstsmodelled_view ON einstsfull_view.area = dinstsmodelled_view.area AND einstsfull_view.type_inst = dinstsmodelled_view.type_inst', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pinsts', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_inst, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_inst, progress, count(*) as amount FROM iquoxe_db.dinstsfull_view group by area, type_inst, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_equi == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const instWeight = (req,res) =>{
+
+  sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dinsts RIGHT JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+              console.log(dweight)
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const instModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dinsts.tag as tag, tinsts.`name` as type, tinsts.weight as weight, pinsts.`name` as status, pinsts.percentage as progress FROM iquoxe_db.dinsts JOIN areas ON dinsts.areas_id = areas.id JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const instTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tinsts', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+
 module.exports = {
   upload,
   update,
@@ -2233,5 +2354,10 @@ module.exports = {
   equipTypes,
   equipModelled,
   uploadEquisModelledReport,
-  uploadEquisEstimatedReport
+  uploadEquisEstimatedReport,
+  instEstimated,
+  instSteps,
+  instWeight,
+  instModelled,
+  instTypes
 };
