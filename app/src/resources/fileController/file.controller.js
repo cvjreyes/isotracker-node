@@ -1731,11 +1731,17 @@ const newRev = (req, res) =>{
 
   
 cron.schedule('0 0 0 * * *', () => {
-  downloadStatus3DPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    downloadStatus3DPeriod()
+  }
+  
 })
 
 cron.schedule('0 0 12 * * *', () => {
-  downloadStatus3DPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    downloadStatus3DPeriod()
+  }
+ 
 })
 
 function downloadStatus3DPeriod(){
@@ -1790,7 +1796,10 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 cron.schedule('0 */5 * * * *', () => {
-  uploadReportPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    uploadReportPeriod()
+  }
+  
 })
 
 async function uploadReportPeriod(){
