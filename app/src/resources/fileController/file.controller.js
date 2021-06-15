@@ -5,7 +5,7 @@ const sql = require("../../db.js");
 const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
-
+const csv=require('csvtojson')
 
 const upload = async (req, res) => {
   try {
@@ -258,8 +258,8 @@ const uploadHis = async (req, res) => {
                       progress = results[0].value_ifd
                     }
                     
-                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress], (err, results) => {
+                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress, realprogress, max_tray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                    [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress, "Design"], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                         res.status(401)
@@ -1057,6 +1057,7 @@ const downloadStatus3D = async(req, res) =>{
     }else{
       ifc_ifd = "IFC"
     }
+    log.push("DESIGN")
     log.push("ONERROR CONTINUE")
     for(let i = 0; i < results.length;i++){
       log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
@@ -1076,7 +1077,9 @@ const downloadStatus3D = async(req, res) =>{
       if(status != "Recycle bin"){
         log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
       }
+      
     }
+    log.push("FINISH")
     res.json({
       log : log
     }).status(200)
@@ -1124,7 +1127,7 @@ const uploadReport = async(req,res) =>{
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
-                if(req.body[i][calc_index] != ""){
+                if(req.body[i][calc_index] != "" && req.body[i][calc_index] != null){
                   calc_notes = 1
                 }
     
@@ -1392,7 +1395,7 @@ const toIssue = async(req,res) =>{
                                           newprogress = results[0].value_ifd
                                         }
                                           console.log(newprogress)
-                                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, newFileName], (err, results)=>{
+                                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ?, max_tray WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, "Transmittal",newFileName], (err, results)=>{
                                             if (err) {
                                               console.log("error: ", err);
                                             }else{
@@ -1746,7 +1749,10 @@ function downloadStatus3DPeriod(){
     }else{
       ifc_ifd = "IFC"
     }
+    log.push("DESIGN")
+    log.push("\n")
     log.push("ONERROR CONTINUE")
+    
     for(let i = 0; i < results.length;i++){
       log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
       log.push("HANDLE ANY")
@@ -1766,19 +1772,204 @@ function downloadStatus3DPeriod(){
         log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
       }
     }
+    log.push("\n")
+    log.push("FINISH")
     logToText = ""
     for(let i = 0; i < log.length; i++){
       logToText += log[i]+"\n"
     }
-    fs.writeFile("statusprogresspipe.pmlmac", logToText, function (err) {
+    fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) {
       if (err) return console.log(err);
       console.log('downloaded');
-      fs.copyFile('./statusprogresspipe.pmlmac', process.env.NODE_STATUS_ROUTE, (err) => {
+      fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => {
         if (err) throw err;
       });
     });
 
   })
+  console.log("Generated 3d report")
+}
+cron.schedule('0 */5 * * * *', () => {
+  uploadReportPeriod()
+})
+
+async function uploadReportPeriod(){
+
+  await csv()
+  .fromFile(process.env.NODE_DPIPES_ROUTE)
+  .then((jsonObj)=>{
+      const csv = jsonObj
+
+      sql.query("SELECT isoid, tpipes_id FROM dpipes_view", (err, results) =>{
+        if(!results[0]){
+          console.log("No existe")
+        }else{
+          const isoids = results
+          for(let i = 0; i < isoids.length; i++){
+            sql.query('UPDATE misoctrls set before_tpipes_id = ? WHERE isoid = ?', [isoids[i].tpipes_id, isoids[i].isoid], (err, results)=>{
+              if(err){
+                console.log("Error updating")
+              }
+            })
+          }
+        }
+      })
+
+      sql.query("TRUNCATE dpipes", (err, results)=>{
+        if(err){
+          console.log(err)
+        }
+      })
+      for(let i = 0; i < csv.length; i++){
+        if(csv[i].area != '' && csv[i].area != null && !csv[i].tag.includes("/") && !csv[i].tag.includes("=") && !csv[i].diameter != null){
+          sql.query("SELECT id FROM areas WHERE name = ?", [csv[i].area], (err, results) =>{
+            if(!results[0]){
+              console.log(csv[i].area)
+            }
+            const areaid = results[0].id
+            if(process.env.REACT_APP_MMDN == 0){
+              sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
+                if(!results[0]){
+                  console.log("indalid diameter: ", csv[i].diameter)
+                }else{
+                  const diameterid = results[0].id
+                  let calc_notes = 0
+                  if(csv[i].calc_notes != "" && csv[i].calc_notes != null){
+                    calc_notes = 1
+                  }
+      
+                  let tl = 0
+      
+                  if(calc_notes == 1){
+                    tl = 3
+                  }else{
+                    if(csv[i].diameter < 50){
+                      tl = 1
+                    }else{
+                      tl = 2
+                    }
+                  }
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                }
+              })
+            }else{
+              sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
+                if(!results[0]){
+                  console.log("indalid diameter: ", csv[i].diameter)
+                }else{
+                  const diameterid = results[0].id
+                  let calc_notes = 0
+                  if(csv[i].calc_notes != null){
+                    calc_notes = 1
+                    
+                  }
+      
+                  let tl = 0
+      
+                  if(calc_notes == 0){
+                    tl = 3
+                  }else{
+                    if(csv[i].diameter < 2.00){
+                      tl = 1
+                    }else{
+                      tl = 2
+                    }
+                  }
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                }
+              })
+            }
+            
+          })
+          
+        }
+      }
+      console.log("Dpipes updated")
+      
+  })
+  const timeoutObj = setTimeout(() => {
+    refreshProgress()
+  }, 5000)
+  
+}
+
+
+async function refreshProgress(){
+
+  sql.query('SELECT filename, isoid, `to`, before_tpipes_id FROM misoctrls', (err, results) =>{
+    if(!results[0]){
+      console.log("Empty misoctrls")
+    }else{
+      const lines = results
+      if(process.env.REACT_APP_IFC == "0"){
+        type = "value_ifd"
+      }else{
+        type = "value_ifc"
+      }
+      for(let i = 0; i < lines.length; i++){
+        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [lines[i].isoid], (err, results)=>{
+          if(!results[0]){
+            console.log("No existe en dpipes ", lines[i].isoid)
+          }else{
+            tl = results[0].tpipes_id
+            const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+            let level = lines[i].to
+            if(level == "LDE/Isocontrol"){
+                level = "Issuer"
+            }
+            sql.query(q, [level, tl], (err, results)=>{
+              if(!results[0]){
+                console.log("No existe")
+              }else{
+                let newRealRrogress = null
+                if(type == "value_ifc"){
+                  newRealRrogress = results[0].value_ifc
+                }else{
+                  newRealRrogress = results[0].value_ifd
+                }
+                sql.query("SELECT progress, max_tray FROM misoctrls WHERE filename = ?", [lines[i].filename], (err, results1) =>{
+                  if(!results1[0]){
+                    console.log("No existe miso")        
+                  }else{
+                    let progress = results1[0].progress
+                    let max_tray = results1[0].max_tray
+                    const q2 = "SELECT "+type+ " as newp FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                    sql.query(q2, [max_tray, lines[i].before_tpipes_id], (err, results)=>{
+                      if(!results[0]){
+                        console.log("No existe")
+                      }else{
+                        
+                        const newProgress = results[0].newp
+                        sql.query("UPDATE misoctrls SET progress = ?, realprogress = ? WHERE filename = ?", [newRealRrogress, newProgress, lines[i].filename], (err, results) =>{
+                          if (err) {
+                              console.log("No existe")
+                              console.log("error: ", err);
+                          }else{
+                              
+                          }
+                        })
+                      }
+                    })
+                    
+                  }
+                })
+                                                      
+              }
+            })
+          }
+        })
+      }
+    }
+  })
+  console.log("updaed progress" );
 }
 
 const equipEstimated = (req, res) =>{
@@ -1979,6 +2170,7 @@ module.exports = {
   downloadStatus3D,
   downloadModelled,
   uploadReport,
+  uploadReportPeriod,
   checkPipe,
   currentProgress,
   getMaxProgress,
