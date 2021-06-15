@@ -11,7 +11,7 @@ const gpipes = async(req,res) =>{
 }
 
 const gequips = async(req,res) =>{
-    sql.query('SELECT * FROM gequips', (err, results)=>{
+    sql.query('SELECT * FROM gequis', (err, results)=>{
         console.log(results)
         res.json({
             rows: results

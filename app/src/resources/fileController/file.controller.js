@@ -1977,7 +1977,7 @@ const equipEstimated = (req, res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT eequisfullview.area, eequisfullview.type_equi, eequisfullview.qty, dequismodelled.modelled FROM iquoxe_db.eequisfullview LEFT JOIN dequismodelled ON eequisfullview.area = dequismodelled.area AND eequisfullview.type_equi = dequismodelled.type_equi', (err, results1) =>{
+  sql.query('SELECT eequisfull_view.area, eequisfull_view.type_equi, eequisfull_view.qty, dequismodelled_view.modelled FROM iquoxe_db.eequisfull_view LEFT JOIN dequismodelled_view ON eequisfull_view.area = dequismodelled_view.area AND eequisfull_view.type_equi = dequismodelled_view.type_equi', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -1997,7 +1997,7 @@ const equipEstimated = (req, res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfullview group by area, type_equi, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfull_view group by area, type_equi, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2008,7 +2008,6 @@ const equipEstimated = (req, res) =>{
                   }
                 }
               }
-              console.log(rows)
               res.json({
                 rows: rows
               }).status(200)
@@ -2141,6 +2140,45 @@ const uploadEquisModelledReport = (req, res) =>{
   }
 }
 
+const uploadEquisEstimatedReport = (req,res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE eequis", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tequis WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: "Invaid type in some lines"})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
 module.exports = {
   upload,
   update,
@@ -2185,5 +2223,6 @@ module.exports = {
   equipWeight,
   equipTypes,
   equipModelled,
-  uploadEquisModelledReport
+  uploadEquisModelledReport,
+  uploadEquisEstimatedReport
 };

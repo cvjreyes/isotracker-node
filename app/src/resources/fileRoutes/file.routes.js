@@ -44,6 +44,7 @@ let routes = (app) => {
   router.get("/equipments/estimated", controller.equipEstimated)
   router.get("/equipments/modelled", controller.equipModelled)
   router.post("/uploadEquisModelledReport", controller.uploadEquisModelledReport)
+  router.post("/uploadEquisEstimatedReport", controller.uploadEquisEstimatedReport)
   router.get("/equipments/steps", controller.equipSteps)
   router.get("/equipments/weight", controller.equipWeight)
   router.get("/equipments/types", controller.equipTypes)
