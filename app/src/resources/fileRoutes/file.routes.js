@@ -48,6 +48,11 @@ let routes = (app) => {
   router.get("/equipments/steps", controller.equipSteps)
   router.get("/equipments/weight", controller.equipWeight)
   router.get("/equipments/types", controller.equipTypes)
+  router.get("/instrumentation/steps", controller.instSteps)
+  router.get("/instrumentation/estimated", controller.instEstimated)
+  router.get("/instrumentation/weight", controller.instWeight)
+  router.get("/instrumentation/modelled", controller.instModelled)
+  router.get("/instrumentation/types", controller.instTypes)
 
   app.use(router);
 };
