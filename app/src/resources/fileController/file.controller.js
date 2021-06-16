@@ -2308,6 +2308,61 @@ const instTypes = (req, res) =>{
   })
 }
 
+const civSteps = (req,res) =>{
+  sql.query('SELECT percentage FROM pcivils', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+}
+
+const civEstimated = (req,res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT ecivilsfull_view.area, ecivilsfull_view.type_civil, ecivilsfull_view.qty, dcivilsmodelled_view.modelled FROM iquoxe_db.ecivilsfull_view LEFT JOIN dcivilsmodelled_view ON ecivilsfull_view.area = dcivilsmodelled_view.area AND ecivilsfull_view.type_civil = dcivilsmodelled_view.type_civil', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pcivils', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_civil, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_civil, progress, count(*) as amount FROM iquoxe_db.dcivilsfull_view group by area, type_civil, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_equi == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
 
 module.exports = {
   upload,
@@ -2359,5 +2414,7 @@ module.exports = {
   instSteps,
   instWeight,
   instModelled,
-  instTypes
+  instTypes,
+  civSteps,
+  civEstimated
 };
