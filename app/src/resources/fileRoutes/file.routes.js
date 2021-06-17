@@ -57,6 +57,12 @@ let routes = (app) => {
   router.get("/civils/estimated", controller.civEstimated)
   router.get("/civils/modelled", controller.civModelled)
   router.get("/civils/types", controller.civTypes)
+  router.get("/civils/weight", controller.civWeight)
+  router.get("/electrical/estimated", controller.elecEstimated)
+  router.get("/electrical/steps", controller.elecSteps)
+  router.get("/electrical/modelled", controller.elecModelled)
+  router.get("/electrical/types", controller.elecTypes)
+  router.get("/electrical/weight", controller.elecWeight)
 
   app.use(router);
 };

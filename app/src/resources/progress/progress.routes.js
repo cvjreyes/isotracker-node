@@ -6,4 +6,5 @@ module.exports = app => {
     app.get("/gequips", progress.gequips);
     app.get("/ginsts", progress.ginsts)
     app.get("/gcivils", progress.gcivils)
+    app.get("/gelecs", progress.gelecs)
   };

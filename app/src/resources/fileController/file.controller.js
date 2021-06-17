@@ -2421,6 +2421,159 @@ const civTypes = (req, res) =>{
   })
 }
 
+const civWeight = (req, res) =>{
+  sql.query('SELECT qty, weight FROM ecivils RIGHT JOIN tcivils ON ecivils.tcivils_id = tcivils.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dcivils RIGHT JOIN tcivils ON dcivils.tcivils_id = tcivils.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+              console.log(dweight)
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const elecEstimated = (req,res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT eelecsfull_view.area, eelecsfull_view.type_elec, eelecsfull_view.qty, delecsmodelled_view.modelled FROM iquoxe_db.eelecsfull_view LEFT JOIN delecsmodelled_view ON eelecsfull_view.area = delecsmodelled_view.area AND eelecsfull_view.type_elec = delecsmodelled_view.type_elec', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pelecs', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_elec, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_elec, progress, count(*) as amount FROM iquoxe_db.delecsfull_view group by area, type_elec, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_elec == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const elecSteps = (req,res) =>{
+  sql.query('SELECT percentage FROM pelecs', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+}
+
+const elecModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, delecs.tag as tag, telecs.`name` as type, telecs.weight as weight, pelecs.`name` as status, pelecs.percentage as progress FROM iquoxe_db.delecs JOIN areas ON delecs.areas_id = areas.id JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const elecTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM telecs', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const elecWeight = (req, res) =>{
+  sql.query('SELECT qty, weight FROM eelecs RIGHT JOIN telecs ON eelecs.telecs_id = telecs.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    console.log("PESO ELEC ", eweight)
+    sql.query('SELECT SUM(weight) as w FROM delecs RIGHT JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM delecs JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+              console.log(dweight)
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -2475,5 +2628,11 @@ module.exports = {
   civSteps,
   civEstimated,
   civModelled,
-  civTypes
+  civTypes,
+  civWeight,
+  elecEstimated,
+  elecSteps,
+  elecModelled,
+  elecTypes,
+  elecWeight
 };

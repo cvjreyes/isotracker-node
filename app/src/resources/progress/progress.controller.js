@@ -33,9 +33,18 @@ const gcivils = (req, res) =>{
     })
 }
 
+const gelecs = (req, res) =>{
+    sql.query('SELECT * FROM gelecs', (err, results)=>{
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
 module.exports = {
     gpipes,
     gequips,
     ginsts,
-    gcivils
+    gcivils,
+    gelecs
   };
