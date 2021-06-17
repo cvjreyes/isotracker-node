@@ -2364,6 +2364,30 @@ const civEstimated = (req,res) =>{
   })
 }
 
+const civModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dcivils.tag as tag, tcivils.`name` as type, tcivils.weight as weight, pcivils.`name` as status, pcivils.percentage as progress FROM iquoxe_db.dcivils JOIN areas ON dcivils.areas_id = areas.id JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const civTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tcivils', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -2416,5 +2440,7 @@ module.exports = {
   instModelled,
   instTypes,
   civSteps,
-  civEstimated
+  civEstimated,
+  civModelled,
+  civTypes
 };

@@ -55,6 +55,8 @@ let routes = (app) => {
   router.get("/instrumentation/types", controller.instTypes)
   router.get("/civils/steps", controller.civSteps)
   router.get("/civils/estimated", controller.civEstimated)
+  router.get("/civils/modelled", controller.civModelled)
+  router.get("/civils/types", controller.civTypes)
 
   app.use(router);
 };
