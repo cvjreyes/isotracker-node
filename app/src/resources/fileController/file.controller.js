@@ -2393,6 +2393,4 @@ module.exports = {
   instWeight,
   instModelled,
   instTypes,
-  civSteps,
-  civEstimated
 };
