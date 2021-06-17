@@ -2574,6 +2574,30 @@ const elecWeight = (req, res) =>{
   })
 }
 
+const uploadInstModelledReport = (req, res) =>{
+
+}
+
+const uploadInstEstimatedReport = (req, res) =>{
+
+}
+
+const uploadCivModelledReport = (req, res) =>{
+
+}
+
+const uploadCivEstimatedReport = (req, res) =>{
+
+}
+
+const uploadElecModelledReport = (req, res) =>{
+
+}
+
+const uploadElecEstimatedReport = (req, res) =>{
+  
+}
+
 module.exports = {
   upload,
   update,
@@ -2634,5 +2658,11 @@ module.exports = {
   elecSteps,
   elecModelled,
   elecTypes,
-  elecWeight
+  elecWeight,
+  uploadInstModelledReport,
+  uploadInstEstimatedReport,
+  uploadCivModelledReport,
+  uploadCivEstimatedReport,
+  uploadElecModelledReport,
+  uploadElecEstimatedReport,
 };

@@ -63,6 +63,12 @@ let routes = (app) => {
   router.get("/electrical/modelled", controller.elecModelled)
   router.get("/electrical/types", controller.elecTypes)
   router.get("/electrical/weight", controller.elecWeight)
+  router.post("/uploadInstModelledReport", controller.uploadInstModelledReport)
+  router.post("/uploadInstEstimatedReport", controller.uploadInstEstimatedReport)
+  router.post("/uploadCivModelledReport", controller.uploadCivModelledReport)
+  router.post("/uploadCivEstimatedReport", controller.uploadCivEstimatedReport)
+  router.post("/uploadElecModelledReport", controller.uploadElecModelledReport)
+  router.post("/uploadElecEstimatedReport", controller.uploadElecEstimatedReport)
 
   app.use(router);
 };
