@@ -25,8 +25,17 @@ const ginsts = async(req,res) =>{
     })
 }
 
+const gcivils = (req, res) =>{
+    sql.query('SELECT * FROM gcivils', (err, results)=>{
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
 module.exports = {
     gpipes,
     gequips,
-    ginsts
+    ginsts,
+    gcivils
   };

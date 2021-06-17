@@ -5,4 +5,5 @@ module.exports = app => {
     app.get("/gpipes", progress.gpipes);
     app.get("/gequips", progress.gequips);
     app.get("/ginsts", progress.ginsts)
+    app.get("/gcivils", progress.gcivils)
   };
