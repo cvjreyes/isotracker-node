@@ -1254,6 +1254,7 @@ const currentProgress = async(req,res) =>{
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
               console.log(progress , realprogress)
               res.json({
+                weight: maxProgress,
                 progress: (progress/maxProgress * 100).toFixed(2),
                 realprogress: (realprogress/maxProgress * 100).toFixed(2)
               }).status(200)
@@ -2093,7 +2094,6 @@ const equipWeight = (req,res) =>{
             let dweight = 0
             for(let i = 0; i < dlines.length; i++){
               dweight += dlines[i].weight * dlines[i].percentage/100
-              console.log(dweight)
             }
            
             res.json({
@@ -2154,12 +2154,12 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: "Invaid type in some lines"})
+                res.status(401).send({invalid: i})
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
-                    res.status(401).send({invalid: "Invaid percentage in some lines"})
+                    res.status(401).send({invalid: i})
                   }else{
                     const percentageid = results[0].id
                     
@@ -2201,7 +2201,7 @@ const uploadEquisEstimatedReport = (req,res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: "Invaid type in some lines"})
+                res.status(401).send({invalid: i})
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
@@ -2302,7 +2302,6 @@ const instWeight = (req,res) =>{
             let dweight = 0
             for(let i = 0; i < dlines.length; i++){
               dweight += dlines[i].weight * dlines[i].percentage/100
-              console.log(dweight)
             }
             res.json({
               weight: eweight,
@@ -2442,7 +2441,6 @@ const civWeight = (req, res) =>{
             let dweight = 0
             for(let i = 0; i < dlines.length; i++){
               dweight += dlines[i].weight * dlines[i].percentage/100
-              console.log(dweight)
             }
             res.json({
               weight: eweight,
@@ -2544,7 +2542,6 @@ const elecWeight = (req, res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    console.log("PESO ELEC ", eweight)
     sql.query('SELECT SUM(weight) as w FROM delecs RIGHT JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
       if(!results[0]){
         res.status(401)
@@ -2559,7 +2556,6 @@ const elecWeight = (req, res) =>{
             let dweight = 0
             for(let i = 0; i < dlines.length; i++){
               dweight += dlines[i].weight * dlines[i].percentage/100
-              console.log(dweight)
             }
             res.json({
               weight: eweight,
@@ -2575,27 +2571,329 @@ const elecWeight = (req, res) =>{
 }
 
 const uploadInstModelledReport = (req, res) =>{
-
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE dinsts", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tinsts WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pinsts WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: i})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO dinsts(areas_id, tag, pinsts_id, tinsts_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
 }
 
 const uploadInstEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE einsts", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tinsts WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO einsts(areas_id, tinsts_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
 
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
 }
 
 const uploadCivModelledReport = (req, res) =>{
-
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE dcivils", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tcivils WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pcivils WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: i})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO dcivils(areas_id, tag, pcivils_id, tcivils_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
 }
 
 const uploadCivEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE ecivils", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tcivils WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO ecivils(areas_id, tcivils_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
 
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
 }
 
 const uploadElecModelledReport = (req, res) =>{
-
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE delecs", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM telecs WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pelecs WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: "Invaid percentage in some lines"})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO delecs(areas_id, tag, pelecs_id, telecs_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
 }
 
 const uploadElecEstimatedReport = (req, res) =>{
-  
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE eelecs", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM telecs WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO eelecs(areas_id, telecs_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadPipesEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE epipes", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tpipes WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO epipes(areas_id, tpipes_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const pipingEstimated = (req, res) =>{
+  sql.query('SELECT areas.name as area, tpipes.name as type, epipes.qty as quantity FROM iquoxe_db.epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
+    res.json({
+      rows: results
+    }).status(200)
+  })
+}
+
+const pipingTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tpipes', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
 }
 
 module.exports = {
@@ -2665,4 +2963,7 @@ module.exports = {
   uploadCivEstimatedReport,
   uploadElecModelledReport,
   uploadElecEstimatedReport,
+  uploadPipesEstimatedReport,
+  pipingEstimated,
+  pipingTypes
 };

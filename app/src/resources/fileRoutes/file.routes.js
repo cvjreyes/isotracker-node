@@ -69,6 +69,9 @@ let routes = (app) => {
   router.post("/uploadCivEstimatedReport", controller.uploadCivEstimatedReport)
   router.post("/uploadElecModelledReport", controller.uploadElecModelledReport)
   router.post("/uploadElecEstimatedReport", controller.uploadElecEstimatedReport)
+  router.post("/uploadPipesEstimatedReport", controller.uploadPipesEstimatedReport)
+  router.get("/piping/estimated", controller.pipingEstimated)
+  router.get("/piping/types", controller.pipingTypes)
 
   app.use(router);
 };
