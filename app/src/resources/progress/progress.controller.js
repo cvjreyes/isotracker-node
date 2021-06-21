@@ -3,7 +3,6 @@ const sql = require("../../db.js");
 
 const gpipes = async(req,res) =>{
     sql.query('SELECT * FROM gpipes', (err, results)=>{
-        console.log(results)
         res.json({
             rows: results
         }).status(200)
@@ -11,15 +10,56 @@ const gpipes = async(req,res) =>{
 }
 
 const gequips = async(req,res) =>{
-    sql.query('SELECT * FROM gequips', (err, results)=>{
-        console.log(results)
+    sql.query('SELECT * FROM gequis', (err, results)=>{
         res.json({
             rows: results
         }).status(200)
     })
 }
 
+const ginsts = async(req,res) =>{
+    sql.query('SELECT * FROM ginsts', (err, results)=>{
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
+const gcivils = (req, res) =>{
+    sql.query('SELECT * FROM gcivils', (err, results)=>{
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
+const gelecs = (req, res) =>{
+    sql.query('SELECT * FROM gelecs', (err, results)=>{
+        res.json({
+            rows: results
+        }).status(200)
+    })
+}
+
+const gcurve = (req,res) =>{
+    sql.query('SELECT gpipes.week as week, gpipes.progress as progress_pipes, gpipes.estimated as estimated_pipes, gequis.progress as progress_equis, gequis.estimated as estimated_equis, ginsts.progress as progress_insts, ginsts.estimated as estimated_insts, gelecs.progress as progress_elecs, gelecs.estimated as estimated_elecs, gcivils.progress as progress_civils, gcivils.estimated as estimated_civils FROM gpipes JOIN gequis on gpipes.id = gequis.id JOIN ginsts ON gpipes.id = ginsts.id JOIN gelecs ON gpipes.id = gelecs.id JOIN gcivils ON gpipes.id = gcivils.id', (err, results)=>{
+        if(err){
+            res.status(401)
+        }else{
+
+            res.json({
+                rows: results
+            }).status(200)
+        }
+        
+    })  
+}
+
 module.exports = {
     gpipes,
-    gequips
+    gequips,
+    ginsts,
+    gcivils,
+    gelecs,
+    gcurve
   };

@@ -274,8 +274,8 @@ const uploadHis = async (req, res) => {
               }
             })
           }else{
-            sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-            [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
+            sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+            [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
               if (err) {
                 console.log("error: ", err);
                 res.status(401)
@@ -782,7 +782,7 @@ const instrument = (req,res) =>{
 const cancelProc = (req, res) =>{
   const fileName = req.body.file
   let prev = 0
-  sql.query('SELECT `from`,id FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Process"], (err, results) =>{
+  sql.query('SELECT `from`,`to`, id, user, role FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Process"], (err, results) =>{
     if(!results[0]){
       prev = 0
     }else if(results[0].from == "Accepted Proc"){
@@ -790,7 +790,21 @@ const cancelProc = (req, res) =>{
     }else{
       prev = 3
     }
-    console.log(results)
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+      if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+      }else{   
+        username  = results[0].name
+    
+        sql.query("INSERT INTO hisoctrls (filename, spo, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?)",
+        [fileName, prev, "Cancelled PRO", "Process", "Cancelled PRO", req.body.role, username], (err, results)=>{
+          if(err){
+            res.status(401)
+          }
+        })
+      }
+    })
+    
     sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [prev, fileName], (err, results) =>{
       if(err){
         res.status(401)
@@ -812,6 +826,22 @@ const cancelInst = (req,res) =>{
     }else{
       prev = 3
     }
+
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+      if (!results[0]){
+        res.status(401).send("Username or password incorrect");
+      }else{   
+        username  = results[0].name
+    
+        sql.query("INSERT INTO hisoctrls (filename, sit, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?)",
+        [fileName, prev, "Cancelled PRO", "Instrumentation", "Cancelled INST", req.body.role, username], (err, results)=>{
+          if(err){
+            res.status(401)
+          }
+        })
+      }
+    })
+
     sql.query('UPDATE misoctrls SET sit = ? WHERE filename = ?', [prev, fileName], (err, results) =>{
       if(err){
         res.status(401)
@@ -1224,6 +1254,7 @@ const currentProgress = async(req,res) =>{
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
               console.log(progress , realprogress)
               res.json({
+                weight: maxProgress,
                 progress: (progress/maxProgress * 100).toFixed(2),
                 realprogress: (realprogress/maxProgress * 100).toFixed(2)
               }).status(200)
@@ -1277,154 +1308,156 @@ const toIssue = async(req,res) =>{
   const user = req.body.user
   const role = req.body.role
 
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+  if(process.env.REACT_APP_PROGRESS == "1"){
+    sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+      if(!results[0]){
+        sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
+          res.status(200).send({blocked:"1"})
+          
+        })
+      }
+    })
+  }
+  sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
     if(!results[0]){
-      sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
-        res.status(200).send({blocked:"1"})
-        
-      })
+      res.status(401).send("File not found")
     }else{
-      sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
-        if(!results[0]){
-          res.status(401).send("File not found")
-        }else{
-          const revision = results[0].revision
-          const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
+      const revision = results[0].revision
+      const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
 
-          let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
+      let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
 
-          if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
-            fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
-          }
+      if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
+        fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
+      }
 
-          masterName = fileName.split('.').slice(0, -1)
+      masterName = fileName.split('.').slice(0, -1)
 
-          origin_path = './app/storage/isoctrl/lde/' + fileName
-          destiny_path = './app/storage/isoctrl/lde/' + newFileName
-          origin_attach_path = './app/storage/isoctrl/lde/attach/'
-          destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
-          origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-          destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
+      origin_path = './app/storage/isoctrl/lde/' + fileName
+      destiny_path = './app/storage/isoctrl/lde/' + newFileName
+      origin_attach_path = './app/storage/isoctrl/lde/attach/'
+      destiny_attach_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date +'/'
+      origin_cl_path = './app/storage/isoctrl/lde/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      destiny_cl_path = './app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date + '/' + newFileName
 
-          fs.rename(origin_path, destiny_path, function (err) {
-            if (err) throw err
-          })
+      fs.rename(origin_path, destiny_path, function (err) {
+        if (err) throw err
+      })
 
-          fs.readdir(origin_attach_path, (err, files) => {
-            files.forEach(file => {                          
-              let attachName = file.split('.').slice(0, -1)
-              const i = file.lastIndexOf('.');
-              const extension = file.substring(i+1);
-              if(String(masterName).trim() == String(attachName).trim()){
-                fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
-                    console.log("moved attach to transmittal")
-                    if (err) throw err
-
-                })
-              }
-            });
-          });
-
-        if(fs.existsSync(origin_cl_path)){
-            fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          const i = file.lastIndexOf('.');
+          const extension = file.substring(i+1);
+          if(String(masterName).trim() == String(attachName).trim()){
+            fs.rename(origin_attach_path+file, destiny_attach_path+attachName+'-'+revision+'.'+extension, function (err) {
+                console.log("moved attach to transmittal")
                 if (err) throw err
-                console.log('Moved CL to transmittal')
+
             })
-        }
+          }
+        });
+      });
+
+    if(fs.existsSync(origin_cl_path)){
+        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+            if (err) throw err
+            console.log('Moved CL to transmittal')
+        })
+    }
 
 
 
-          sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
-            if (!results[0]){
-              res.status(401).send("Username or password incorrect");
-            }else{   
-              username  = results[0].name
-              sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
-                if(!results[0]){
-                    res.status(401).send("No files found");
-                }else{
-                    let last = results[0]
-                    for (let i = 1; i < results.length; i++){
-                        if(results[i].updated_at > last.updated_at){
-                            last = results[i]
-                        }
+      sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+        if (!results[0]){
+          res.status(401).send("Username or password incorrect");
+        }else{   
+          username  = results[0].name
+          sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+            if(!results[0]){
+                res.status(401).send("No files found");
+            }else{
+                let last = results[0]
+                for (let i = 1; i < results.length; i++){
+                    if(results[i].updated_at > last.updated_at){
+                        last = results[i]
                     }
-                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                }
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                  if (err) {
+                    console.log("error: ", err);
+                  }else{
+                    console.log("issued in hisoctrls");
+                    console.log(newFileName, revision, fileName)
+                    sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
                       if (err) {
                         console.log("error: ", err);
                       }else{
-                        console.log("issued in hisoctrls");
-                        console.log(newFileName, revision, fileName)
-                        sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
-                          if (err) {
-                            console.log("error: ", err);
-                          }else{
-                            if(process.env.REACT_APP_PROGRESS == "0"){
-                              sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
-                                if (err) {
-                                  console.log("error: ", err);
-                                }else{
-                                  console.log("issued in misoctrls");
-                                }
-                              })
+                        if(process.env.REACT_APP_PROGRESS == "0"){
+                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
+                            if (err) {
+                              console.log("error: ", err);
                             }else{
-                                let type = ""
-                                if(process.env.REACT_APP_IFC == "0"){
-                                  type = "value_ifd"
-                                }else{
-                                  type = "value_ifc"
-                                }
-                                sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                              console.log("issued in misoctrls");
+                              res.status(200).send({issued: "issued"})
+                            }
+                          })
+                        }else{
+                            let type = ""
+                            if(process.env.REACT_APP_IFC == "0"){
+                              type = "value_ifd"
+                            }else{
+                              type = "value_ifc"
+                            }
+                            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                              if(!results[0]){
+                                res.status(401)
+                              }else{
+                                tl = results[0].tpipes_id
+                                const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                                let level = "Transmittal"
+                                console.log(tl)
+                                sql.query(q, [level, tl], (err, results)=>{
                                   if(!results[0]){
                                     res.status(401)
                                   }else{
-                                    tl = results[0].tpipes_id
-                                    const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
-                                    let level = "Transmittal"
-                                    console.log(tl)
-                                    sql.query(q, [level, tl], (err, results)=>{
-                                      if(!results[0]){
-                                        res.status(401)
-                                      }else{
-                                        let newprogress = null
-                                        console.log(results[0])
-                                        if(type == "value_ifc"){
-                                          newprogress = results[0].value_ifc
+                                    let newprogress = null
+                                    console.log(results[0])
+                                    if(type == "value_ifc"){
+                                      newprogress = results[0].value_ifc
+                                    }else{
+                                      newprogress = results[0].value_ifd
+                                    }
+                                      console.log(newprogress)
+                                      sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ?, max_tray = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, "Transmittal",newFileName], (err, results)=>{
+                                        if (err) {
+                                          console.log("error: ", err);
                                         }else{
-                                          newprogress = results[0].value_ifd
+                                          console.log("issued in misoctrls");
+                                          res.status(200).send({issued: "issued"})
                                         }
-                                          console.log(newprogress)
-                                          sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ?, max_tray WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, "Transmittal",newFileName], (err, results)=>{
-                                            if (err) {
-                                              console.log("error: ", err);
-                                            }else{
-                                              console.log("issued in misoctrls");
-                                              res.status(200).send({issued: "issued"})
-                                            }
-                                          })
-                                        }
-
                                       })
                                     }
+
                                   })
                                 }
+                              })
                             }
-                            
-                          })
                         }
+                        
                       })
                     }
-                })
-              }
+                  })
+                }
             })
           }
-        
-      })
-    }
+        })
+      }
+    
   })
-
 }
+
 const request = (req,res) =>{
 
   const fileName = req.body.file
@@ -1484,121 +1517,122 @@ const newRev = (req, res) =>{
 
   const origin_path = './app/storage/isoctrl/lde/' + fileName
   const destiny_path = './app/storage/isoctrl/design/' + newFileName
-  console.log(fileName)
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
+  if(process.env.REACT_APP_PROGRESS == "1"){
+    sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
+      if(!results[0]){
+        sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
+          res.status(200).send({blocked:"1"})
+        })
+      }
+    })
+  }
+
+  sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
     if(!results[0]){
-      sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
-        res.status(200).send({blocked:"1"})
-      })
+      res.status(401).send("file not found")
     }else{
-      sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
-        if(!results[0]){
-          res.status(401).send("file not found")
-        }else{
-          if(results[0].requested == 2){
-            res.status(401).send("Already sent for revision")
-          }else{
-            fs.copyFile(origin_path, destiny_path, (err) => {
-              if (err) throw err;
-            });
-            sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
-              if (!results[0]){
-                res.status(401).send("Username or password incorrect");
-              }else{   
-                username  = results[0].name
-                sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
-                  if(!results[0]){
-                    res.status(401).send("File not found")
-                  }else{
-                    const revision = results[0].revision
-                    if(process.env.REACT_APP_PROGRESS == "0"){
-                      sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                      [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+      if(results[0].requested == 2){
+        res.status(401).send("Already sent for revision")
+      }else{
+        fs.copyFile(origin_path, destiny_path, (err) => {
+          if (err) throw err;
+        });
+        sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+          if (!results[0]){
+            res.status(401).send("Username or password incorrect");
+          }else{   
+            username  = results[0].name
+            sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send("File not found")
+              }else{
+                const revision = results[0].revision
+                if(process.env.REACT_APP_PROGRESS == "0"){
+                  sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+                  [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                    if (err) {
+                      console.log("error: ", err);
+                    }else{
+                      console.log("created hisoctrls");
+                      sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+                      [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", null], (err, results) => {
                         if (err) {
                           console.log("error: ", err);
                         }else{
-                          console.log("created hisoctrls");
-                          sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                          [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", null], (err, results) => {
-                            if (err) {
-                              console.log("error: ", err);
+                          console.log("created misoctrls");
+                          sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
+                            if(err){
+                              res.status(401).send(err)
                             }else{
-                              console.log("created misoctrls");
-                              sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
-                                if(err){
-                                  res.status(401).send(err)
-                                }else{
-                                  res.status(200).send({revision: "newRev"})
-                                }
-                              })             
+                              res.status(200).send({revision: "newRev"})
                             }
-                          });
-            
+                          })             
                         }
-                      })
+                      });
+        
+                    }
+                  })
+                }else{
+                  let type = ""
+                  if(process.env.REACT_APP_IFC == "0"){
+                    type = "value_ifd"
+                  }else{
+                    type = "value_ifc"
+                  }
+                  sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
+                    if(!results[0]){
+                      res.status(401)
                     }else{
-                      let type = ""
-                      if(process.env.REACT_APP_IFC == "0"){
-                        type = "value_ifd"
-                      }else{
-                        type = "value_ifc"
-                      }
-                      sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
+                      tl = results[0].tpipes_id
+                      const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
+                      let level = req.body.to
+                      level = "Design"
+                      sql.query(q, [level, tl], (err, results)=>{
                         if(!results[0]){
                           res.status(401)
                         }else{
-                          tl = results[0].tpipes_id
-                          const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
-                          let level = req.body.to
-                          level = "Design"
-                          sql.query(q, [level, tl], (err, results)=>{
-                            if(!results[0]){
-                              res.status(401)
-                            }else{
-                              let newprogress = null
-                              if(type == "value_ifc"){
-                                newprogress = results[0].value_ifc
+                          let newprogress = null
+                          if(type == "value_ifc"){
+                            newprogress = results[0].value_ifc
+                          }else{
+                            newprogress = results[0].value_ifd
+                          }
+                            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
+                            [newFileName, revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                              if (err) {
+                                console.log("error: ", err);
                               }else{
-                                newprogress = results[0].value_ifd
-                              }
-                                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                                [newFileName, revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                                console.log("created hisoctrls");
+                                sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                                [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", newprogress, newprogress], (err, results) => {
                                   if (err) {
                                     console.log("error: ", err);
                                   }else{
-                                    console.log("created hisoctrls");
-                                    sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                                    [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", newprogress, newprogress], (err, results) => {
-                                      if (err) {
-                                        console.log("error: ", err);
+                                    console.log("created misoctrls");
+                                    sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
+                                      if(err){
+                                        res.status(401).send(err)
                                       }else{
-                                        console.log("created misoctrls");
-                                        sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
-                                          if(err){
-                                            res.status(401).send(err)
-                                          }else{
-                                            res.status(200).send({revision: "newRev"})
-                                          }
-                                        })             
+                                        res.status(200).send({revision: "newRev"})
                                       }
-                                    });
-            
+                                    })             
                                   }
-                                })
+                                });
+        
                               }
                             })
                           }
                         })
                       }
-                    }
-                    
-                  })
+                    })
+                  }
                 }
                 
               })
             }
-          }
-        })
+            
+          })
+        }
       }
     })
   }
@@ -1731,11 +1765,17 @@ const newRev = (req, res) =>{
 
   
 cron.schedule('0 0 0 * * *', () => {
-  downloadStatus3DPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    downloadStatus3DPeriod()
+  }
+  
 })
 
 cron.schedule('0 0 12 * * *', () => {
-  downloadStatus3DPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    downloadStatus3DPeriod()
+  }
+ 
 })
 
 function downloadStatus3DPeriod(){
@@ -1790,7 +1830,10 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 cron.schedule('0 */5 * * * *', () => {
-  uploadReportPeriod()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+    uploadReportPeriod()
+  }
+  
 })
 
 async function uploadReportPeriod(){
@@ -1977,7 +2020,7 @@ const equipEstimated = (req, res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT eequisfullview.area, eequisfullview.type_equi, eequisfullview.qty, dequismodelled.modelled FROM iquoxe_db.eequisfullview LEFT JOIN dequismodelled ON eequisfullview.area = dequismodelled.area AND eequisfullview.type_equi = dequismodelled.type_equi', (err, results1) =>{
+  sql.query('SELECT eequisfull_view.area, eequisfull_view.type_equi, eequisfull_view.qty, dequismodelled_view.modelled FROM iquoxe_db.eequisfull_view LEFT JOIN dequismodelled_view ON eequisfull_view.area = dequismodelled_view.area AND eequisfull_view.type_equi = dequismodelled_view.type_equi', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -1997,7 +2040,7 @@ const equipEstimated = (req, res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfullview group by area, type_equi, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfull_view group by area, type_equi, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2008,7 +2051,6 @@ const equipEstimated = (req, res) =>{
                   }
                 }
               }
-              console.log(rows)
               res.json({
                 rows: rows
               }).status(200)
@@ -2052,7 +2094,6 @@ const equipWeight = (req,res) =>{
             let dweight = 0
             for(let i = 0; i < dlines.length; i++){
               dweight += dlines[i].weight * dlines[i].percentage/100
-              console.log(dweight)
             }
            
             res.json({
@@ -2113,12 +2154,12 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: "Invaid type in some lines"})
+                res.status(401).send({invalid: i})
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
-                    res.status(401).send({invalid: "Invaid percentage in some lines"})
+                    res.status(401).send({invalid: i})
                   }else{
                     const percentageid = results[0].id
                     
@@ -2139,6 +2180,720 @@ const uploadEquisModelledReport = (req, res) =>{
       res.status(200)
     
   }
+}
+
+const uploadEquisEstimatedReport = (req,res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE eequis", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tequis WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const instSteps = (req, res) =>{
+
+  sql.query('SELECT percentage FROM pinsts', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+
+}
+
+
+const instEstimated = (req, res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT einstsfull_view.area, einstsfull_view.type_inst, einstsfull_view.qty, dinstsmodelled_view.modelled FROM iquoxe_db.einstsfull_view LEFT JOIN dinstsmodelled_view ON einstsfull_view.area = dinstsmodelled_view.area AND einstsfull_view.type_inst = dinstsmodelled_view.type_inst', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pinsts', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_inst, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_inst, progress, count(*) as amount FROM iquoxe_db.dinstsfull_view group by area, type_inst, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_equi == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const instWeight = (req,res) =>{
+
+  sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dinsts RIGHT JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const instModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dinsts.tag as tag, tinsts.`name` as type, tinsts.weight as weight, pinsts.`name` as status, pinsts.percentage as progress FROM iquoxe_db.dinsts JOIN areas ON dinsts.areas_id = areas.id JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const instTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tinsts', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const civSteps = (req,res) =>{
+  sql.query('SELECT percentage FROM pcivils', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+}
+
+const civEstimated = (req,res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT ecivilsfull_view.area, ecivilsfull_view.type_civil, ecivilsfull_view.qty, dcivilsmodelled_view.modelled FROM iquoxe_db.ecivilsfull_view LEFT JOIN dcivilsmodelled_view ON ecivilsfull_view.area = dcivilsmodelled_view.area AND ecivilsfull_view.type_civil = dcivilsmodelled_view.type_civil', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pcivils', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_civil, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_civil, progress, count(*) as amount FROM iquoxe_db.dcivilsfull_view group by area, type_civil, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_equi == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const civModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, dcivils.tag as tag, tcivils.`name` as type, tcivils.weight as weight, pcivils.`name` as status, pcivils.percentage as progress FROM iquoxe_db.dcivils JOIN areas ON dcivils.areas_id = areas.id JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const civTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tcivils', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const civWeight = (req, res) =>{
+  sql.query('SELECT qty, weight FROM ecivils RIGHT JOIN tcivils ON ecivils.tcivils_id = tcivils.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM dcivils RIGHT JOIN tcivils ON dcivils.tcivils_id = tcivils.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const elecEstimated = (req,res) =>{
+  let rows = []
+  let percentages = []
+  
+  sql.query('SELECT eelecsfull_view.area, eelecsfull_view.type_elec, eelecsfull_view.qty, delecsmodelled_view.modelled FROM iquoxe_db.eelecsfull_view LEFT JOIN delecsmodelled_view ON eelecsfull_view.area = delecsmodelled_view.area AND eelecsfull_view.type_elec = delecsmodelled_view.type_elec', (err, results1) =>{
+    if(!results1[0]){
+      res.status(401)
+    }else{
+
+      sql.query('SELECT percentage FROM pelecs', (err, results)=>{
+        if(!results[0]){
+          res.status(401)
+        }else{
+          for(let i = 0; i < results.length; i++){
+            percentages.push(results[i].percentage)
+          }
+          for(let i = 0; i < results1.length; i++){
+            let row = ({"area": results1[i].area, "type": results1[i].type_elec, "quantity": results1[i].qty, "modelled": results1[i].modelled})
+            for(let i = 0; i < percentages.length; i++){
+              row[percentages[i]] = 0
+            }
+            rows.push(row)
+          }
+
+          sql.query('SELECT area, type_elec, progress, count(*) as amount FROM iquoxe_db.delecsfull_view group by area, type_elec, progress' ,(err, results)=>{
+            if(!results[0]){
+              res.status(401)
+            }else{
+              for(let i = 0; i < results.length; i++){
+                for(let j = 0; j < rows.length; j++){
+                  if(results[i].area == rows[j]["area"] && results[i].type_elec == rows[j]["type"]){
+                    rows[j][results[i].progress] = results[i].amount
+                  }
+                }
+              }
+              res.json({
+                rows: rows
+              }).status(200)
+            }
+
+          })
+          
+        }
+      })
+    }
+  })
+}
+
+const elecSteps = (req,res) =>{
+  sql.query('SELECT percentage FROM pelecs', (err, results)=>{
+    res.json({
+      steps: results
+    }).status(200)
+  })
+}
+
+const elecModelled = (req, res) =>{
+  sql.query('SELECT areas.`name` as area, delecs.tag as tag, telecs.`name` as type, telecs.weight as weight, pelecs.`name` as status, pelecs.percentage as progress FROM iquoxe_db.delecs JOIN areas ON delecs.areas_id = areas.id JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const elecTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM telecs', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
+}
+
+const elecWeight = (req, res) =>{
+  sql.query('SELECT qty, weight FROM eelecs RIGHT JOIN telecs ON eelecs.telecs_id = telecs.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query('SELECT SUM(weight) as w FROM delecs RIGHT JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const maxweight = results[0].w
+        
+        sql.query('SELECT weight, percentage FROM delecs JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            const dlines = results
+            let dweight = 0
+            for(let i = 0; i < dlines.length; i++){
+              dweight += dlines[i].weight * dlines[i].percentage/100
+            }
+            res.json({
+              weight: eweight,
+              progress: (dweight/eweight*100).toFixed(2)
+            })
+          }
+        })
+        
+      }
+    })
+      
+  })
+}
+
+const uploadInstModelledReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE dinsts", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tinsts WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pinsts WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: i})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO dinsts(areas_id, tag, pinsts_id, tinsts_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadInstEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE einsts", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tinsts WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO einsts(areas_id, tinsts_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadCivModelledReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE dcivils", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tcivils WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pcivils WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: i})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO dcivils(areas_id, tag, pcivils_id, tcivils_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadCivEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE ecivils", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tcivils WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO ecivils(areas_id, tcivils_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadElecModelledReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const tag_index = req.body[0].indexOf("TAG")
+  const progress_index = req.body[0].indexOf("PROGRESS")
+ 
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+    console.log("error",area_index,tag_index,type_index,progress_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE delecs", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM telecs WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id
+                sql.query("SELECT id FROM pelecs WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                  if(!results[0]){
+                    
+                    res.status(401).send({invalid: "Invaid percentage in some lines"})
+                  }else{
+                    const percentageid = results[0].id
+                    
+                    sql.query("INSERT INTO delecs(areas_id, tag, pelecs_id, telecs_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                    
+                  }
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadElecEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE eelecs", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM telecs WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO eelecs(areas_id, telecs_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const uploadPipesEstimatedReport = (req, res) =>{
+  const area_index = req.body[0].indexOf("AREA")
+  const type_index = req.body[0].indexOf("TYPE")
+  const qty_index = req.body[0].indexOf("QTY")
+  if(area_index == -1 || type_index == -1 || qty_index == -1){
+    console.log("error",area_index,type_index,qty_index)
+    res.status(401).send("Missing columns!")
+  }else{
+    sql.query("TRUNCATE epipes", (err, results)=>{
+      if(err){
+        console.log(err)
+      }
+    })
+    for(let i = 1; i < req.body.length; i++){
+      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+          const areaid = results[0].id
+            sql.query("SELECT id FROM tpipes WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
+              if(!results[0]){
+                res.status(401).send({invalid: i})
+              }else{
+                const typeid = results[0].id      
+                sql.query("INSERT INTO epipes(areas_id, tpipes_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }
+
+                })       
+              }
+            })
+          })
+        }
+        
+      }
+      res.status(200)
+    
+  }
+}
+
+const pipingEstimated = (req, res) =>{
+  sql.query('SELECT areas.name as area, tpipes.name as type, epipes.qty as quantity FROM iquoxe_db.epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
+    res.json({
+      rows: results
+    }).status(200)
+  })
+}
+
+const pipingTypes = (req, res) =>{
+  sql.query('SELECT code, name, weight FROM tpipes', (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }
+  })
 }
 
 module.exports = {
@@ -2185,5 +2940,30 @@ module.exports = {
   equipWeight,
   equipTypes,
   equipModelled,
-  uploadEquisModelledReport
+  uploadEquisModelledReport,
+  uploadEquisEstimatedReport,
+  instEstimated,
+  instSteps,
+  instWeight,
+  instModelled,
+  instTypes,
+  civSteps,
+  civEstimated,
+  civModelled,
+  civTypes,
+  civWeight,
+  elecEstimated,
+  elecSteps,
+  elecModelled,
+  elecTypes,
+  elecWeight,
+  uploadInstModelledReport,
+  uploadInstEstimatedReport,
+  uploadCivModelledReport,
+  uploadCivEstimatedReport,
+  uploadElecModelledReport,
+  uploadElecEstimatedReport,
+  uploadPipesEstimatedReport,
+  pipingEstimated,
+  pipingTypes
 };
