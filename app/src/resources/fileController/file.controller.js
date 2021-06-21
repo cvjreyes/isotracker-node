@@ -2042,7 +2042,9 @@ const equipEstimated = (req, res) =>{
 
           sql.query('SELECT area, type_equi, progress, count(*) as amount FROM dequisfull_view group by area, type_equi, progress' ,(err, results)=>{
             if(!results[0]){
-              res.status(401)
+              res.json({
+                rows: rows
+              }).status(200)
             }else{
               for(let i = 0; i < results.length; i++){
                 for(let j = 0; j < rows.length; j++){
@@ -2080,9 +2082,12 @@ const equipWeight = (req,res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM dequis RIGHT JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
-      if(!results[0]){
-        res.status(401)
+    sql.query('SELECT SUM(weight) as w FROM dequis JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
+      if(!results[0].w){
+        res.json({
+          weight: eweight,
+          progress: 0
+        })
       }else{
         const maxweight = results[0].w
         
@@ -2258,7 +2263,9 @@ const instEstimated = (req, res) =>{
 
           sql.query('SELECT area, type_inst, progress, count(*) as amount FROM dinstsfull_view group by area, type_inst, progress' ,(err, results)=>{
             if(!results[0]){
-              res.status(401)
+              res.json({
+                rows: rows
+              }).status(200)
             }else{
               for(let i = 0; i < results.length; i++){
                 for(let j = 0; j < rows.length; j++){
@@ -2288,9 +2295,12 @@ const instWeight = (req,res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM dinsts RIGHT JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
+    sql.query('SELECT SUM(weight) as w FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
       if(!results[0]){
-        res.status(401)
+        res.json({
+          weight: eweight,
+          progress: 0
+        })
       }else{
         const maxweight = results[0].w
         
@@ -2374,7 +2384,9 @@ const civEstimated = (req,res) =>{
 
           sql.query('SELECT area, type_civil, progress, count(*) as amount FROM dcivilsfull_view group by area, type_civil, progress' ,(err, results)=>{
             if(!results[0]){
-              res.status(401)
+              res.json({
+                rows: rows
+              }).status(200)
             }else{
               for(let i = 0; i < results.length; i++){
                 for(let j = 0; j < rows.length; j++){
@@ -2427,10 +2439,14 @@ const civWeight = (req, res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM dcivils RIGHT JOIN tcivils ON dcivils.tcivils_id = tcivils.id', (err, results)=>{
-      if(!results[0]){
-        res.status(401)
+    sql.query('SELECT SUM(weight) as w FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id', (err, results)=>{
+      if(!results[0].w){
+        res.json({
+          weight: eweight,
+          progress: 0
+        })
       }else{
+        console.log(results)
         const maxweight = results[0].w
         
         sql.query('SELECT weight, percentage FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
@@ -2463,7 +2479,6 @@ const elecEstimated = (req,res) =>{
     if(!results1[0]){
       res.status(401)
     }else{
-
       sql.query('SELECT percentage FROM pelecs', (err, results)=>{
         if(!results[0]){
           res.status(401)
@@ -2472,6 +2487,9 @@ const elecEstimated = (req,res) =>{
             percentages.push(results[i].percentage)
           }
           for(let i = 0; i < results1.length; i++){
+            if(!results1[i].modelled){
+              results1[i].modelled = 0
+            }
             let row = ({"area": results1[i].area, "type": results1[i].type_elec, "quantity": results1[i].qty, "modelled": results1[i].modelled})
             for(let i = 0; i < percentages.length; i++){
               row[percentages[i]] = 0
@@ -2481,7 +2499,9 @@ const elecEstimated = (req,res) =>{
 
           sql.query('SELECT area, type_elec, progress, count(*) as amount FROM delecsfull_view group by area, type_elec, progress' ,(err, results)=>{
             if(!results[0]){
-              res.status(401)
+              res.json({
+                rows: rows
+              }).status(200)
             }else{
               for(let i = 0; i < results.length; i++){
                 for(let j = 0; j < rows.length; j++){
@@ -2490,6 +2510,7 @@ const elecEstimated = (req,res) =>{
                   }
                 }
               }
+              console.log("AAAA",rows[0])
               res.json({
                 rows: rows
               }).status(200)
@@ -2542,9 +2563,12 @@ const elecWeight = (req, res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM delecs RIGHT JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
-      if(!results[0]){
-        res.status(401)
+    sql.query('SELECT SUM(weight) as w FROM delecs JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
+      if(!results[0].w){
+        res.json({
+          weight: eweight,
+          progress: 0
+        })
       }else{
         const maxweight = results[0].w
         
