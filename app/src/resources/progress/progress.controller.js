@@ -41,10 +41,25 @@ const gelecs = (req, res) =>{
     })
 }
 
+const gcurve = (req,res) =>{
+    sql.query('SELECT gpipes.week as week, gpipes.progress as progress_pipes, gpipes.estimated as estimated_pipes, gequis.progress as progress_equis, gequis.estimated as estimated_equis, ginsts.progress as progress_insts, ginsts.estimated as estimated_insts, gelecs.progress as progress_elecs, gelecs.estimated as estimated_elecs, gcivils.progress as progress_civils, gcivils.estimated as estimated_civils FROM gpipes JOIN gequis on gpipes.id = gequis.id JOIN ginsts ON gpipes.id = ginsts.id JOIN gelecs ON gpipes.id = gelecs.id JOIN gcivils ON gpipes.id = gcivils.id', (err, results)=>{
+        if(err){
+            res.status(401)
+        }else{
+
+            res.json({
+                rows: results
+            }).status(200)
+        }
+        
+    })  
+}
+
 module.exports = {
     gpipes,
     gequips,
     ginsts,
     gcivils,
-    gelecs
+    gelecs,
+    gcurve
   };
