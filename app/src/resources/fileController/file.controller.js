@@ -2020,7 +2020,7 @@ const equipEstimated = (req, res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT eequisfull_view.area, eequisfull_view.type_equi, eequisfull_view.qty, dequismodelled_view.modelled FROM iquoxe_db.eequisfull_view LEFT JOIN dequismodelled_view ON eequisfull_view.area = dequismodelled_view.area AND eequisfull_view.type_equi = dequismodelled_view.type_equi', (err, results1) =>{
+  sql.query('SELECT eequisfull_view.area, eequisfull_view.type_equi, eequisfull_view.qty, dequismodelled_view.modelled FROM eequisfull_view LEFT JOIN dequismodelled_view ON eequisfull_view.area = dequismodelled_view.area AND eequisfull_view.type_equi = dequismodelled_view.type_equi', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -2040,7 +2040,7 @@ const equipEstimated = (req, res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM iquoxe_db.dequisfull_view group by area, type_equi, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_equi, progress, count(*) as amount FROM dequisfull_view group by area, type_equi, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2122,7 +2122,7 @@ const equipTypes = (req, res) =>{
 }
 
 const equipModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM iquoxe_db.dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2236,7 +2236,7 @@ const instEstimated = (req, res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT einstsfull_view.area, einstsfull_view.type_inst, einstsfull_view.qty, dinstsmodelled_view.modelled FROM iquoxe_db.einstsfull_view LEFT JOIN dinstsmodelled_view ON einstsfull_view.area = dinstsmodelled_view.area AND einstsfull_view.type_inst = dinstsmodelled_view.type_inst', (err, results1) =>{
+  sql.query('SELECT einstsfull_view.area, einstsfull_view.type_inst, einstsfull_view.qty, dinstsmodelled_view.modelled FROM einstsfull_view LEFT JOIN dinstsmodelled_view ON einstsfull_view.area = dinstsmodelled_view.area AND einstsfull_view.type_inst = dinstsmodelled_view.type_inst', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -2256,7 +2256,7 @@ const instEstimated = (req, res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_inst, progress, count(*) as amount FROM iquoxe_db.dinstsfull_view group by area, type_inst, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_inst, progress, count(*) as amount FROM dinstsfull_view group by area, type_inst, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2317,7 +2317,7 @@ const instWeight = (req,res) =>{
 }
 
 const instModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, dinsts.tag as tag, tinsts.`name` as type, tinsts.weight as weight, pinsts.`name` as status, pinsts.percentage as progress FROM iquoxe_db.dinsts JOIN areas ON dinsts.areas_id = areas.id JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, dinsts.tag as tag, tinsts.`name` as type, tinsts.weight as weight, pinsts.`name` as status, pinsts.percentage as progress FROM dinsts JOIN areas ON dinsts.areas_id = areas.id JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2352,7 +2352,7 @@ const civEstimated = (req,res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT ecivilsfull_view.area, ecivilsfull_view.type_civil, ecivilsfull_view.qty, dcivilsmodelled_view.modelled FROM iquoxe_db.ecivilsfull_view LEFT JOIN dcivilsmodelled_view ON ecivilsfull_view.area = dcivilsmodelled_view.area AND ecivilsfull_view.type_civil = dcivilsmodelled_view.type_civil', (err, results1) =>{
+  sql.query('SELECT ecivilsfull_view.area, ecivilsfull_view.type_civil, ecivilsfull_view.qty, dcivilsmodelled_view.modelled FROM ecivilsfull_view LEFT JOIN dcivilsmodelled_view ON ecivilsfull_view.area = dcivilsmodelled_view.area AND ecivilsfull_view.type_civil = dcivilsmodelled_view.type_civil', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -2372,7 +2372,7 @@ const civEstimated = (req,res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_civil, progress, count(*) as amount FROM iquoxe_db.dcivilsfull_view group by area, type_civil, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_civil, progress, count(*) as amount FROM dcivilsfull_view group by area, type_civil, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2397,7 +2397,7 @@ const civEstimated = (req,res) =>{
 }
 
 const civModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, dcivils.tag as tag, tcivils.`name` as type, tcivils.weight as weight, pcivils.`name` as status, pcivils.percentage as progress FROM iquoxe_db.dcivils JOIN areas ON dcivils.areas_id = areas.id JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, dcivils.tag as tag, tcivils.`name` as type, tcivils.weight as weight, pcivils.`name` as status, pcivils.percentage as progress FROM dcivils JOIN areas ON dcivils.areas_id = areas.id JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2459,7 +2459,7 @@ const elecEstimated = (req,res) =>{
   let rows = []
   let percentages = []
   
-  sql.query('SELECT eelecsfull_view.area, eelecsfull_view.type_elec, eelecsfull_view.qty, delecsmodelled_view.modelled FROM iquoxe_db.eelecsfull_view LEFT JOIN delecsmodelled_view ON eelecsfull_view.area = delecsmodelled_view.area AND eelecsfull_view.type_elec = delecsmodelled_view.type_elec', (err, results1) =>{
+  sql.query('SELECT eelecsfull_view.area, eelecsfull_view.type_elec, eelecsfull_view.qty, delecsmodelled_view.modelled FROM eelecsfull_view LEFT JOIN delecsmodelled_view ON eelecsfull_view.area = delecsmodelled_view.area AND eelecsfull_view.type_elec = delecsmodelled_view.type_elec', (err, results1) =>{
     if(!results1[0]){
       res.status(401)
     }else{
@@ -2479,7 +2479,7 @@ const elecEstimated = (req,res) =>{
             rows.push(row)
           }
 
-          sql.query('SELECT area, type_elec, progress, count(*) as amount FROM iquoxe_db.delecsfull_view group by area, type_elec, progress' ,(err, results)=>{
+          sql.query('SELECT area, type_elec, progress, count(*) as amount FROM delecsfull_view group by area, type_elec, progress' ,(err, results)=>{
             if(!results[0]){
               res.status(401)
             }else{
@@ -2512,7 +2512,7 @@ const elecSteps = (req,res) =>{
 }
 
 const elecModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, delecs.tag as tag, telecs.`name` as type, telecs.weight as weight, pelecs.`name` as status, pelecs.percentage as progress FROM iquoxe_db.delecs JOIN areas ON delecs.areas_id = areas.id JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, delecs.tag as tag, telecs.`name` as type, telecs.weight as weight, pelecs.`name` as status, pelecs.percentage as progress FROM delecs JOIN areas ON delecs.areas_id = areas.id JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2877,7 +2877,7 @@ const uploadPipesEstimatedReport = (req, res) =>{
 }
 
 const pipingEstimated = (req, res) =>{
-  sql.query('SELECT areas.name as area, tpipes.name as type, epipes.qty as quantity FROM iquoxe_db.epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
+  sql.query('SELECT areas.name as area, tpipes.name as type, epipes.qty as quantity FROM epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
     res.json({
       rows: results
     }).status(200)
