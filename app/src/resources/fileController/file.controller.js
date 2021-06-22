@@ -2296,7 +2296,7 @@ const instWeight = (req,res) =>{
       eweight += elines[i].qty * elines[i].weight
     }
     sql.query('SELECT SUM(weight) as w FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
-      if(!results[0]){
+      if(!results[0].w){
         res.json({
           weight: eweight,
           progress: 0
