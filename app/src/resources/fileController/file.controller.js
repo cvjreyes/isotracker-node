@@ -1147,7 +1147,7 @@ const uploadReport = async(req,res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
           if(process.env.REACT_APP_MMDN == 0){
@@ -2154,17 +2154,20 @@ const uploadEquisModelledReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                console.log("A")
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
-                    res.status(401).send({invalid: i})
+                    res.json({invalid: 1}).status(401)
+                    return;
                   }else{
                     const percentageid = results[0].id
                     
@@ -2179,6 +2182,10 @@ const uploadEquisModelledReport = (req, res) =>{
               }
             })
           })
+        }else{
+          res.json({invalid: 1}).status(401)
+          
+          return;
         }
         
       }
@@ -2201,12 +2208,13 @@ const uploadEquisEstimatedReport = (req,res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
@@ -2610,18 +2618,20 @@ const uploadInstModelledReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tinsts WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pinsts WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
                     
-                    res.status(401).send({invalid: i})
+                    res.json({invalid: 1}).status(401)
+                    return;
                   }else{
                     const percentageid = results[0].id
                     
@@ -2658,12 +2668,13 @@ const uploadInstEstimatedReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tinsts WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO einsts(areas_id, tinsts_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
@@ -2699,18 +2710,20 @@ const uploadCivModelledReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tcivils WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pcivils WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
                     
-                    res.status(401).send({invalid: i})
+                    res.json({invalid: 1}).status(401)
+                    return;
                   }else{
                     const percentageid = results[0].id
                     
@@ -2747,12 +2760,13 @@ const uploadCivEstimatedReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tcivils WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO ecivils(areas_id, tcivils_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
@@ -2788,12 +2802,13 @@ const uploadElecModelledReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM telecs WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pelecs WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
@@ -2836,12 +2851,13 @@ const uploadElecEstimatedReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM telecs WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO eelecs(areas_id, telecs_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
@@ -2875,12 +2891,13 @@ const uploadPipesEstimatedReport = (req, res) =>{
       }
     })
     for(let i = 1; i < req.body.length; i++){
-      if(req.body[i] != '' && req.body[i][0] != null && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
+      if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tpipes WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: i})
+                res.json({invalid: 1}).status(401)
+                return;
               }else{
                 const typeid = results[0].id      
                 sql.query("INSERT INTO epipes(areas_id, tpipes_id, qty) VALUES (?,?,?)", [areaid, typeid, req.body[i][qty_index]], (err, results)=>{
