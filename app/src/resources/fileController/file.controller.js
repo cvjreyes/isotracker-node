@@ -2160,13 +2160,13 @@ const uploadEquisModelledReport = (req, res) =>{
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
                 console.log("A")
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
-                    res.json({invalid: 1}).status(401)
+                    res.json({invalid: i}).status(401)
                     return;
                   }else{
                     const percentageid = results[0].id
@@ -2183,7 +2183,7 @@ const uploadEquisModelledReport = (req, res) =>{
             })
           })
         }else{
-          res.json({invalid: 1}).status(401)
+          res.json({invalid: i}).status(401)
           
           return;
         }
@@ -2213,7 +2213,7 @@ const uploadEquisEstimatedReport = (req,res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id      
@@ -2623,14 +2623,14 @@ const uploadInstModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tinsts WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pinsts WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
                     
-                    res.json({invalid: 1}).status(401)
+                    res.json({invalid: i}).status(401)
                     return;
                   }else{
                     const percentageid = results[0].id
@@ -2673,7 +2673,7 @@ const uploadInstEstimatedReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tinsts WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id      
@@ -2715,14 +2715,14 @@ const uploadCivModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tcivils WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id
                 sql.query("SELECT id FROM pcivils WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
                   if(!results[0]){
                     
-                    res.json({invalid: 1}).status(401)
+                    res.json({invalid: i}).status(401)
                     return;
                   }else{
                     const percentageid = results[0].id
@@ -2765,7 +2765,7 @@ const uploadCivEstimatedReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tcivils WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id      
@@ -2807,7 +2807,7 @@ const uploadElecModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM telecs WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id
@@ -2856,7 +2856,7 @@ const uploadElecEstimatedReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM telecs WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id      
@@ -2896,7 +2896,7 @@ const uploadPipesEstimatedReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tpipes WHERE name = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                res.json({invalid: 1}).status(401)
+                res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id      
