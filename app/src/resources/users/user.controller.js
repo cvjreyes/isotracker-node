@@ -124,19 +124,30 @@ exports.update = (req, res) => {
 
 // Delete a user with the specified userId in the request
 exports.delete = (req, res) => {
-    User.remove(req.params.userId, (err, data) => {
-        if (err) {
-          if (err.kind === "not_found") {
-            res.status(404).send({
-              message: `Not found use with id ${req.params.userId}.`
-            });
-          } else {
-            res.status(500).send({
-              message: "Could not delete user with id " + req.params.userId
-            });
-          }
-        } else res.send({ message: `User was deleted successfully!` });
-      });
+
+    sql.query("SELECT name FROM users WHERE id = ?", [req.params.userId], (err, results)=>{
+      const username = results[0].name
+      sql.query("SELECT * FROM misoctrls WHERE claimed = 1 AND user = ?", [username], (err, results)=>{
+        if(!results[0]){
+          User.remove(req.params.userId, (err, data) => {
+            if (err) {
+              if (err.kind === "not_found") {
+                res.status(404).send({
+                  message: `Not found use with id ${req.params.userId}.`
+                });
+              } else {
+                res.status(500).send({
+                  message: "Could not delete user with id " + req.params.userId
+                });
+              }
+            } else res.send({ message: `User was deleted successfully!` });
+          });
+        }else{
+          res.send({error: "This user has claimed isometrics and can't be removed!"})
+        }
+      })
+    })
+   
 };
 
 // Delete all users from the database.
@@ -258,6 +269,144 @@ exports.changePassword = (req,res) =>{
     }else{
       console.log("password changed")
       res.status(200).send({changed: true})
+    }
+  })
+}
+
+exports.createUser = (req, res) =>{
+  const { username, email, roles} = req.body;
+
+    sql.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [username, email, md5("123456")], async (err, result)=>{
+        if(err){
+            console.log(err)
+            res.status(401).send({error: "Error"});
+        }else{
+            for(let i = 0; i < roles.length; i++){
+              sql.query('SELECT id FROM roles WHERE code = ?', [roles[i]], async(err, result) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401).send({error: "Error"});
+                  }else{
+                      const role_id = result[0].id;
+                      sql.query('SELECT id FROM users WHERE email = ?', [email], async(err, result) =>{
+                          if (err){
+                              console.log(err);
+                              res.status(401).send({error: "Error"});
+                          }else{
+                              const user_id = result[0].id;
+                              sql.query('INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)', [role_id, user_id, "App/User"], async(err, result) =>{
+                                  if (err) {
+                                      console.log(err);
+                                      res.status(401).send({error: "Error"});
+                                  }else{
+                                      sql.query('INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)', [15, user_id, "App/User"], async(err, result) =>{
+                                          if (err) {
+                                              console.log(err);
+                                              res.status(401).send({error: "Error"});
+                                          }
+                                      })
+                                  }
+                              })
+                          }
+                      })
+                  }
+              })
+          }
+          res.send({success: 1}).status(200)
+        }
+        
+    })
+}
+exports.usersWithRoles = (req, res) =>{
+  
+  sql.query("SELECT * FROM users", (err, results) => {
+    if (err) {
+      res.status(401).send({error: 1})
+    }else{
+      const users = results
+      
+      for(let j = 0; j < users.length; j++){
+        let email = users[j].email;
+        sql.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+          if (!results[0]){
+            res.status(401).send("Username or password incorrect");
+          }else{
+            const user_id = results[0].id;
+            sql.query('SELECT role_id FROM model_has_roles WHERE model_id = ?', [user_id], async (err, results) =>{
+              if (err){
+                res.status(401).send("Roles not found");
+              }else{
+                var q = 'SELECT name FROM roles WHERE id IN (';
+                if (results.length === 1){
+                  q += results[0].role_id + ")";
+                }else if(results.length === 2){
+                  q += results[0].role_id + "," + results[1].role_id + ")";
+                }else{
+                  for (var i = 0; i < results.length; i++){
+                    if(i === 0){
+                      q += results[i].role_id;
+                    }else if(i === results.length - 1){
+                      q += "," + results[i].role_id + ")";                
+                    }else{
+                      q += "," + results[i].role_id;
+                    }
+                  }
+                }
+                let user = []
+
+                sql.query(q, async (err, results) =>{
+                  if(err){
+                    user = [users[j], []]
+                  }else{
+                    var user_roles = [];
+                    for (var i = 0; i < results.length; i++){
+                      user_roles.push(results[i].name)
+                    }
+                    user = [users[j], user_roles]
+                      
+                  }
+                  allUsers.push(user)   
+
+                     
+                  
+                })
+              }
+            });
+          }
+        })
+      }
+    }
+  })
+  console.log("users:", allUsers) 
+  res.json({
+    users: allUsers
+  }).status(401)
+    
+  
+}
+
+exports.manageRoles = (req, res) =>{
+  const userId = req.body.id
+  const roles = req.body.roles
+  sql.query("DELETE FROM model_has_roles WHERE model_id = ?", [userId], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      for(let i = 0; i < roles.length; i++){
+        sql.query("SELECT id as role_id FROM roles WHERE code = ?", [roles[i]], (err, results)=>{
+          if(!results[0]){
+            res.status(401)
+          }else{
+            let role_id = results[0].role_id
+            sql.query("INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)", [role_id, userId, "App/User"], (err, results)=>{
+              if(err){
+                res.status(401)
+              }
+            })
+          }
+        })
+      }
+      res.send({success: 1}).status(201)
     }
   })
 }

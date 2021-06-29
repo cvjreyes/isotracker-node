@@ -30,4 +30,10 @@ module.exports = app => {
 
     // Create a new user
     app.delete("/api/users", users.deleteAll);
+
+    app.post("/createUser", users.createUser);
+
+    app.get("/usersWithRoles", users.usersWithRoles)
+
+    app.post("/users/manageRoles", users.manageRoles)
   };

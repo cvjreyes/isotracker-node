@@ -51,7 +51,8 @@ exports.findByUser = async(req, res) => {
               }
               console.log(user_roles)
               res.json({
-                roles: user_roles
+                roles: user_roles,
+                email: email
               });
             }
           })
