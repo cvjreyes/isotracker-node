@@ -43,7 +43,7 @@ exports.findByUser = async(req, res) => {
           sql.query(q, async (err, results) =>{
             if(err){
               console.log(err)
-              res.status(401).send("Roles not found");
+              res.status(401).send({roles: ""});
             }else{
               var user_roles = [];
               for (var i = 0; i < results.length; i++){
@@ -51,7 +51,8 @@ exports.findByUser = async(req, res) => {
               }
               console.log(user_roles)
               res.json({
-                roles: user_roles
+                roles: user_roles,
+                email: email
               });
             }
           })

@@ -89,7 +89,6 @@ User.getAll = result => {
       return;
     }
 
-    console.log("users: ", res);
     result(null, res);
   });
 };
