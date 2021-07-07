@@ -2937,6 +2937,76 @@ const pipingTypes = (req, res) =>{
   })
 }
 
+const downloadInstrumentationModelled = (req, res) =>{
+  sql.query('SELECT area, tag, type_inst, weight, status, progress FROM dinstsfull_view', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const downloadEquipmentModelled = (req, res) =>{
+  sql.query('SELECT area, tag, type_equi, weight, status, progress FROM dequisfull_view', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const downloadCivilModelled = (req, res) =>{
+  sql.query('SELECT area, tag, type_civil, weight, status, progress FROM dcivilsfull_view', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const downloadElectricalModelled = (req, res) =>{
+  sql.query('SELECT area, tag, type_elec, weight, status, progress FROM delecsfull_view', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const navis = (req, res) =>{
+  sql.query('SELECT object, value FROM navis', (err, results) =>{
+    if(!results[0]){
+      res.status(401).send("El historial esta vacio")
+    }else{
+      let rows = []
+      for(let i = 0; i < results.length;i++){
+        rows.push(results[i])
+      }
+      res.json({rows: rows}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3006,5 +3076,10 @@ module.exports = {
   uploadElecEstimatedReport,
   uploadPipesEstimatedReport,
   pipingEstimated,
-  pipingTypes
+  pipingTypes,
+  downloadInstrumentationModelled,
+  downloadEquipmentModelled,
+  downloadCivilModelled,
+  downloadElectricalModelled,
+  navis
 };
