@@ -55,11 +55,34 @@ const gcurve = (req,res) =>{
     })  
 }
 
+const submitEquipProgress = (req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE gequis", (err,results) =>{
+        if(err){
+        res.send({error:1}).status(401)
+        }else{
+        for(let i = 1; i < rows.length; i++){
+            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
+            sql.query("INSERT INTO gequis(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                if(err){
+                console.log(err)
+                res.send({error:1}).status(401)
+                }
+            })
+            }  
+        }
+        res.status(200)
+        }
+    })
+    
+}
+
 module.exports = {
     gpipes,
     gequips,
     ginsts,
     gcivils,
     gelecs,
-    gcurve
+    gcurve,
+    submitEquipProgress
   };

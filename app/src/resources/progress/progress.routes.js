@@ -8,4 +8,6 @@ module.exports = app => {
     app.get("/gcivils", progress.gcivils)
     app.get("/gelecs", progress.gelecs)
     app.get("/gcurve", progress.gcurve)
+
+    app.post("/submit/equipments/progress", progress.submitEquipProgress)
   };

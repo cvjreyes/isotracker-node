@@ -2068,9 +2068,14 @@ const equipEstimated = (req, res) =>{
 
 const equipSteps = (req, res) =>{
   sql.query('SELECT percentage FROM pequis', (err, results)=>{
-    res.json({
-      steps: results
-    }).status(200)
+    const steps = results
+    sql.query('SELECT name FROM pequis', (err, results)=>{
+      const names = results
+      res.json({
+        steps: steps,
+        names: names
+      }).status(200)
+    })
   })
 }
 
@@ -3007,6 +3012,83 @@ const navis = (req, res) =>{
   })
 }
 
+const submitEquipTypes = (req, res) =>{
+  const rows = req.body.rows
+  sql.query("TRUNCATE tequis", (err,results) =>{
+    if(err){
+      res.send({error:1}).status(401)
+    }else{
+      for(let i = 1; i < rows.length; i++){
+        if(rows[i]["Code"] != null && rows[i]["Name"] != null && rows[i]["Weight"] != null){
+          sql.query("INSERT INTO tequis(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
+            if(err){
+              console.log(err)
+              res.send({error:1}).status(401)
+            }
+          })
+        }  
+      }
+      res.status(200)
+    }
+  })
+
+}
+
+const submitEquipSteps = (req, res) =>{
+  const rows = req.body.rows
+  sql.query("TRUNCATE pequis", (err,results) =>{
+    if(err){
+      res.send({error:1}).status(401)
+    }else{
+      for(let i = 1; i < rows.length; i++){
+        if(rows[i]["Name"] != null && rows[i]["Percentage"] != null){
+          sql.query("INSERT INTO pequis(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
+            if(err){
+              console.log(err)
+              res.send({error:1}).status(401)
+            }
+          })
+        }  
+      }
+      res.status(200)
+    }
+  })
+
+}
+
+const submitEquipEstimated = (req, res) =>{
+  const rows = req.body.rows
+  sql.query("TRUNCATE eequis", (err,results) =>{
+    if(err){
+      res.send({error:1}).status(401)
+    }else{
+      for(let i = 1; i < rows.length; i++){
+        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
+          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
+            const areaid = results[0].id
+              sql.query("SELECT id FROM tequis WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
+                if(!results[0]){
+                  res.json({error: i}).status(401)
+                  return;
+                }else{
+                  const typeid = results[0].id
+                  sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
+                    if(err){
+                      console.log(err)
+                      res.send({error:1}).status(401)
+                    }
+                  })
+                }
+              })
+            })
+        }  
+      }
+      res.status(200)
+    }
+  })
+
+}
+
 module.exports = {
   upload,
   update,
@@ -3081,5 +3163,8 @@ module.exports = {
   downloadEquipmentModelled,
   downloadCivilModelled,
   downloadElectricalModelled,
-  navis
+  navis,
+  submitEquipTypes,
+  submitEquipSteps,
+  submitEquipEstimated
 };
