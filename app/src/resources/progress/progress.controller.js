@@ -77,6 +77,95 @@ const submitEquipProgress = (req, res) =>{
     
 }
 
+const submitInstProgress = (req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE ginsts", (err,results) =>{
+        if(err){
+        res.send({error:1}).status(401)
+        }else{
+        for(let i = 1; i < rows.length; i++){
+            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
+            sql.query("INSERT INTO ginsts(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                if(err){
+                console.log(err)
+                res.send({error:1}).status(401)
+                }
+            })
+            }  
+        }
+        res.status(200)
+        }
+    })
+    
+}
+
+const submitCivilProgress = (req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE gcivils", (err,results) =>{
+        if(err){
+        res.send({error:1}).status(401)
+        }else{
+        for(let i = 1; i < rows.length; i++){
+            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
+            sql.query("INSERT INTO gcivils(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                if(err){
+                console.log(err)
+                res.send({error:1}).status(401)
+                }
+            })
+            }  
+        }
+        res.status(200)
+        }
+    })
+    
+}
+
+const submitElecProgress = (req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE gelecs", (err,results) =>{
+        if(err){
+        res.send({error:1}).status(401)
+        }else{
+        for(let i = 1; i < rows.length; i++){
+            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
+            sql.query("INSERT INTO gelecs(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                if(err){
+                console.log(err)
+                res.send({error:1}).status(401)
+                }
+            })
+            }  
+        }
+        res.status(200)
+        }
+    })
+    
+}
+
+const submitPipingProgress = (req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE gpipes", (err,results) =>{
+        if(err){
+        res.send({error:1}).status(401)
+        }else{
+        for(let i = 1; i < rows.length; i++){
+            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
+            sql.query("INSERT INTO gpipes(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                if(err){
+                console.log(err)
+                res.send({error:1}).status(401)
+                }
+            })
+            }  
+        }
+        res.status(200)
+        }
+    })
+    
+}
+
+
 module.exports = {
     gpipes,
     gequips,
@@ -84,5 +173,9 @@ module.exports = {
     gcivils,
     gelecs,
     gcurve,
-    submitEquipProgress
+    submitEquipProgress,
+    submitInstProgress,
+    submitCivilProgress,
+    submitElecProgress,
+    submitPipingProgress
   };

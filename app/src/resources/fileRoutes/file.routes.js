@@ -77,9 +77,20 @@ let routes = (app) => {
   router.get("/downloadCivilModelled", controller.downloadCivilModelled)
   router.get("/downloadElectricalModelled", controller.downloadElectricalModelled)
   router.get("/navis", controller.navis)
+
   router.post("/submit/equipments/types", controller.submitEquipTypes)
   router.post("/submit/equipments/steps", controller.submitEquipSteps)
   router.post("/submit/equipments/estimated", controller.submitEquipEstimated)
+  router.post("/submit/instrumentation/types", controller.submitInstTypes)
+  router.post("/submit/instrumentation/steps", controller.submitInstSteps)
+  router.post("/submit/instrumentation/estimated", controller.submitInstEstimated)
+  router.post("/submit/civils/types", controller.submitCivilTypes)
+  router.post("/submit/civils/steps", controller.submitCivilSteps)
+  router.post("/submit/civils/estimated", controller.submitCivilEstimated)
+  router.post("/submit/electrical/types", controller.submitElecTypes)
+  router.post("/submit/electrical/steps", controller.submitElecSteps)
+  router.post("/submit/electrical/estimated", controller.submitElecEstimated)
+  router.post("/submit/piping/estimated", controller.submitPipingEstimated)
 
   app.use(router);
 };
