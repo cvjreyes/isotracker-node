@@ -8,4 +8,11 @@ module.exports = app => {
     app.get("/gcivils", progress.gcivils)
     app.get("/gelecs", progress.gelecs)
     app.get("/gcurve", progress.gcurve)
+
+    app.post("/submit/equipments/progress", progress.submitEquipProgress)
+    app.post("/submit/instrumentation/progress", progress.submitInstProgress)
+    app.post("/submit/civils/progress", progress.submitCivilProgress)
+    app.post("/submit/electrical/progress", progress.submitElecProgress)
+    app.post("/submit/piping/progress", progress.submitPipingProgress)
+
   };
