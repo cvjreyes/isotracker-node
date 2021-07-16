@@ -7,7 +7,6 @@ exports.getFilesByTray = async(req, res) => {
     var body = req.body;
     let role = body.currentRole;
     let user = body.currentUser;
-    console.log("empiezo a hacer fetch", body)
 
     var username = "";
     sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{

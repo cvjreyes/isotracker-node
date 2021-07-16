@@ -37,7 +37,6 @@ const transaction = async (req, res) => {
                       if(!results[0]){
                         res.status(401).send("File not found");
                       }else{
-                        console.log(results)
                         const dest_user = results[0].user
                         const dest_role = results[0].role
                         let destiny = "Supports"
@@ -138,7 +137,6 @@ const transaction = async (req, res) => {
                                             res.status(401)
                                           }else{
                                             let newprogress = null
-                                            console.log(results[0])
                                             if(type == "value_ifc"){
                                               newprogress = results[0].value_ifc
                                             }else{
@@ -191,11 +189,10 @@ const transaction = async (req, res) => {
                       }
                     })
                   }else{
-                    console.log(results[0])
                     const from = results[0].to
                     let created_at = results[0].created_at
                     if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && req.body.to == "LDE/Isocontrol"){
-                      res.status(401).send({"error": "error"})
+                      res.status(401).send({error: "error"})
                     }else{
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
                       [req.body.fileName, results[0].revision, results[0].spo, results[0].sit, req.body.deleted, req.body.onhold, from, req.body.to, req.body.comment, req.body.role, username], (err, results) => {
@@ -313,8 +310,6 @@ const transaction = async (req, res) => {
                                   u = username
                                   r = req.body.role
                               }
-                              console.log("viene de ",from)
-                              console.log(req.body.deleted, req.body.onhold)
                               if(process.env.REACT_APP_PROGRESS == "1" && req.body.to !== "Recycle bin" && req.body.to !== "On hold"){
                                   let type = ""
                                   if(process.env.REACT_APP_IFC == "0"){
@@ -337,7 +332,6 @@ const transaction = async (req, res) => {
                                           res.status(401)
                                         }else{
                                           let newprogress = null
-                                          console.log(results[0])
                                           if(type == "value_ifc"){
                                             newprogress = results[0].value_ifc
                                           }else{
@@ -428,7 +422,6 @@ const returnLead = async(req, res) =>{
               res.status(401).send("File not found");
           }else{
               const from = results[0].from
-              console.log("FROM", from, req.body.to)
               sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user) VALUES (?,?,?,?,?,?,?,?,?,?)", 
               [req.body.fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, "Claimed by LD", req.body.to, "Unclaimed by leader", username], (err, results) => {
                   if (err) {
@@ -453,7 +446,6 @@ const returnLead = async(req, res) =>{
                     origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
                     destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-                  console.log(origin_path, destiny_path)
                     
                     if(fs.existsSync(origin_path)){
                         fs.rename(origin_path, destiny_path, function (err) {
@@ -515,7 +507,6 @@ const returnLead = async(req, res) =>{
                                   res.status(401)
                                 }else{
                                   let newprogress = null
-                                  console.log(results[0])
                                   if(type == "value_ifc"){
                                     newprogress = results[0].value_ifc
                                   }else{
@@ -600,11 +591,9 @@ const returnLeadStress = async(req, res) =>{
       sql.query('SELECT user, role FROM hisoctrls WHERE filename = ? AND `from` = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, destiny, dest_role], (err, results)=>{
         if(!results[0]){
           sql.query("SELECT * FROM misoctrls WHERE filename = ?", fileName, (err, results) => {
-              console.log(results)
               if (!results[0]){
                   res.status(401).send("File not found");
               }else{
-                  console.log(results[0])
                   const from = results[0].to
                   let created_at = results[0].created_at
                   if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && destiny == "LDE/Isocontrol"){
@@ -711,7 +700,6 @@ const returnLeadStress = async(req, res) =>{
                                         res.status(401)
                                       }else{
                                         let newprogress = null
-                                        console.log(results[0])
                                         if(type == "value_ifc"){
                                           newprogress = results[0].value_ifc
                                         }else{
@@ -789,7 +777,7 @@ const returnLeadStress = async(req, res) =>{
               origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
               destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-              console.log(origin_path)
+
               if(fs.existsSync(origin_path)){
                 fs.rename(origin_path, destiny_path, function (err) {
                     if (err) throw err
@@ -858,7 +846,6 @@ const returnLeadStress = async(req, res) =>{
                               res.status(401)
                             }else{
                               let newprogress = null
-                              console.log(results[0])
                               if(type == "value_ifc"){
                                 newprogress = results[0].value_ifc
                               }else{
@@ -990,8 +977,6 @@ const returnIso = async(req, res) =>{
                                   destiny_proc_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
                                   origin_inst_path = './app/storage/isoctrl/' + local_from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
                                   destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
-
-                                  console.log(origin_path, destiny_path)
                                   
                                   if(fs.existsSync(origin_path)){
                                       fs.rename(origin_path, destiny_path, function (err) {
@@ -1044,7 +1029,6 @@ const returnIso = async(req, res) =>{
                                       }
                                   }
     
-                                  console.log("viene de ",from)
                                   if(process.env.REACT_APP_PROGRESS == "1"){
                                       let type = ""
                                       if(process.env.REACT_APP_IFC == "0"){
@@ -1067,7 +1051,6 @@ const returnIso = async(req, res) =>{
                                               res.status(401)
                                             }else{
                                               let newprogress = null
-                                              console.log(results[0])
                                               if(type == "value_ifc"){
                                                 newprogress = results[0].value_ifc
                                               }else{
@@ -1149,7 +1132,6 @@ const returnIso = async(req, res) =>{
               origin_inst_path = './app/storage/isoctrl/' + local_from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
               destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-              console.log(origin_path, destiny_path)
               if(fs.existsSync(origin_path)){
                 fs.rename(origin_path, destiny_path, function (err) {
                     if (err) throw err
@@ -1218,7 +1200,6 @@ const returnIso = async(req, res) =>{
                               res.status(401)
                             }else{
                               let newprogress = null
-                              console.log(results[0])
                               if(type == "value_ifc"){
                                 newprogress = results[0].value_ifc
                               }else{

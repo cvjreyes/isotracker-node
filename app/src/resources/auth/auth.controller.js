@@ -21,7 +21,7 @@ const login = async(req, res) => {
         });
       }
     })       
-    console.log("connected");    
+    console.log("The user "+ email +" logged in.");    
 };
 
 module.exports = {
