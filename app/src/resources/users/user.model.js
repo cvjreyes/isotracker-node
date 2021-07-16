@@ -33,7 +33,6 @@ User.findById = (userId, result) => {
     }
 
     if (res.length) {
-      console.log("found user: ", res[0]);
       result(null, res[0]);
       return;
     }
@@ -52,7 +51,6 @@ User.findByEmail = async (userEmail, result) =>{
       return;
     }
     if (res.length) {
-      console.log("found user: ", res[0]);
       result(null, res[0]);
       return;
     }
@@ -71,7 +69,6 @@ User.findByUsername = async (email, result) =>{
       return;
     }
     if (res.length) {
-      console.log("found user");
       result(null, res[0]);
       return;
     }

@@ -47,21 +47,18 @@ exports.getFilesByTray = async(req, res) => {
               res.json({
                 rows: results
               })
-              console.log("fetch mytray")
             })
           }else if(role == "Instrument"){
             sql.query('SELECT * FROM misoctrls WHERE situser = ? AND sitclaimed = 1', [username], async (err, results) => { 
               res.json({
                 rows: results
               })
-              console.log("fetch mytray")
             })
           }else{
             sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1', [folder, username, role], async (err, results) => { 
               res.json({
                 rows: results
               })
-              console.log("fetch mytray")
             })
           }
           
