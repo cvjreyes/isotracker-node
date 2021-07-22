@@ -103,7 +103,7 @@ const update = async (req, res) => {
 
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
-  sql.query('SELECT * FROM misoctrls WHERE `to` = ?', [tab], (err, results) =>{
+  sql.query('SELECT * FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = ?', [tab], (err, results) =>{
       res.json({
         rows: results
       })
@@ -629,7 +629,7 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results) =>{
+  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -925,7 +925,7 @@ const downloadHistory = async(req,res) =>{
 const downloadStatus = async(req,res) =>{
   sql.query("SELECT deleted, onhold, issued, `from` FROM misoctrls", (err, results)=>{
     const delhold = results
-    sql.query("SELECT isoid, created_at, updated_at, revision, `to` FROM misoctrls", (err, results) =>{
+    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, name, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
