@@ -18,7 +18,6 @@ let storage = multer.diskStorage({
     }
 
     if (extension == 'pdf' && !cl){
-      console.log("entro a pdf")
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
       for(let i = 0; i < folders.length; i++){
@@ -28,7 +27,6 @@ let storage = multer.diskStorage({
           if (fs.existsSync(path)) {
             exists = true;
             where = folders[i]
-            console.log(exists)
           }
         }      
       }
@@ -63,14 +61,12 @@ let storage = multer.diskStorage({
         cb("error", null)
       }
     }else{
-      console.log("entro a zip")
       let parentPath
       if (cl){
         parentPath = './app/storage/isoctrl/design/' + file.originalname.substring(0,file.originalname.length-7) + '.pdf'
       }else{
         parentPath = './app/storage/isoctrl/design/' + file.originalname.split('.').slice(0, -1).join('.') + '.pdf'
       }
-      console.log(parentPath)
       if (fs.existsSync(parentPath)) {
         await cb(null, './app/storage/isoctrl/design/attach')
       }else{
@@ -99,7 +95,6 @@ let updateStorage = multer.diskStorage({
       }
     }
 
-    console.log("entro a pdf master")
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
     './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
     for(let i = 0; i < folders.length; i++){
@@ -116,7 +111,6 @@ let updateStorage = multer.diskStorage({
         where = folders[i]
       }
     }
-    console.log(exists)
     if(exists){
       if (extension == 'pdf' && !cl){ 
         await cb(null, where)
@@ -137,7 +131,6 @@ let updateStorage = multer.diskStorage({
 
 let uploadProcStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    console.log(req.user)
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
       for(let i = 0; i < folders.length; i++){
@@ -159,7 +152,6 @@ let uploadProcStorage = multer.diskStorage({
 
 let uploadInstStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    console.log(req.user)
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
       for(let i = 0; i < folders.length; i++){

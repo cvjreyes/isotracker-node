@@ -59,14 +59,12 @@ const singleUnclaim = async (req, res) => {
 const forceUnclaim = async(req,res) =>{
     const fileName = req.body.file
     let username = ""
-    console.log(req.body)
 
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
         if (!results[0]){
             res.status(401).send("Username or password incorrect");
         }else{   
             username  = results[0].name
-            console.log(username)
             sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
                 if(!results[0]){
                     res.status(401).send("No files found");

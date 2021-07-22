@@ -150,7 +150,6 @@ const singleClaimInst = async(req, res) =>{
                     console.log("error: ", err);
                 }else{
                     console.log("created claim in hisoctrls");
-                    console.log("el usuario es ", username)
                     let sit = 1
                     if(situser){
                       sit = 4

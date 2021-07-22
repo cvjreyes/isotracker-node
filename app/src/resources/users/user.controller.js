@@ -377,7 +377,7 @@ exports.usersWithRoles = (req, res) =>{
       }
     }
   })
-  console.log("users:", allUsers) 
+  
   res.json({
     users: allUsers
   }).status(401)

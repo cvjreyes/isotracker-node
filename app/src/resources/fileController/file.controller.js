@@ -12,7 +12,6 @@ const upload = async (req, res) => {
     await uploadFile.uploadFileMiddleware(req, res);
 
     if (req.file == undefined) {
-      console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
     res.status(200).send({
@@ -43,7 +42,6 @@ const upload = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    console.log(req.file)
     await uploadFile.updateFileMiddleware(req, res);
 
     if (req.file == undefined) {
@@ -105,7 +103,6 @@ const update = async (req, res) => {
 
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
-  console.log("fetch de archivos")
   sql.query('SELECT * FROM misoctrls WHERE `to` = ?', [tab], (err, results) =>{
       res.json({
         rows: results
@@ -167,7 +164,6 @@ const download = (req, res) => {
         message: "Could not download the file. " + err,
       });
     }else{
-      console.log("Se descarga")
     }
   });
 };
@@ -218,7 +214,6 @@ const getAttach = (req,res) =>{
 
 
 const uploadHis = async (req, res) => {
-  console.log("Empieza el uploadhis de  " , req.body.fileName)
   var username = "";
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
@@ -251,7 +246,6 @@ const uploadHis = async (req, res) => {
                     res.status(401)
                   }else{
                     let progress = null
-                    console.log(results[0])
                     if(type == "value_ifc"){
                       progress = results[0].value_ifc
                     }else{
@@ -298,7 +292,6 @@ const updateHis = async (req, res) => {
   const fileName = req.body.file
   var username = "";
 
-  console.log(fileName, req.body.user)
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
@@ -314,7 +307,6 @@ const updateHis = async (req, res) => {
                     last = results[i]
                 }
             }
-            console.log(last, req.body.role)
     
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
             [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => {
@@ -334,7 +326,6 @@ const updateHis = async (req, res) => {
 
 const getMaster = async(req, res) =>{
   fileName = req.params.fileName
-  console.log(fileName)
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
   './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
   for(let i = 0; i < folders.length; i++){
@@ -605,7 +596,6 @@ const restore = async(req,res) =>{
                     fs.readdir(origin_attach_path, (err, files) => {
                         files.forEach(file => {                          
                           let attachName = file.split('.').slice(0, -1)
-                          console.log(masterName == attachName)
                           if(String(masterName).trim() == String(attachName).trim()){
                             fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
                                 console.log("moved attach "+ file)
@@ -677,7 +667,6 @@ const modelled = (req,res) =>{
 const toProcess = (req,res) =>{
   let action = req.body.action
   let fileName = req.body.file
-  console.log(fileName)
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
@@ -881,7 +870,6 @@ const uploadProc = async(req, res) =>{
 
   await uploadFile.uploadFileProcMiddleware(req, res);
   if (req.file == undefined) {
-    console.log("undef")
     return res.status(400).send({ message: "Please upload a file!" });
   }else{
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
@@ -905,7 +893,6 @@ const uploadProc = async(req, res) =>{
 const uploadInst = async(req, res) =>{
   await uploadFile.uploadFileInstMiddleware(req, res);
   if (req.file == undefined) {
-    console.log("undef")
     return res.status(400).send({ message: "Please upload a file!" });
   }else{
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
@@ -1031,7 +1018,6 @@ const downloadIssued = async(req,res) =>{
 
             if(isos_index.includes(results[i].isoid)){
               index = isos_index.indexOf(results[i].isoid)
-              console.log("ya existe")
             }else{
               isos_index.push(results[i].isoid)
               isos.push({isoid: results[i].isoid, rev0: "", rev1: "", rev2: "", rev3: "", rev4: ""})
@@ -1222,9 +1208,7 @@ const uploadReport = async(req,res) =>{
 }
 
 const checkPipe = async(req,res) =>{
-  console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
   const fileName = req.params.fileName.split('.').slice(0, -1)
-  console.log("Se comprueba si existe ", fileName)
   sql.query("SELECT * FROM dpipes_view WHERE isoid = ?", [fileName], (err, results) =>{
     if(!results[0]){
       res.json({
@@ -1252,7 +1236,6 @@ const currentProgress = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-              console.log(progress , realprogress)
               res.json({
                 weight: maxProgress,
                 progress: (progress/maxProgress * 100).toFixed(2),
@@ -1280,7 +1263,6 @@ const currentProgressISO = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-              console.log((progress/maxProgress * 100).toFixed(2))
               res.json({
                 progressISO: (progress/maxProgress * 100).toFixed(2),
                 realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
@@ -1389,7 +1371,6 @@ const toIssue = async(req,res) =>{
                     console.log("error: ", err);
                   }else{
                     console.log("issued in hisoctrls");
-                    console.log(newFileName, revision, fileName)
                     sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
                       if (err) {
                         console.log("error: ", err);
@@ -1417,19 +1398,16 @@ const toIssue = async(req,res) =>{
                                 tl = results[0].tpipes_id
                                 const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
                                 let level = "Transmittal"
-                                console.log(tl)
                                 sql.query(q, [level, tl], (err, results)=>{
                                   if(!results[0]){
                                     res.status(401)
                                   }else{
                                     let newprogress = null
-                                    console.log(results[0])
                                     if(type == "value_ifc"){
                                       newprogress = results[0].value_ifc
                                     }else{
                                       newprogress = results[0].value_ifd
                                     }
-                                      console.log(newprogress)
                                       sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ?, max_tray = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, "Transmittal",newFileName], (err, results)=>{
                                         if (err) {
                                           console.log("error: ", err);
@@ -1820,7 +1798,6 @@ function downloadStatus3DPeriod(){
     }
     fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) {
       if (err) return console.log(err);
-      console.log('downloaded');
       fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => {
         if (err) throw err;
       });
@@ -1867,7 +1844,6 @@ async function uploadReportPeriod(){
         if(csv[i].area != '' && csv[i].area != null && !csv[i].tag.includes("/") && !csv[i].tag.includes("=") && !csv[i].diameter != null){
           sql.query("SELECT id FROM areas WHERE name = ?", [csv[i].area], (err, results) =>{
             if(!results[0]){
-              console.log(csv[i].area)
             }
             const areaid = results[0].id
             if(process.env.REACT_APP_MMDN == 0){
@@ -2164,7 +2140,6 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                console.log("A")
                 res.json({invalid: i}).status(401)
                 return;
               }else{
@@ -2533,7 +2508,6 @@ const elecEstimated = (req,res) =>{
                   }
                 }
               }
-              console.log("AAAA",rows[0])
               res.json({
                 rows: rows
               }).status(200)

@@ -49,7 +49,6 @@ exports.findByUser = async(req, res) => {
               for (var i = 0; i < results.length; i++){
                 user_roles.push(results[i].name)
               }
-              console.log(user_roles)
               res.json({
                 roles: user_roles,
                 email: email
@@ -98,7 +97,6 @@ exports.findRolesByUsername = async(req,res) =>{
               for (var i = 0; i < results.length; i++){
                 user_roles.push(results[i].code)
               }
-              console.log(user_roles)
               res.json({
                 roles: user_roles
               });
@@ -112,8 +110,6 @@ exports.findRolesByUsername = async(req,res) =>{
 }
 
 exports.getAcronyms = async(req,res) =>{
-
-    console.log("AAAAAAAA")
 
     sql.query('SELECT code, name FROM roles', async (err, results) => {
       if (!results[0]){
