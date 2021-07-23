@@ -20,8 +20,7 @@ const singleClaim = async (req, res) => {
     sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
       if (!results[0]){
         res.status(401).send("The file does not exist");
-      }else if (results[0].claimed == 1 && role != "DesignLead" && role != "StressLead" && role != "SupportsLead" && 
-                results[0].role == "DesignLead" && results[0].role == "StressLead" && results[0].role == "SupportsLead"){   
+      }else if (results[0].claimed == 1){   
         res.status(401).send("This isometric has already been claimed");
       }else{
         sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
