@@ -2448,7 +2448,6 @@ const civWeight = (req, res) =>{
           progress: 0
         })
       }else{
-        console.log(results)
         const maxweight = results[0].w
         
         sql.query('SELECT weight, percentage FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
