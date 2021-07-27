@@ -925,7 +925,43 @@ const downloadHistory = async(req,res) =>{
 const downloadStatus = async(req,res) =>{
   sql.query("SELECT deleted, onhold, issued, `from` FROM misoctrls", (err, results)=>{
     const delhold = results
-    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
+    if(process.env.REACT_APP_PROGRESS === "1"){
+      sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
+        if(!results[0]){
+          res.status(401).send("El historial esta vacio")
+        }else{
+          pattern = "MM/dd/yyyy hh:mm:ss";
+          for(let i = 0; i < results.length; i++){
+    
+            if(delhold[i].issued == null){
+              results[i].revision = "ON GOING R" + results[i].revision
+            }else{
+              results[i].revision = "ISSUED"
+            }
+            if(delhold[i].deleted == 1){
+              results[i].revision = "DELETED"
+              results[i].to =  delhold[i].from
+              
+            }else if (delhold[i].onhold == 1){
+              results[i].revision = "ON HOLD"
+              results[i].to =  delhold[i].from
+            }
+            
+            if(results[i].to == "LDE/Isocontrol"){
+              results[i].to = "LOS/Isocontrol"
+            }
+
+            results[i].to = results[i].to.toUpperCase()
+
+            results[i].created_at = format(pattern, results[i].created_at)
+            results[i].updated_at = format(pattern, results[i].updated_at)
+          }
+          
+          res.json(JSON.stringify(results)).status(200)
+        }
+      })
+   }else{
+    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
@@ -959,7 +995,9 @@ const downloadStatus = async(req,res) =>{
         res.json(JSON.stringify(results)).status(200)
       }
     })
+   }
   })
+  
   
 }
 
@@ -2448,7 +2486,6 @@ const civWeight = (req, res) =>{
           progress: 0
         })
       }else{
-        console.log(results)
         const maxweight = results[0].w
         
         sql.query('SELECT weight, percentage FROM dcivils JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
