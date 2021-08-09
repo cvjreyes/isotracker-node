@@ -103,12 +103,24 @@ const update = async (req, res) => {
 
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
-  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = ?', [tab], (err, results) =>{
+  if(process.env.REACT_APP_PROGRESS === "1"){
+    sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = ?', [tab], (err, results) =>{
+      
       res.json({
         rows: results
       })
     
   })
+  }else{
+    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ?', [tab], (err, results) =>{
+      
+      res.json({
+        rows: results
+      })
+    
+  })
+  }
+  
   /*
   fs.readdir(directoryPath, function (err, files) {
     if (err) {
