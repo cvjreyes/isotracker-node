@@ -985,7 +985,7 @@ const downloadStatus = async(req,res) =>{
         }
       })
    }else{
-    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
+    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
