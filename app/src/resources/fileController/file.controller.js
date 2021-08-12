@@ -641,15 +641,27 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
-    if(!results[0]){
-      res.status(401).send("No files found");
-    }else{
-      res.status(200).send({
-        rows : results
-      })
-    }
-  })
+  if(process.env.REACT_APP_PROGRESS == "1"){
+    sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("No files found");
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }else{
+    sql.query('SELECT * FROM misoctrls', (err, results) =>{
+      if(!results[0]){
+        res.status(401).send("No files found");
+      }else{
+        res.status(200).send({
+          rows : results
+        })
+      }
+    })
+  }
 }
 
 const historyFiles = (req,res) =>{
