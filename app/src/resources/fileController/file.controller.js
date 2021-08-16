@@ -941,6 +941,10 @@ const downloadHistory = async(req,res) =>{
     if(!results[0]){
       res.status(401).send("El historial esta vacio")
     }else{
+      let pattern = "MM/dd/yyyy hh:mm:ss";
+      for(let i = 0; i < results.length; i++){
+        results[i].created_at = format(pattern, results[i].created_at)
+      }
       res.json(JSON.stringify(results)).status(200)
     }
   })
@@ -984,15 +988,15 @@ const downloadStatus = async(req,res) =>{
           res.json(JSON.stringify(results)).status(200)
         }
       })
-   }else{
+   }else{             
     sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
         pattern = "MM/dd/yyyy hh:mm:ss";
-        for(let i = 0; i < results.length; i++){
-  
-          if(delhold[i].issued == null){
+        for(let i = 0; i < results.length; i++){                          
+
+          if(delhold[i].issued == null){             
             results[i].revision = "ON GOING R" + results[i].revision
           }else{
             results[i].revision = "ISSUED"
@@ -1011,6 +1015,7 @@ const downloadStatus = async(req,res) =>{
           }
 
           results[i].to = results[i].to.toUpperCase()
+
 
           results[i].created_at = format(pattern, results[i].created_at)
           results[i].updated_at = format(pattern, results[i].updated_at)
@@ -1069,7 +1074,7 @@ const downloadIssued = async(req,res) =>{
     if(!results[0]){
       res.status(401).send("El historial esta vacio")
     }else{
-      sql.query("SELECT isoid, revision, issued, updated_at FROM misoctrls", (err, results) =>{
+      sql.query("SELECT isoid, revision, issued, issued_date FROM misoctrls", (err, results) =>{
         if(!results[0]){
           res.status(401).send("El historial esta vacio")
         }else{
@@ -1088,27 +1093,27 @@ const downloadIssued = async(req,res) =>{
 
             if(results[i].revision == 1){
               if(results[i].issued == 1){
-                isos[index].rev0 = format(pattern, results[i].updated_at)
+                isos[index].rev0 = results[i].issued_date
               }
             }
             if(results[i].revision == 2){
               if(results[i].issued == 1){
-                isos[index].rev1 = format(pattern, results[i].updated_at)
+                isos[index].rev1 = results[i].issued_date
               }
             }
             if(results[i].revision == 3){
               if(results[i].issued == 1){
-                isos[index].rev2 = format(pattern, results[i].updated_at)
+                isos[index].rev2 = results[i].issued_date
               }
             }
             if(results[i].revision == 4){
               if(results[i].issued == 1){
-                isos[index].rev3 = format(pattern, results[i].updated_at)
+                isos[index].rev3 = results[i].issued_date
               }
             }
             if(results[i].revision == 5){
               if(results[i].issued == 1){
-                isos[index].rev4 = format(pattern, results[i].updated_at)
+                isos[index].rev4 = results[i].issued_date
               }
             }
             

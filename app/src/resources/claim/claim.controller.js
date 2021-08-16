@@ -33,8 +33,8 @@ const singleClaim = async (req, res) => {
                       last = results[i]
                   }
               }
-              sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-              [fileName, last.revision, last.spo, last.sit, 1, last.to, "Claimed" , last.comments, username, role, 0, last.created_at], (err, results) => {
+              sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+              [fileName, last.revision, last.spo, last.sit, 1, last.to, "Claimed" , last.comments, username, role, 0], (err, results) => {
               if (err) {
                   console.log("error: ", err);
               }else{
