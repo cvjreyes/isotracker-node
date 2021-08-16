@@ -941,10 +941,7 @@ const downloadHistory = async(req,res) =>{
     if(!results[0]){
       res.status(401).send("El historial esta vacio")
     }else{
-      let pattern = "MM/dd/yyyy hh:mm:ss";
-      for(let i = 0; i < results.length; i++){
-        results[i].created_at = format(pattern, results[i].created_at)
-      }
+
       res.json(JSON.stringify(results)).status(200)
     }
   })
