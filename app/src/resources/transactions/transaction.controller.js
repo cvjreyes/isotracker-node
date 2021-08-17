@@ -944,7 +944,7 @@ const returnIso = async(req, res) =>{
                               res.status(401)
                             }else{
                               sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                              [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, from, destiny, comments, role, user], (err, results) => {
+                              [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, from, destiny, comments, role, username], (err, results) => {
                                   if (err) {
                                       console.log("error: ", err);
                                   }else{
@@ -1096,6 +1096,7 @@ const returnIso = async(req, res) =>{
                 }
             })
             }else{
+              console.log(results, destiny)
               const dest_user = results[0].user
               const dest_role = results[0].role
               sql.query('SELECT * from misoctrls WHERE filename = ?', [fileName], (err, results)=>{
@@ -1167,7 +1168,7 @@ const returnIso = async(req, res) =>{
                     }
     
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, "Unclaimed by leader", dest_user, dest_role], (err, results) => {
+                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, "Unclaimed by leader", username, dest_role], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -1225,7 +1226,7 @@ const returnIso = async(req, res) =>{
                             }
                           })
                         }else{
-                          sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
+                          sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, dest_user, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
                               if (err) {
                                   console.log("error: ", err);
                               }else{
