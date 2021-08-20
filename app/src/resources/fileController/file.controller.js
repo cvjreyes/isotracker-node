@@ -339,7 +339,9 @@ const updateHis = async (req, res) => {
 const getMaster = async(req, res) =>{
   fileName = req.params.fileName
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-  './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+  './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', './app/storage/isoctrl/materials/TRASH',
+  './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
+  './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
   for(let i = 0; i < folders.length; i++){
     let path = folders[i] + '/' + fileName;
     if (fs.existsSync(path)) {
