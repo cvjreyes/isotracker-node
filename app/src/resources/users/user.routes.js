@@ -36,4 +36,6 @@ module.exports = app => {
     app.get("/usersWithRoles", users.usersWithRoles)
 
     app.post("/users/manageRoles", users.manageRoles)
+
+    app.get("/downloadUsers", users.downloadUsers)
   };

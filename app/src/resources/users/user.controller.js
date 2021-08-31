@@ -318,7 +318,7 @@ exports.createUser = (req, res) =>{
     })
 }
 exports.usersWithRoles = (req, res) =>{
-  
+  const { username, email, roles} = req.body;
   sql.query("SELECT * FROM users", (err, results) => {
     if (err) {
       res.status(401).send({error: 1})
@@ -407,6 +407,16 @@ exports.manageRoles = (req, res) =>{
         })
       }
       res.send({success: 1}).status(201)
+    }
+  })
+}
+
+exports.downloadUsers = (req, res) =>{
+  sql.query("SELECT DISTINCT users.name as username, email, roles.name as role FROM users INNER JOIN model_has_roles JOIN roles ON model_has_roles.role_id = roles.id ORDER BY users.name ASC", (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json(results).status(200)
     }
   })
 }
