@@ -6,6 +6,7 @@ const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
+const readXlsxFile = require('read-excel-file/node')
 
 const upload = async (req, res) => {
   try {
@@ -3411,6 +3412,42 @@ const submitPipingEstimated = (req, res) =>{
 
 }
 
+const getBom = async(req, res) =>{
+  sql.query("SELECT * FROM bomtbl", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+cron.schedule("0 */5 * * * *", () => {
+  if(process.env.NODE_CRON == "1"){
+    updateBom()
+  }
+  
+})
+
+async function updateBom(){
+  readXlsxFile(process.env.NODE_BOM_ROUTE).then((rows) => {
+    sql.query("TRUNCATE bomtbl", (err, results) =>{
+      if(err){
+        console.log(err)
+      }else{
+        for(let i = 9; i < rows.length; i++){      
+          sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code) VALUES(?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6]], (err, results)=>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+        console.log("Bom updated")
+      }
+    })
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3498,5 +3535,6 @@ module.exports = {
   submitElecTypes,
   submitElecSteps,
   submitElecEstimated,
-  submitPipingEstimated
+  submitPipingEstimated,
+  getBom,
 };
