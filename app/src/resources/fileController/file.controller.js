@@ -1920,7 +1920,7 @@ async function uploadReportPeriod(){
             if(process.env.REACT_APP_MMDN == 0){
               sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("indalid diameter: ", csv[i].diameter)
+                  console.log(" diameter: ", csv[i].diameter)
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -1939,7 +1939,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -1949,7 +1949,7 @@ async function uploadReportPeriod(){
             }else{
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("indalid diameter: ", csv[i].diameter)
+                  console.log("invalid diameter: ", csv[i].diameter)
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -1969,7 +1969,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -2192,7 +2192,7 @@ const equipModelled = (req, res) =>{
 
 const uploadEquisModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
-  const type_index = req.body[0].indexOf("TYPE")
+  const type_index = req.body[0].indexOf("TYPE")  
   const tag_index = req.body[0].indexOf("TAG")
   const progress_index = req.body[0].indexOf("PROGRESS")
  
@@ -3413,7 +3413,7 @@ const submitPipingEstimated = (req, res) =>{
 }
 
 const getBom = async(req, res) =>{
-  sql.query("SELECT * FROM bomtbl", (err, results)=>{
+  sql.query("SELECT * FROM isocontrol_fullview", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3435,8 +3435,8 @@ async function updateBom(){
       if(err){
         console.log(err)
       }else{
-        for(let i = 9; i < rows.length; i++){      
-          sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code) VALUES(?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6]], (err, results)=>{
+        for(let i = 9; i < rows.length; i++){    
+          sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code, weight) VALUES(?,?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6], rows[i][21]], (err, results)=>{
             if(err){
               console.log(err)
             }
