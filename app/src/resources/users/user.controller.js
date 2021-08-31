@@ -412,7 +412,7 @@ exports.manageRoles = (req, res) =>{
 }
 
 exports.downloadUsers = (req, res) =>{
-  sql.query("SELECT DISTINCT users.name as username, email, roles.name as role FROM users INNER JOIN model_has_roles JOIN roles ON model_has_roles.role_id = roles.id ORDER BY users.name ASC", (err, results) =>{
+  sql.query("SELECT users.name as username, email, roles.name as role FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id ORDER BY users.name ASC", (err, results) =>{
     if(err){
       res.status(401)
     }else{
