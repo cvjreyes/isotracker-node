@@ -3408,7 +3408,7 @@ async function updateBom(){
         console.log(err)
       }else{
         for(let i = 9; i < rows.length; i++){      
-          sql.query("INSERT INTO bomtbl (unit, area, line, train) VALUES(?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4]], (err, results)=>{
+          sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code) VALUES(?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6]], (err, results)=>{
             if(err){
               console.log(err)
             }
