@@ -164,6 +164,8 @@ const download = (req, res) => {
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
       './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
+
+  
   for(let i = 0; i < folders.length; i++){
     path = folders[i] + '/' + req.params.fileName
     if (fs.existsSync(path)) {
@@ -187,6 +189,8 @@ const getAttach = (req,res) =>{
   let allFiles = []
   const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+
+  
   for(let i = 0; i < folders.length; i++){
     path = folders[i] + '/' + req.params.fileName
     if (fs.existsSync(path)) {
