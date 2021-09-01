@@ -184,46 +184,90 @@ const getAttach = (req,res) =>{
   const fileName = req.params.fileName;
   let where, path = null
   let allFiles = []
-  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+  let folders = null
+
+  sql.query("SELECT transmittal, issued_date FROM misoctrls WHERE filename = ?", fileName, (err, results)=>{
+    if(!results[0].transmittal){
+      folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
-  for(let i = 0; i < folders.length; i++){
-    path = folders[i] + '/' + req.params.fileName
-    if (fs.existsSync(path)) {
-      exists = true;
-      where = folders[i]
-    }
-  }
-
-  let masterName = fileName.split('.').slice(0, -1)
-  let origin_attach_path = where + "/attach/"
-  let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-  let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
-  let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
-
-  fs.readdir(origin_attach_path, (err, files) => {
-    files.forEach(file => {                          
-      let attachName = file.split('.').slice(0, -1)
-      if(String(masterName).trim() == String(attachName).trim()){
-        allFiles.push(file)
+  
+      for(let i = 0; i < folders.length; i++){
+        path = folders[i] + '/' + req.params.fileName
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
       }
-    });
-    if(fs.existsSync(origin_cl_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
-    }
 
-    if(fs.existsSync(origin_proc_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
-    }
+      let masterName = fileName.split('.').slice(0, -1)
+      let origin_attach_path = where + "/attach/"
+      let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-    if(fs.existsSync(origin_inst_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          if(String(masterName).trim() == String(attachName).trim()){
+            allFiles.push(file)
+          }
+        });
+        if(fs.existsSync(origin_cl_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+        }
+
+        if(fs.existsSync(origin_proc_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+        }
+
+        if(fs.existsSync(origin_inst_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+        }
+        res.status(200).json(allFiles)
+      });
+    }else{
+      folders = ['./app/storage/isoctrl/lde/transmittals/' + results[0].transmittal + "/" + results[0].issued_date];
+  
+      for(let i = 0; i < folders.length; i++){
+        path = folders[i] + '/' + req.params.fileName
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+
+      let masterName = fileName.split('.').slice(0, -1)
+      let origin_attach_path = where + "/"
+      let origin_cl_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let origin_proc_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let origin_inst_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          if(String(masterName).trim() == String(attachName).trim()){
+            allFiles.push(file)
+          }
+        });
+        if(fs.existsSync(origin_cl_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+        }
+
+        if(fs.existsSync(origin_proc_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+        }
+
+        if(fs.existsSync(origin_inst_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+        }
+        res.status(200).json(allFiles)
+      });
     }
-    res.status(200).json(allFiles)
-  });
+  })
+  
 
   
 }
-
 
 const uploadHis = async (req, res) => {
   var username = "";
