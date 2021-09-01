@@ -1575,7 +1575,7 @@ const newRev = (req, res) =>{
           res.status(401).send("file not found")
         }else{
           if(results[0].requested == 2){
-            res.status(401).send("Already sent for revision")
+            res.status(401).send({already: "Already sent for revision"})
           }else{
             fs.copyFile(origin_path, destiny_path, (err) => {
               if (err) throw err;
