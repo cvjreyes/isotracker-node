@@ -1565,7 +1565,7 @@ const newRev = (req, res) =>{
   const destiny_path = './app/storage/isoctrl/design/' + newFileName
 
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results && process.env.REACT_APP_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
       })
