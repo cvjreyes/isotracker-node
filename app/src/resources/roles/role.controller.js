@@ -82,7 +82,7 @@ exports.findRolesByUsername = async(req,res) =>{
               if(i === 0){
                 q += results[i].role_id;
               }else if(i === results.length - 1){
-                q += results[i].role_id + ")";                
+                q += "," + results[i].role_id + ")";                
               }else{
                 q += "," + results[i].role_id;
               }

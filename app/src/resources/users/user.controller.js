@@ -298,13 +298,6 @@ exports.createUser = (req, res) =>{
                                   if (err) {
                                       console.log(err);
                                       res.status(401).send({error: "Error"});
-                                  }else{
-                                      sql.query('INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)', [15, user_id, "App/User"], async(err, result) =>{
-                                          if (err) {
-                                              console.log(err);
-                                              res.status(401).send({error: "Error"});
-                                          }
-                                      })
                                   }
                               })
                           }
