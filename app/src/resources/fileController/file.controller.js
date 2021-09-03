@@ -1943,7 +1943,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -1973,7 +1973,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -3452,6 +3452,39 @@ async function updateBom(){
   })
 }
 
+
+const getNotModelled = async(req, res) =>{
+  sql.query("SELECT unit, area, line, train, spec_code, total_weight FROM not_modelled WHERE diameter IS NULL", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const isocontrolWeights = async(req, res) =>{
+  let modelledWeight, notModelledWeight
+  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_fullview", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      modelledWeight = results[0].modelledWeight
+      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM not_modelled", (err, results)=>{
+        if(err){
+          res.status(401)
+        }else{
+          notModelledWeight = results[0].notModelledWeight
+          res.json({
+            modelledWeight: modelledWeight,
+            notModelledWeight: notModelledWeight
+          })
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3541,4 +3574,6 @@ module.exports = {
   submitElecEstimated,
   submitPipingEstimated,
   getBom,
+  getNotModelled,
+  isocontrolWeights
 };
