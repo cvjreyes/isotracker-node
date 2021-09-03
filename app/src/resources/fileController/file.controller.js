@@ -1924,7 +1924,7 @@ async function uploadReportPeriod(){
             if(process.env.REACT_APP_MMDN == 0){
               sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log(" diameter: ", csv[i].diameter)
+                  console.log("invalid diameter")
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -3417,7 +3417,7 @@ const submitPipingEstimated = (req, res) =>{
 }
 
 const getBom = async(req, res) =>{
-  sql.query("SELECT * FROM isocontrol_fullview", (err, results)=>{
+  sql.query("SELECT * FROM isocontrol_modelled", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3454,7 +3454,7 @@ async function updateBom(){
 
 
 const getNotModelled = async(req, res) =>{
-  sql.query("SELECT unit, area, line, train, spec_code, total_weight FROM not_modelled WHERE diameter IS NULL", (err, results)=>{
+  sql.query("SELECT * FROM isocontrol_not_modelled", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3465,12 +3465,12 @@ const getNotModelled = async(req, res) =>{
 
 const isocontrolWeights = async(req, res) =>{
   let modelledWeight, notModelledWeight
-  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_fullview", (err, results)=>{
+  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_modelled", (err, results)=>{
     if(err){
       res.status(401)
     }else{
       modelledWeight = results[0].modelledWeight
-      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM not_modelled", (err, results)=>{
+      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_not_modelled", (err, results)=>{
         if(err){
           res.status(401)
         }else{
@@ -3482,6 +3482,72 @@ const isocontrolWeights = async(req, res) =>{
         }
       })
     }
+  })
+}
+
+
+cron.schedule("0 */1 * * * *", () => {
+  if(process.env.NODE_CRON == "1"){
+    updateIsocontrolNotModelled()
+    updateIsocontrolModelled()
+    updateLines()
+  }
+  
+})
+
+async function updateIsocontrolNotModelled(){
+    sql.query("DROP TABLE isocontrol_not_modelled", (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+    sql.query("CREATE TABLE isocontrol_not_modelled AS ( SELECT * FROM not_modelled_def_view)", (err, results)=>{
+      if(err){
+        console.log(err)
+      }else{
+        console.log("isocontrol not modelled updated")
+      }
+    })       
+}
+
+async function updateIsocontrolModelled(){
+  sql.query("DROP TABLE isocontrol_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+    }
+  })
+  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrol_fullview)", (err, results)=>{
+    if(err){
+      console.log(err)
+    }else{
+      console.log("isocontrol modelled updated")
+    }
+  })       
+}
+
+async function updateLines(){
+
+  sql.query("TRUNCATE `lines`", (err, results) =>{
+    if(err){
+      console.log(err)
+    }
+  })
+
+  await csv()
+  .fromFile(process.env.NODE_LINES_ROUTE)
+  .then((jsonObj)=>{
+    const csv = jsonObj
+    
+    for(let i = 0; i < csv.length; i++){    
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq).includes("unset")){
+        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq) VALUES(?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
+          if(err){
+            console.log(err)
+          }
+        })
+      }
+    }
+      
   })
 }
 
