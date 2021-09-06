@@ -93,6 +93,7 @@ let routes = (app) => {
   router.post("/submit/piping/estimated", controller.submitPipingEstimated)
 
   router.get("/getBom", controller.getBom)
+  router.post("/updateBOM", controller.updateBom)
   router.get("/getNotModelled", controller.getNotModelled)
   router.get("/isocontrolWeights", controller.isocontrolWeights)
 

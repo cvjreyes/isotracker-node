@@ -1,4 +1,5 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
+const uploadBom = require("../fileMiddleware/bom.middleware");
 const fs = require("fs");
 const bodyParser = require('body-parser')
 const sql = require("../../db.js");
@@ -3426,14 +3427,24 @@ const getBom = async(req, res) =>{
   })
 }
 
-cron.schedule("0 */5 * * * *", () => {
-  if(process.env.NODE_CRON == "1"){
-    updateBom()
-  }
-  
-})
 
-async function updateBom(){
+const updateBom = async(req, res) =>{
+
+  try {
+    await uploadBom.uploadFileMiddleware(req, res);
+
+    if (req.file == undefined) {
+      return res.status(400).send({ message: "Please upload a file!" });
+    }else{
+      res.status(200).send({
+        message: "Uploaded the file successfully: " + req.file.originalname,
+      });
+    }
+  }catch(error){
+    console.log(error)
+  }
+    
+
   readXlsxFile(process.env.NODE_BOM_ROUTE).then((rows) => {
     sql.query("TRUNCATE bomtbl", (err, results) =>{
       if(err){
@@ -3447,6 +3458,7 @@ async function updateBom(){
           })
         }
         console.log("Bom updated")
+        res.status(200)
       }
     })
   })
@@ -3501,7 +3513,7 @@ async function updateIsocontrolNotModelled(){
         console.log(err)
       }
     })
-    sql.query("CREATE TABLE isocontrol_not_modelled AS ( SELECT * FROM not_modelled_def_view)", (err, results)=>{
+    sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM not_modelled_def_view)", (err, results)=>{
       if(err){
         console.log(err)
       }else{
@@ -3539,14 +3551,15 @@ async function updateLines(){
     const csv = jsonObj
     
     for(let i = 0; i < csv.length; i++){    
-      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq).includes("unset")){
-        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq) VALUES(?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq], (err, results)=>{
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq + csv[i].spec).includes("unset")){
+        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code) VALUES(?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec], (err, results)=>{
           if(err){
             console.log(err)
           }
         })
       }
     }
+    console.log("Lines updated")
       
   })
 }
@@ -3640,6 +3653,7 @@ module.exports = {
   submitElecEstimated,
   submitPipingEstimated,
   getBom,
+  updateBom,
   getNotModelled,
   isocontrolWeights
 };
