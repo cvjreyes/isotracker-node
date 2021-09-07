@@ -96,6 +96,8 @@ let routes = (app) => {
   router.post("/updateBOM", controller.updateBom)
   router.get("/getNotModelled", controller.getNotModelled)
   router.get("/isocontrolWeights", controller.isocontrolWeights)
+  router.get("/exportModelled", controller.exportModelled)
+  router.get("/exportNotModelled", controller.exportNotModelled)
 
   app.use(router);
 };

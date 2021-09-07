@@ -3564,6 +3564,55 @@ async function updateLines(){
   })
 }
 
+const exportModelled = async(req, res) =>{
+  sql.query("SELECT unit, area, line, train, fluid, seq, unit as line_id, unit as iso_id, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight FROM isocontrol_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      let rows = results
+      for(let i = 0; i < rows.length; i++){
+        rows[i].line_id = rows[i].unit + rows[i].line
+        rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const exportNotModelled = async(req, res) =>{
+  sql.query("SELECT bom_unit as unit, area, line, train, bom_unit as line_id, bom_unit as iso_id, spec_code, total_weight, LDL, BOM FROM isocontrol_not_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      let rows = results
+      sql.query("SELECT ldl_unit,spec_code_ldl FROM isocontrol_not_modelled", (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          for(let i = 0; i < rows.length; i++){ 
+            if(!rows[i].unit){
+              rows[i].unit = results[i].ldl_unit
+            }
+    
+            if(!rows[i].spec_code){
+              rows[i].spec_code = results[i].spec_code_ldl
+            }
+
+            rows[i].line_id = rows[i].unit + rows[i].line
+            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+    
+    
+          }
+          res.json(JSON.stringify(rows)).status(200)
+        }
+      })
+    }     
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3655,5 +3704,7 @@ module.exports = {
   getBom,
   updateBom,
   getNotModelled,
-  isocontrolWeights
+  isocontrolWeights,
+  exportModelled,
+  exportNotModelled
 };
