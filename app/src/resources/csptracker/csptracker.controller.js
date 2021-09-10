@@ -1,6 +1,7 @@
 const sql = require("../../db.js");
 const fs = require("fs");
 const drawingMiddleware = require("../csptracker/csptracker.middleware");
+const { resolveSrv } = require("dns");
 
 const csptracker = (req, res) =>{
     sql.query("SELECT * FROM csptracker_fullview", (err, results)=>{
@@ -196,6 +197,128 @@ const getDrawing = async(req, res) =>{
     
 }
 
+const getListsData = async(req, res) =>{
+    let descriptionPlaneData = []
+    let diametersData = []
+    let ratingData = []
+    let specData = []
+    let endPreparationData = []
+    let boltTypesData = []
+
+    sql.query("SELECT description_plan_code FROM description_plans", (err, results)=>{
+        if(err){
+            res.status(401)
+        }else{
+            for(let i = 0; i < results.length; i++){
+                descriptionPlaneData.push(results[i].description_plan_code)
+            }
+            sql.query("SELECT nps, dn FROM diameters ORDER BY nps ASC", (err, results)=>{
+                if(err){
+                    res.status(401)
+                }else{
+                    if(process.env.REACT_APP_MMDN === "0"){
+                        for(let i = 0; i < results.length; i++){
+                            diametersData.push(results[i].nps)
+                        }
+                    }else{
+                        for(let i = 0; i < results.length; i++){
+                            diametersData.push(results[i].dn)
+                        }
+                    }
+                    sql.query("SELECT rating FROM ratings", (err, results)=>{
+                        if(err){
+                            res.status(401)
+                        }else{                          
+                            for(let i = 0; i < results.length; i++){
+                                ratingData.push(results[i].rating)
+                            }
+                            sql.query("SELECT spec FROM specs", (err, results)=>{
+                                if(err){
+                                    res.status(401)
+                                }else{                          
+                                    for(let i = 0; i < results.length; i++){
+                                        specData.push(results[i].spec)
+                                    }
+                                    sql.query("SELECT state FROM end_preparations", (err, results)=>{
+                                        if(err){
+                                            res.status(401)
+                                        }else{                          
+                                            for(let i = 0; i < results.length; i++){
+                                                endPreparationData.push(results[i].state)
+                                            }
+                                            sql.query("SELECT type FROM bolt_types", (err, results)=>{
+                                                if(err){
+                                                    res.status(401)
+                                                }else{                          
+                                                    for(let i = 0; i < results.length; i++){
+                                                        boltTypesData.push(results[i].type)
+                                                    }
+                                                    res.json({
+                                                        descriptionPlaneData: descriptionPlaneData,
+                                                        diametersData: diametersData,
+                                                        ratingData: ratingData,
+                                                        specData: specData,
+                                                        endPreparationData: endPreparationData,
+                                                        boltTypesData: boltTypesData
+                                                    }).status(200)
+                                                }
+                                            })
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    })
+                    
+                    
+                }
+            })
+        }
+    })
+}
+
+const submitCSP = async(req, res) =>{
+    const rows = req.body.rows
+    sql.query("TRUNCATE csptracker_bak", (err, results)=>{
+        if(err){
+            console.log(err)
+            res.status(401)
+        }else{
+            sql.query("INSERT INTO csptracker_bak SELECT * FROM csptracker", (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    sql.query("TRUNCATE csptracker", (err, results)=>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }else{
+                            let description_plans_id, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, end_preparations_id, bolt_types_id = ""
+                            for(let i = 0; i < rows.length; i++){
+                                sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                                    if(!results[0]){
+                                        sql.query("INSERT INTO description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
+                                            if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }
+                                        })
+                                    }
+                                    sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                                        let description_plan_code_id = results[0].id
+                                    })
+
+                                })
+                            }
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -205,5 +328,7 @@ module.exports = {
     updateDrawing,
     editCSP,
     exitEditCSP,
-    getDrawing
+    getDrawing,
+    getListsData,
+    submitCSP
   };

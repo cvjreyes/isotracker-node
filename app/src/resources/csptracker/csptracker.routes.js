@@ -12,6 +12,8 @@ let routes = (app) => {
   router.post("/editCSP", controller.editCSP)
   router.post("/exitEditCSP", controller.exitEditCSP)
   router.get("/getDrawing/:fileName", controller.getDrawing)
+  router.get("/getListsData", controller.getListsData)
+  router.post("/submitCSP", controller.submitCSP)
   app.use(router);
 };
 
