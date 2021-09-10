@@ -159,12 +159,21 @@ const piStatus = (req, res) =>{
 
 const download = (req, res) => {
   const fileName = req.params.fileName;
-  let fileName_noext = fileName.split('.').slice(0, -1)[0]
-  if(fileName_noext.includes("-")){
-    fileName_noext = fileName_noext.split('-').slice(0, -1)[0]
+  let master = fileName.split('.').slice(0, -1)[0]
+  if(master.includes("-CL")){
+    master = master.substring(0, master.length - 3)+".pdf"
+  }else{
+    master += ".pdf"
   }
-  console.log(fileName_noext)
-  let where, path = null
+
+  console.log(master)
+  
+  sql.query("SELECT isoid FROM misoctrls WHERE filename = ?", master, (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      let fileName_noext = results[0].isoid
+      let where, path = null
   sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE isoid = ?", fileName_noext, (err, results)=>{
     if(!results[0]){
       res.status(401)
@@ -172,7 +181,10 @@ const download = (req, res) => {
       if(results[0].issued != 1){
         const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
         './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
-        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
+        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/TRASH/attach', './app/storage/isoctrl/issuer/TRASH/attach', './app/storage/isoctrl/lde/TRASH/attach', 
+        './app/storage/isoctrl/materials/TRASH/attach', './app/storage/isoctrl/stress/TRASH/attach','./app/storage/isoctrl/supports/TRASH/attach'];
+
         for(let i = 0; i < folders.length; i++){
           path = folders[i] + '/' + req.params.fileName
           if (fs.existsSync(path)) {
@@ -186,21 +198,28 @@ const download = (req, res) => {
               message: "Could not download the file. " + err,
             });
           }else{
+            res.status(200)
           }
         });
       }else{  
         const trn = results[0].transmittal
-        const date = results[0].issued_date      
+        const date = results[0].issued_date
         res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
           if (err) {
+            console.log("error")
             res.status(500).send({
               message: "Could not download the file. " + err,
             });
+          }else{
+            
           }
         })
       } 
     }
   })
+    }
+  })
+  
 };
 
 const getAttach = (req,res) =>{
@@ -211,8 +230,10 @@ const getAttach = (req,res) =>{
 
   sql.query("SELECT transmittal, issued_date FROM misoctrls WHERE filename = ?", fileName, (err, results)=>{
     if(!results[0].transmittal){
-      folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+        './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
+        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH'];
   
       for(let i = 0; i < folders.length; i++){
         path = folders[i] + '/' + req.params.fileName
@@ -228,24 +249,32 @@ const getAttach = (req,res) =>{
       let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
       let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
+      let trash_attach_path = where + "/TRASH/tattach/"
+      let trash_cl_path = where + "/TRASH/tattach/"+ fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let trash_proc_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let trash_inst_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
       fs.readdir(origin_attach_path, (err, files) => {
-        files.forEach(file => {                          
-          let attachName = file.split('.').slice(0, -1)
-          if(String(masterName).trim() == String(attachName).trim()){
-            allFiles.push(file)
+        if(files){
+          files.forEach(file => {                          
+            let attachName = file.split('.').slice(0, -1)
+            if(String(masterName).trim() == String(attachName).trim()){
+              allFiles.push(file)
+            }
+          });
+          if(fs.existsSync(origin_cl_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
           }
-        });
-        if(fs.existsSync(origin_cl_path)){
-          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+  
+          if(fs.existsSync(origin_proc_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+          }
+  
+          if(fs.existsSync(origin_inst_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+          }
         }
-
-        if(fs.existsSync(origin_proc_path)){
-          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
-        }
-
-        if(fs.existsSync(origin_inst_path)){
-          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
-        }
+        
         res.status(200).json(allFiles)
       });
     }else{
@@ -283,6 +312,7 @@ const getAttach = (req,res) =>{
         if(fs.existsSync(origin_inst_path)){
           allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
         }
+        
         res.status(200).json(allFiles)
       });
     }
