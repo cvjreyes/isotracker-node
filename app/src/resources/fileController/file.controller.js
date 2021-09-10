@@ -160,6 +160,11 @@ const piStatus = (req, res) =>{
 const download = (req, res) => {
   const fileName = req.params.fileName;
   let master = fileName.split('.').slice(0, -1)[0]
+  let issued = false
+  if(master.substring(master.length-3, master.length) === "-0" || master.substring(master.length-3, master.length) === "-1" || master.substring(master.length-3, master.length) === "-2" || master.substring(master.length-3, master.length) === "-3"){
+    issued = true
+  }
+
   if(master.includes("-CL")){
     master = master.substring(0, master.length - 3)+".pdf"
   }else{
@@ -174,7 +179,7 @@ const download = (req, res) => {
     }else{
       let fileName_noext = results[0].isoid
       let where, path = null
-  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE isoid = ?", fileName_noext, (err, results)=>{
+  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE filename = ?", master, (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
