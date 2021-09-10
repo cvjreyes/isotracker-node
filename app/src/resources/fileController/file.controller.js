@@ -166,7 +166,7 @@ const download = (req, res) => {
   console.log(fileName_noext)
   let where, path = null
   sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE isoid = ?", fileName_noext, (err, results)=>{
-    if(!results){
+    if(!results[0]){
       res.status(401)
     }else{
       if(results[0].issued != 1){
