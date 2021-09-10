@@ -159,25 +159,48 @@ const piStatus = (req, res) =>{
 
 const download = (req, res) => {
   const fileName = req.params.fileName;
-  let where, path = null
-  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
-      './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
-  for(let i = 0; i < folders.length; i++){
-    path = folders[i] + '/' + req.params.fileName
-    if (fs.existsSync(path)) {
-      exists = true;
-      where = folders[i]
-    }
+  let fileName_noext = fileName.split('.').slice(0, -1)[0]
+  if(fileName_noext.includes("-")){
+    fileName_noext = fileName_noext.split('-').slice(0, -1)[0]
   }
-  res.download(where + '/' + fileName, fileName, (err) => {
-    if (err) {
-      res.status(500).send({
-        message: "Could not download the file. " + err,
-      });
+  console.log(fileName_noext)
+  let where, path = null
+  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE isoid = ?", fileName_noext, (err, results)=>{
+    if(!results){
+      res.status(401)
     }else{
+      if(results[0].issued != 1){
+        const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+        './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
+        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
+        for(let i = 0; i < folders.length; i++){
+          path = folders[i] + '/' + req.params.fileName
+          if (fs.existsSync(path)) {
+            exists = true;
+            where = folders[i]
+          }
+        }
+        res.download(where + '/' + fileName, fileName, (err) => {
+          if (err) {
+            res.status(500).send({
+              message: "Could not download the file. " + err,
+            });
+          }else{
+          }
+        });
+      }else{  
+        const trn = results[0].transmittal
+        const date = results[0].issued_date      
+        res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
+          if (err) {
+            res.status(500).send({
+              message: "Could not download the file. " + err,
+            });
+          }
+        })
+      } 
     }
-  });
+  })
 };
 
 const getAttach = (req,res) =>{
