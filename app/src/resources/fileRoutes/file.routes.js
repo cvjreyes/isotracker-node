@@ -98,6 +98,7 @@ let routes = (app) => {
   router.get("/isocontrolWeights", controller.isocontrolWeights)
   router.get("/exportModelled", controller.exportModelled)
   router.get("/exportNotModelled", controller.exportNotModelled)
+  router.get("/getIsocontrolFull", controller.getIsocontrolFull)
 
   app.use(router);
 };

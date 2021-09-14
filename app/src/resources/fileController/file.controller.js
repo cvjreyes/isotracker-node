@@ -3613,6 +3613,16 @@ const exportNotModelled = async(req, res) =>{
   })
 }
 
+const getIsocontrolFull = async(req, res)=>{
+  sql.query("SELECT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.unit, isocontrol_all_view.area, isocontrol_all_view.line,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3706,5 +3716,6 @@ module.exports = {
   getNotModelled,
   isocontrolWeights,
   exportModelled,
-  exportNotModelled
+  exportNotModelled,
+  getIsocontrolFull
 };
