@@ -14,6 +14,7 @@ let routes = (app) => {
   router.get("/getDrawing/:fileName", controller.getDrawing)
   router.get("/getListsData", controller.getListsData)
   router.post("/submitCSP", controller.submitCSP)
+  router.get("/tags", controller.tags)
   app.use(router);
 };
 

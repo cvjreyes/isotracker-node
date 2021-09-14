@@ -39,7 +39,6 @@ const cancelReadye3d = (req, res) =>{
 const uploadDrawing = async(req, res) =>{
     try{   
         await drawingMiddleware.uploadFileMiddleware(req, res);
-        console.log(req.file.filename)
         sql.query("SELECT * FROM description_drawings WHERE filename = ?", req.file.filename, (err, results)=>{
             if(!results[0]){
                 res.send({error: true}).status(401)
@@ -109,7 +108,6 @@ const uploadDrawingDB = (req, res) =>{
 const updateDrawing = async(req, res) =>{
     try{   
         await drawingMiddleware.updateFileMiddleware(req, res);
-        console.log(req.file.filename)
         sql.query("SELECT * FROM description_drawings WHERE filename = ?", req.file.filename, (err, results)=>{
             if(!results[0]){
                 res.send({error: true}).status(401)
@@ -170,8 +168,8 @@ const exitEditCSP = async(req, res) =>{
         }else{
             const user_id = results[0].id
             sql.query("SELECT id FROM editing_csp WHERE user_id = ?", user_id, (err, results)=>{
-                if(err){
-                    res.status(401)
+                if(err || !results[0]){               
+                    res.send({success: 1}).status(200)
                 }else{
                     sql.query("TRUNCATE editing_csp", (err, results)=>{
                         if(err){
@@ -279,7 +277,7 @@ const getListsData = async(req, res) =>{
 
 const submitCSP = async(req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE csptracker_bak", (err, results)=>{
+    await sql.query("TRUNCATE csptracker_bak", (err, results)=>{
         if(err){
             console.log(err)
             res.status(401)
@@ -294,27 +292,275 @@ const submitCSP = async(req, res) =>{
                             console.log(err)
                             res.status(401)
                         }else{
-                            let description_plans_id, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, end_preparations_id, bolt_types_id = ""
-                            for(let i = 0; i < rows.length; i++){
-                                sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
-                                    if(!results[0]){
-                                        sql.query("INSERT INTO description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
-                                            if(err){
-                                                console.log(err)
-                                                res.status(401)
-                                            }
-                                        })
-                                    }
+                            for(let i = 0; i < rows.length; i++){  
+                                if(rows[i].tag != "" && rows[i].tag != null){ 
+                                    let drawing_code = null
                                     sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
-                                        let description_plan_code_id = results[0].id
-                                    })
+                                        if(!results){
+                                            results = []
+                                            results[0] = null
+                                        }
+                                        if(!results){
+                                            results[0] = null
+                                        }
+                                        if(!results[0] && rows[i].description_plan_code != null && rows[i].description_plan_code != ""){
+                                            sql.query("INSERT INTO description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
+                                                if(err){
+                                                    console.log(err)
+                                                    res.status(401)
+                                                }
+                                            })
+                                        }
+                                        sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                                            if(!results){
+                                                results = []
+                                                results[0] = null
+                                            }
+                                            if(!results[0]){
+                                                drawing_code = null
+                                            }else{
+                                                drawing_code = rows[i].description_plan_code
+                                                rows[i].description_plan_code = results[0].id
+                                            }
+                                            
+                                            if(process.env.REACT_APP_MMDN == "0"){
+                                                sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p1diameter_nps, (err, results)=>{
+                                                    if(!results){
+                                                        results = []
+                                                        results[0] = null
+                                                    }
+                                                    if(!results[0]){
+                                                        rows[i].p1diameter_nps = null
+                                                    }else{
+                                                        rows[i].p1diameter_nps = results[0].id 
+                                                    }
+                                                    sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p2diameter_nps, (err, results)=>{
+                                                        if(!results){
+                                                            results = []
+                                                            results[0] = null
+                                                        }
+                                                        if(!results[0]){
+                                                            rows[i].p2diameter_nps = null
+                                                        }else{
+                                                            rows[i].p2diameter_nps = results[0].id
+                                                        } 
+                                                        sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p3diameter_nps, (err, results)=>{
+                                                            if(!results){
+                                                                results = []
+                                                                results[0] = null
+                                                            }
+                                                            if(!results[0]){
+                                                                rows[i].p3diameter_nps = null
+                                                            }else{
+                                                                rows[i].p3diameter_nps = results[0].id 
+                                                            }
+                                                            sql.query("SELECT id FROM ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
+                                                                if(!results){
+                                                                    results = []
+                                                                    results[0] = null
+                                                                }
+                                                                if(!results[0]){
+                                                                    rows[i].rating = null
+                                                                }else{
+                                                                    rows[i].rating = results[0].id
+                                                                }
+                                                                sql.query("SELECT id FROM specs WHERE spec = ?", rows[i].spec, (err, results)=>{
+                                                                    if(!results){
+                                                                        results = []
+                                                                        results[0] = null
+                                                                    }
+                                                                    if(!results[0]){
+                                                                        rows[i].spec = null
+                                                                    }else{
+                                                                        rows[i].spec = results[0].id
+                                                                    }
+                                                                    sql.query("SELECT id FROM end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
+                                                                        if(!results){
+                                                                            results = []
+                                                                            results[0] = null
+                                                                        }
+                                                                        if(!results[0]){
+                                                                            rows[i].end_preparation = null
+                                                                        }else{
+                                                                            rows[i].end_preparation = results[0].id
+                                                                        }
+                                                                        sql.query("SELECT id FROM bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
+                                                                            if(!results){
+                                                                                results = []
+                                                                                results[0] = null
+                                                                            }
+                                                                            if(!results[0]){
+                                                                                rows[i].bolt_type = null
+                                                                            }else{
+                                                                                rows[i].bolt_type = results[0].id
+                                                                            }
+                                                                            let description_drawings_id = 0
+                                                                            sql.query("SELECT description_drawings_id FROM description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
+                                                                                if(!results){
+                                                                                    results = []
+                                                                                    results[0] = null
+                                                                                }
+                                                                                if(!results[0]){
+                                                                                    description_drawings_id = null
+                                                                                }else{
+                                                                                    description_drawings_id = results[0].description_drawings_id
+                                                                                }
+                                                                                sql.query("INSERT INTO csptracker(tag, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, face_to_face, end_preparations_id, description_drawings_id, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].face_to_face, rows[i].end_preparation, description_drawings_id, rows[i].bolts, rows[i].bolt_type, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
+                                                                                    if(err){
+                                                                                        console.log(err)
+                                                                                        res.status(401)
+                                                                                    }else{
+                                                                                        
+                                                                                    }
+                                                                                })
+                                                                            })
+                                                                            
+                                                                                                    
+                                                                        })
+                                                                                            
+                                                                    })
+                                                                                
+                                                                })
+                                                                            
+                                                            })
+                                                                    
+                                                        })
+                                                            
+                                                    })
+                                                    
+                                                })
+                                            }else{
+                                                sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p1diameter_dn, (err, results)=>{
+                                                    if(!results){
+                                                        results = []
+                                                        results[0] = null
+                                                    }
+                                                    if(!results[0]){
+                                                        p1_diameters_id = null
+                                                    }else{
+                                                        p1_diameters_id = results[0].id 
+                                                    }
+                                                    sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p2diameter_dn, (err, results)=>{
+                                                        if(!results){
+                                                            results = []
+                                                            results[0] = null
+                                                        }
+                                                        if(!results[0]){
+                                                            p2_diameters_id = null
+                                                        }else{
+                                                            p2_diameters_id = results[0].id
+                                                        } 
+                                                        sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p3diameter_dn, (err, results)=>{
+                                                            if(!results){
+                                                                results = []
+                                                                results[0] = null
+                                                            }
+                                                            if(!results[0]){
+                                                                p3_diameters_id = null
+                                                            }else{
+                                                                p3_diameters_id = results[0].id 
+                                                            }
+                                                            sql.query("SELECT id FROM ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
+                                                                if(!results){
+                                                                    results = []
+                                                                    results[0] = null
+                                                                }
+                                                                if(!results[0]){
+                                                                    ratings_id = null
+                                                                }else{
+                                                                    ratings_id = results[0].id
+                                                                }
+                                                                sql.query("SELECT id FROM specs WHERE spec = ?", rows[i].spec, (err, results)=>{
+                                                                    if(!results){
+                                                                        results = []
+                                                                        results[0] = null
+                                                                    }
+                                                                    if(!results[0]){
+                                                                        specs_id = null
+                                                                    }else{
+                                                                        specs_id = results[0].id
+                                                                    }
+                                                                    sql.query("SELECT id FROM end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
+                                                                        if(!results){
+                                                                            results = []
+                                                                            results[0] = null
+                                                                        }
+                                                                        if(!results[0]){
+                                                                            end_preparations_id = null
+                                                                        }else{
+                                                                            end_preparations_id = results[0].id
+                                                                        }
+                                                                        sql.query("SELECT id FROM bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
+                                                                            if(!results){
+                                                                                results = []
+                                                                                results[0] = null
+                                                                            }
+                                                                            if(!results[0]){
+                                                                                bolt_types_id = null
+                                                                            }else{
+                                                                                bolt_types_id = results[0].id
+                                                                            }
+                                                                            sql.query("SELECT description_drawings_id FROM description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                                                                                if(!results){
+                                                                                    results = []
+                                                                                    results[0] = null
+                                                                                }
+                                                                                if(!results[0]){
+                                                                                    description_drawings_id = null
+                                                                                }else{
+                                                                                    description_drawings_id = results[0].description_drawings_id
+                                                                                }
+                                                                                sql.query("INSERT INTO csptracker(tag, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, face_to_face, end_preparations_id, description_drawings_id, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].description, description_plans_id, rows[i].description_iso, rows[i].ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, rows[i].face_to_face, end_preparations_id, description_drawings_id, rows[i].bolts, bolt_types_id, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
+                                                                                    if(err){
+                                                                                        console.log(err)
+                                                                                        res.status(401)
+                                                                                    }else{
+                                                                                    }
+                                                                                })
+                                                                            })
+                                                                            
+                                                                                                    
+                                                                        })
+                                                                                            
+                                                                    })
+                                                                                
+                                                                })
+                                                                            
+                                                            })
+                                                                    
+                                                        })
+                                                            
+                                                    })
+                                                    
+                                                })
+                                            }
+                                            
+                                        })
 
-                                })
+                                    })
+                            }
                             }
                         }
                     })
+                    
                 }
             })
+        }
+        res.send({success: 1}).status(200)
+    })
+    
+}
+
+const tags = async(req, res) =>{
+    sql.query("SELECT tag FROM csptracker_fullview", (err, results)=>{
+        if(!results[0]){
+            res.send({none:1}).status(200)
+        }else{
+            let tags = []
+            for(let i = 0; i < results.length; i++){
+                tags.push(results[i].tag)
+            }
+            res.send({tags: tags}).status(200)
         }
     })
 }
@@ -330,5 +576,6 @@ module.exports = {
     exitEditCSP,
     getDrawing,
     getListsData,
-    submitCSP
+    submitCSP,
+    tags
   };
