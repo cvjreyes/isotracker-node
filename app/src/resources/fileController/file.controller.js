@@ -3623,6 +3623,16 @@ const getIsocontrolFull = async(req, res)=>{
   })
 }
 
+const isoControlGroupLineId = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3717,5 +3727,6 @@ module.exports = {
   isocontrolWeights,
   exportModelled,
   exportNotModelled,
-  getIsocontrolFull
+  getIsocontrolFull,
+  isoControlGroupLineId
 };

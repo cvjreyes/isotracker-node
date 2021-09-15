@@ -99,6 +99,7 @@ let routes = (app) => {
   router.get("/exportModelled", controller.exportModelled)
   router.get("/exportNotModelled", controller.exportNotModelled)
   router.get("/getIsocontrolFull", controller.getIsocontrolFull)
+  router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
 
   app.use(router);
 };
