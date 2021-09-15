@@ -101,6 +101,8 @@ let routes = (app) => {
   router.get("/getIsocontrolFull", controller.getIsocontrolFull)
   router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
 
+  router.get("/holds", controller.holds)
+
   app.use(router);
 };
 

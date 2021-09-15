@@ -3633,6 +3633,17 @@ const isoControlGroupLineId = async(req, res) =>{
   })
 }
 
+const holds = async(req, res) =>{
+  console.log("SDSADSADSA")
+  sql.query("SELECT holds.*, dpipes_view.isoid FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3728,5 +3739,6 @@ module.exports = {
   exportModelled,
   exportNotModelled,
   getIsocontrolFull,
-  isoControlGroupLineId
+  isoControlGroupLineId,
+  holds
 };
