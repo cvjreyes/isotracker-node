@@ -167,6 +167,10 @@ const download = (req, res) => {
 
   if(master.includes("-CL")){
     master = master.substring(0, master.length - 3)+".pdf"
+  }else if(master.includes("-INST")){
+    master = master.substring(0, master.length - 5)+".pdf"
+  }else if(master.includes("-PROC")){
+    master = master.substring(0, master.length - 5)+".pdf"
   }else{
     master += ".pdf"
   }
