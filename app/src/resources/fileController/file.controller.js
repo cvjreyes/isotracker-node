@@ -3503,6 +3503,7 @@ cron.schedule("0 */1 * * * *", () => {
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
     updateLines()
+    updateHolds()
   }
   
 })
@@ -3634,13 +3635,31 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  console.log("SDSADSADSA")
   sql.query("SELECT holds.*, dpipes_view.isoid FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag", (err, results)=>{
     if(err){
       res.status(401)
     }else{
       res.send({rows: results}).status(200)
     }
+  })
+}
+
+function updateHolds(){
+  readXlsxFile(process.env.NODE_HOLDS_ROUTE).then((rows) => {
+    sql.query("TRUNCATE holds", (err, results) =>{
+      if(err){
+        console.log(err)
+      }else{
+        for(let i = 1; i < rows.length; i++){    
+          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+        console.log("Holds updated")
+      }
+    })
   })
 }
 
