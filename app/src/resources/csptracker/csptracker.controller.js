@@ -1,7 +1,6 @@
 const sql = require("../../db.js");
 const fs = require("fs");
 const drawingMiddleware = require("../csptracker/csptracker.middleware");
-const { resolveSrv } = require("dns");
 
 const csptracker = (req, res) =>{
     sql.query("SELECT * FROM csptracker_fullview", (err, results)=>{
@@ -405,7 +404,7 @@ const submitCSP = async(req, res) =>{
                                                                                 }else{
                                                                                     description_drawings_id = results[0].description_drawings_id
                                                                                 }
-                                                                                sql.query("INSERT INTO csptracker(tag, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, face_to_face, end_preparations_id, description_drawings_id, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].face_to_face, rows[i].end_preparation, description_drawings_id, rows[i].bolts, rows[i].bolt_type, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
+                                                                                sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
                                                                                     if(err){
                                                                                         console.log(err)
                                                                                         res.status(401)
@@ -510,7 +509,7 @@ const submitCSP = async(req, res) =>{
                                                                                 }else{
                                                                                     description_drawings_id = results[0].description_drawings_id
                                                                                 }
-                                                                                sql.query("INSERT INTO csptracker(tag, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, face_to_face, end_preparations_id, description_drawings_id, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].description, description_plans_id, rows[i].description_iso, rows[i].ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, rows[i].face_to_face, end_preparations_id, description_drawings_id, rows[i].bolts, bolt_types_id, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
+                                                                                sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, bolts, bolt_types_id, ready_load, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i].tag, rows[i].quantity, rows[i].description, description_plans_id, rows[i].description_iso, rows[i].ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, rows[i].type, end_preparations_id, description_drawings_id, rows[i].bolts, bolt_types_id, rows[i].ready_load, rows[i].ready_e3d, rows[i].comments], (err, results)=>{
                                                                                     if(err){
                                                                                         console.log(err)
                                                                                         res.status(401)
