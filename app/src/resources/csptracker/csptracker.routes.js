@@ -9,12 +9,15 @@ let routes = (app) => {
   router.post("/uploadDrawing", controller.uploadDrawing);
   router.post("/uploadDrawingDB", controller.uploadDrawingDB);
   router.post("/updateDrawing", controller.updateDrawing)
+  router.post("/updateDrawingDB", controller.updateDrawingDB)
   router.post("/editCSP", controller.editCSP)
   router.post("/exitEditCSP", controller.exitEditCSP)
   router.get("/getDrawing/:fileName", controller.getDrawing)
   router.get("/getListsData", controller.getListsData)
   router.post("/submitCSP", controller.submitCSP)
   router.get("/tags", controller.tags)
+  router.post("/requestSP", controller.requestSP)
+  router.get("/csptrackerRequests", controller.csptrackerRequests)
   app.use(router);
 };
 

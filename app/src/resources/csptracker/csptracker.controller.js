@@ -1,9 +1,10 @@
 const sql = require("../../db.js");
 const fs = require("fs");
 const drawingMiddleware = require("../csptracker/csptracker.middleware");
+var path = require('path')
 
 const csptracker = (req, res) =>{
-    sql.query("SELECT * FROM csptracker_fullview", (err, results)=>{
+    sql.query("SELECT csptracker_fullview.*, description_plans.revision FROM csptracker_fullview LEFT JOIN description_plans ON csptracker_fullview.description_plan_code = description_plans.description_plan_code", (err, results)=>{
         if(err){
             console.log(err)
             res.status(401)
@@ -14,7 +15,7 @@ const csptracker = (req, res) =>{
 }
 
 const readye3d = (req, res) =>{
-    sql.query("UPDATE csptracker SET ready_e3d = 1 WHERE tag = ?", [req.body.tag], (err, results) =>{
+    sql.query("UPDATE csptracker SET ready_e3d = 1, updated = 0 WHERE tag = ?", [req.body.tag], (err, results) =>{
         if(err){
             res.status(401)
             console.log(err)
@@ -125,6 +126,50 @@ const updateDrawing = async(req, res) =>{
             error: true,
           }).status(401);
     }
+}
+
+const updateDrawingDB = async(req, res) =>{
+    const description_plan_code = req.body.description_plan_code
+    const fileName = req.body.fileName
+    sql.query("SELECT id FROM description_plans WHERE description_plan_code = ?", [description_plan_code], (err, results)=>{
+        if(!results[0]){
+            res.status(401)
+        }else{
+            const description_plans_id = results[0].id
+            console.log(description_plans_id)
+            sql.query("UPDATE csptracker SET updated = 1, ready_e3d = 0 WHERE description_plans_id = ? AND ready_e3d = 1", [description_plans_id], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    sql.query("UPDATE description_plans SET revision = revision+1 WHERE id = ?", [description_plans_id], (err, results)=>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }else{
+                            console.log("Drawing updated in db")
+                            sql.query("SELECT revision FROM description_plans WHERE id = ?", [description_plans_id], (err, results)=>{
+                                if(!results[0]){
+                                    res.status(401)
+                                }else{
+                                    const revision = results[0].revision
+                                    const extension = path.extname(fileName)
+                                    const bakFileName = fileName.split('.').slice(0, -1) + "-" + revision + extension
+                                    fs.copyFile('./app/storage/drawings/'+ fileName, './app/storage/drawings/bak/'+ bakFileName, (err) => {
+                                        if (err) throw err;
+                                        console.log('Created drawing backup');
+                                      });
+                                    res.send({success: 1}).status(200)
+                                }
+                            })
+                            
+                        }
+                    })
+                }
+            })
+
+        }
+    })
 }
 
 const editCSP = async(req, res) =>{
@@ -564,6 +609,38 @@ const tags = async(req, res) =>{
     })
 }
 
+const requestSP = async(req, res) =>{
+    const tag = req.body.tag
+    const pid = req.body.pid
+    const sptag = req.body.sptag
+    sql.query("SELECT id FROM csptracker WHERE tag = ?", [sptag], (err, results)=>{
+        if(!results){
+            sql.query("INSERT INTO csptracker_requests(tag, pid, sptag) VALUES(?,?,?)", [tag, pid, sptag], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    res.send({success: 1}).status(200)
+                }
+            })
+        }else{
+            res.send({exists: 1}).status(200)
+        }
+    })
+    
+}
+
+const csptrackerRequests = async(req, res) =>{
+    sql.query("SELECT * FROM csptracker_requests", (err, results)=>{
+        if(err){
+            console.log(err)
+            res.status(401)
+        }else{
+            res.send({rows: results}).status(401)
+        }
+    })
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -571,10 +648,13 @@ module.exports = {
     uploadDrawing,
     uploadDrawingDB,
     updateDrawing,
+    updateDrawingDB,
     editCSP,
     exitEditCSP,
     getDrawing,
     getListsData,
     submitCSP,
-    tags
+    tags,
+    requestSP,
+    csptrackerRequests
   };

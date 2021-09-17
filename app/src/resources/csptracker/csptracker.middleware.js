@@ -2,6 +2,7 @@ const util = require("util");
 const multer = require("multer");
 const maxSize = 2 * 1024 * 1024 * 100;
 const fs = require('fs');
+const { SSL_OP_NO_QUERY_MTU } = require("constants");
 
 let storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -32,6 +33,7 @@ let updateStorage = multer.diskStorage({
 
 
     if (fs.existsSync(path_pdf) || fs.existsSync(path_png)) {
+        
         console.log("Se añade")
         await cb(null, './app/storage/drawings')
     }else{
