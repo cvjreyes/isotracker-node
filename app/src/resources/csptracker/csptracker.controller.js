@@ -613,16 +613,40 @@ const requestSP = async(req, res) =>{
     const tag = req.body.tag
     const pid = req.body.pid
     const sptag = req.body.sptag
+    const email = req.body.user
+    console.log("Empieza request")
     sql.query("SELECT id FROM csptracker WHERE tag = ?", [sptag], (err, results)=>{
-        if(!results){
-            sql.query("INSERT INTO csptracker_requests(tag, pid, sptag) VALUES(?,?,?)", [tag, pid, sptag], (err, results)=>{
-                if(err){
-                    console.log(err)
-                    res.status(401)
-                }else{
-                    res.send({success: 1}).status(200)
-                }
+        if(typeof results !== 'undefined'){
+            sql.query("SELECT id FROM roles WHERE name = Materials)", (err, results1)=>{
+                const mat_id = 7
+                sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = ?", [mat_id], (err, results)=>{
+                    if(!results[0]){
+                        console.log("No users with materials role")
+                        res.status(401)
+                    }else{
+                        const recievers = results
+                        sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+                            const sender = results[0].id
+                            for(let i = 0; i < recievers.length; i++){
+                                sql.query("INSERT INTO csptracker_requests(tag, pid, sptag, sent_user_id, rec_user_id) VALUES(?,?,?,?,?)", [tag, pid, sptag, sender, recievers[i].model_id], (err, results)=>{
+                                    if(err){
+                                        console.log(err)
+                                        res.status(401)
+                                    }else{
+                                        
+                                    }
+                                })
+
+                            }
+                            console.log("Request sent")
+                            res.send({success: 1}).status(200)
+
+                        })
+                    }
+                })
+
             })
+
         }else{
             res.send({exists: 1}).status(200)
         }
@@ -631,14 +655,85 @@ const requestSP = async(req, res) =>{
 }
 
 const csptrackerRequests = async(req, res) =>{
-    sql.query("SELECT * FROM csptracker_requests", (err, results)=>{
+    const email = req.params.email
+    sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+        const userid = results[0].id
+        sql.query("SELECT * FROM csptracker_requests WHERE rec_user_id = ? ORDER BY 1 DESC", [userid], (err, results)=>{
+            if(err){
+                console.log(err)
+                res.status(401)
+            }else{
+                res.send({rows: results}).status(200)
+            }
+        })
+    })
+    
+}
+
+const markAsRead = async(req, res) =>{
+    const sptag = req.body.sptag
+    const email = req.body.user
+    sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+        const userid = results[0].id
+        sql.query("UPDATE csptracker_requests SET `read` = 1 WHERE rec_user_id = ? AND sptag = ?", [userid, sptag], (err, results)=>{
+            if(err){
+                console.log(err)
+                res.status(401)
+            }else{
+                res.send({success: 1}).status(200)
+            }
+        })
+    })
+}
+
+const markAsUnread = async(req, res) =>{
+    const sptag = req.body.sptag
+    const email = req.body.user
+    sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+        const userid = results[0].id
+        sql.query("UPDATE csptracker_requests SET `read` = 0 WHERE rec_user_id = ? AND sptag = ?", [userid, sptag], (err, results)=>{
+            if(err){
+                console.log(err)
+                res.status(401)
+            }else{
+                res.send({success: 1}).status(200)
+            }
+        })
+    })  
+}
+
+const rejectRequest = async(req, res) =>{
+    const sptag = req.body.sptag
+    sql.query("DELETE FROM csptracker_requests WHERE sptag = ?", [sptag], (err, results)=>{
         if(err){
             console.log(err)
             res.status(401)
         }else{
-            res.send({rows: results}).status(401)
+            //notificar design
+            res.send({success: 1}).status(200)
         }
-    })
+    }) 
+}
+
+const acceptRequest = async(req, res) =>{
+    const sptag = req.body.sptag
+    sql.query("DELETE FROM csptracker_requests WHERE sptag = ?", [sptag], (err, results)=>{
+        if(err){
+            console.log(err)
+            res.status(401)
+        }else{
+            sql.query("INSERT INTO csptracker(tag) VALUES(?)", [sptag], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    //notificar design
+                    res.send({success: 1}).status(200)
+                }
+            })
+           
+        }
+    }) 
 }
 
 module.exports = {
@@ -656,5 +751,9 @@ module.exports = {
     submitCSP,
     tags,
     requestSP,
-    csptrackerRequests
+    csptrackerRequests,
+    markAsRead,
+    markAsUnread,
+    rejectRequest,
+    acceptRequest
   };

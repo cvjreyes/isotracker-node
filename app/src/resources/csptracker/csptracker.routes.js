@@ -17,7 +17,11 @@ let routes = (app) => {
   router.post("/submitCSP", controller.submitCSP)
   router.get("/tags", controller.tags)
   router.post("/requestSP", controller.requestSP)
-  router.get("/csptrackerRequests", controller.csptrackerRequests)
+  router.get("/csptrackerRequests/:email", controller.csptrackerRequests)
+  router.post("/markAsRead", controller.markAsRead)
+  router.post("/markAsUnread", controller.markAsUnread)
+  router.post("/rejectRequest", controller.rejectRequest)
+  router.post("/acceptRequest", controller.acceptRequest)
   app.use(router);
 };
 
