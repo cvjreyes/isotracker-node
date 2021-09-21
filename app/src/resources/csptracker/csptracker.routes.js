@@ -22,6 +22,11 @@ let routes = (app) => {
   router.post("/markAsUnread", controller.markAsUnread)
   router.post("/rejectRequest", controller.rejectRequest)
   router.post("/acceptRequest", controller.acceptRequest)
+  router.post("/deleteNotification", controller.deleteNotification)
+  router.get("/csptrackerDesignRequests/:email", controller.csptrackerDesignRequests)
+  router.post("/designMarkAsRead", controller.designMarkAsRead)
+  router.post("/designMarkAsUnread", controller.designMarkAsUnread)
+  router.post("/deleteDesignNotification", controller.deleteDesignNotification)
   app.use(router);
 };
 
