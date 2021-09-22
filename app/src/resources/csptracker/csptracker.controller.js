@@ -816,7 +816,6 @@ const deleteNotification = async(req, res) =>{
 
 const csptrackerDesignRequests = async(req, res) =>{
     const email = req.params.email
-    console.log(email)
     sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
         const userid = results[0].id
         sql.query("SELECT * FROM csptracker_design_requests WHERE rec_user_id = ? ORDER BY 1 DESC", [userid], (err, results)=>{
