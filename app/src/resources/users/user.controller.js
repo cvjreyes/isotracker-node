@@ -418,7 +418,7 @@ exports.notifications = (req, res) =>{
   const email = req.params.email
   sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
       const userid = results[0].id
-      sql.query("SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC", [userid], (err, results)=>{
+      sql.query("SELECT * FROM notifications WHERE users_id = ? ORDER BY id DESC", [userid], (err, results)=>{
           if(err){
               console.log(err)
               res.status(401)
@@ -433,7 +433,7 @@ exports.markAllNotificationsAsRead = (req, res) =>{
   const email = req.body.email
   sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
       const userid = results[0].id
-      sql.query("UPDATE notifications SET `read` = 1 WHERE user_id = ?", [userid], (err, results)=>{
+      sql.query("UPDATE notifications SET `read` = 1 WHERE users_id = ?", [userid], (err, results)=>{
           if(err){
               console.log(err)
               res.status(401)
