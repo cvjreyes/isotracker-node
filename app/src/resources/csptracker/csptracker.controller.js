@@ -274,7 +274,7 @@ const getListsData = async(req, res) =>{
     let endPreparationData = []
     let boltTypesData = []
 
-    sql.query("SELECT description_plan_code FROM description_plans", (err, results)=>{
+    sql.query("SELECT description_plan_code FROM csptracker_description_plans", (err, results)=>{
         if(err){
             res.status(401)
         }else{
@@ -294,28 +294,28 @@ const getListsData = async(req, res) =>{
                             diametersData.push(results[i].dn)
                         }
                     }
-                    sql.query("SELECT rating FROM ratings", (err, results)=>{
+                    sql.query("SELECT rating FROM csptracker_ratings", (err, results)=>{
                         if(err){
                             res.status(401)
                         }else{                          
                             for(let i = 0; i < results.length; i++){
                                 ratingData.push(results[i].rating)
                             }
-                            sql.query("SELECT spec FROM specs", (err, results)=>{
+                            sql.query("SELECT spec FROM csptracker_specs", (err, results)=>{
                                 if(err){
                                     res.status(401)
                                 }else{                          
                                     for(let i = 0; i < results.length; i++){
                                         specData.push(results[i].spec)
                                     }
-                                    sql.query("SELECT state FROM end_preparations", (err, results)=>{
+                                    sql.query("SELECT state FROM csptracker_end_preparations", (err, results)=>{
                                         if(err){
                                             res.status(401)
                                         }else{                          
                                             for(let i = 0; i < results.length; i++){
                                                 endPreparationData.push(results[i].state)
                                             }
-                                            sql.query("SELECT type FROM bolt_types", (err, results)=>{
+                                            sql.query("SELECT type FROM csptracker_bolt_types", (err, results)=>{
                                                 if(err){
                                                     res.status(401)
                                                 }else{                          
@@ -367,7 +367,7 @@ const submitCSP = async(req, res) =>{
                                     results[0] = null
                                 }
                                 if(!results[0] && rows[i].description_plan_code != null && rows[i].description_plan_code != ""){
-                                    sql.query("INSERT INTO description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
+                                    sql.query("INSERT INTO csptracker_description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
                                         if(err){
                                             console.log(err)
                                             res.status(401)
