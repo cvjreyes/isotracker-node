@@ -92,6 +92,8 @@ let routes = (app) => {
   router.post("/submit/electrical/estimated", controller.submitElecEstimated)
   router.post("/submit/piping/estimated", controller.submitPipingEstimated)
 
+  router.post("/uploadNotifications", controller.uploadNotifications)
+
   app.use(router);
 };
 
