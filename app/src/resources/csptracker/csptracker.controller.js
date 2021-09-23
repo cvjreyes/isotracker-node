@@ -131,6 +131,7 @@ const updateDrawing = async(req, res) =>{
 const updateDrawingDB = async(req, res) =>{
     const description_plan_code = req.body.description_plan_code
     const fileName = req.body.fileName
+    const email = req.body.email
     sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", [description_plan_code], (err, results)=>{
         if(!results[0]){
             res.status(401)
@@ -159,7 +160,33 @@ const updateDrawingDB = async(req, res) =>{
                                         if (err) throw err;
                                         console.log('Created drawing backup');
                                       });
-                                    res.send({success: 1}).status(200)
+
+                                    sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                                        let updater = null
+                                        if(results[0]){
+                                            updater = results[0].name
+                                        }
+                                        sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
+                                            if(!results[0]){
+                                                res.send({success: 1}).status(200)
+                                            }else{
+                                                const users_ids = results
+                                                for(let i = 0; i < users_ids.length; i++){
+                                                    sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[i].model_id, "The drawing for the plan " + description_plan_code + " has been updated by " + updater + "."], (err, results)=>{
+                                                        if(err){
+                                                            console.log(err)
+                                                            res.status(401)
+                                                        }else{
+                                                            
+                                                        }
+                                                    })
+                                                }
+                                                res.send({success: 1}).status(200)
+                                            }
+                                        })
+                                    })
+                                    
+                                    
                                 }
                             })
                             
@@ -321,6 +348,7 @@ const getListsData = async(req, res) =>{
 
 const submitCSP = async(req, res) =>{
     const rows = req.body.rows
+    const email = req.body.email
     await sql.query("TRUNCATE csptracker_bak", (err, results)=>{
         if(err){
             console.log(err)
@@ -454,6 +482,30 @@ const submitCSP = async(req, res) =>{
                                                                                                     if(err){
                                                                                                         console.log(err)
                                                                                                         res.status(401)
+                                                                                                    }else{
+                                                                                                        sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                                                                                                            let updater = null
+                                                                                                            if(results[0]){
+                                                                                                                updater = results[0].name
+                                                                                                            }
+                                                                                                            sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
+                                                                                                                if(!results[0]){
+                                                                                                                    res.send({success: 1}).status(200)
+                                                                                                                }else{
+                                                                                                                    const users_ids = results
+                                                                                                                    for(let j = 0; j < users_ids.length; j++){
+                                                                                                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
+                                                                                                                            if(err){
+                                                                                                                                console.log(err)
+                                                                                                                                res.status(401)
+                                                                                                                            }else{
+                                                                                                                                
+                                                                                                                            }
+                                                                                                                        })
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            })
+                                                                                                        })
                                                                                                     }
                                                                                                 })
                                                                                             }
@@ -580,6 +632,30 @@ const submitCSP = async(req, res) =>{
                                                                                                     if(err){
                                                                                                         console.log(err)
                                                                                                         res.status(401)
+                                                                                                    }else{
+                                                                                                        sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                                                                                                            let updater = null
+                                                                                                            if(results[0]){
+                                                                                                                updater = results[0].name
+                                                                                                            }
+                                                                                                            sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
+                                                                                                                if(!results[0]){
+                                                                                                                    res.send({success: 1}).status(200)
+                                                                                                                }else{
+                                                                                                                    const users_ids = results
+                                                                                                                    for(let j = 0; j < users_ids.length; j++){
+                                                                                                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
+                                                                                                                            if(err){
+                                                                                                                                console.log(err)
+                                                                                                                                res.status(401)
+                                                                                                                            }else{
+                                                                                                                                
+                                                                                                                            }
+                                                                                                                        })
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            })
+                                                                                                        })
                                                                                                     }
                                                                                                 })
                                                                                             }
@@ -658,15 +734,23 @@ const requestSP = async(req, res) =>{
                         res.status(401)
                     }else{
                         const recievers = results
-                        sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+                        sql.query("SELECT id, name FROM users WHERE email = ?", [email],(err, results)=>{
                             const sender = results[0].id
+                            const sender_name = results[0].name
                             for(let i = 0; i < recievers.length; i++){
                                 sql.query("INSERT INTO csptracker_requests(tag, pid, sptag, sent_user_id, rec_user_id) VALUES(?,?,?,?,?)", [tag, pid, sptag, sender, recievers[i].model_id], (err, results)=>{
                                     if(err){
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        
+                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [recievers[i].model_id, "New request for the SP " + sptag + " by " + sender_name + "."], (err, results)=>{
+                                            if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }else{
+                                                
+                                            }
+                                        })
                                     }
                                 })
 
@@ -737,20 +821,35 @@ const markAsUnread = async(req, res) =>{
 
 const rejectRequest = async(req, res) =>{
     const sptag = req.body.sptag
+    const email = req.body.email
     sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
+        const sent_user_id = results[0].sent_user_id
         if(!results[0]){
             res.status(401)
         }else{
-            const sp = results[0]
-            sql.query("UPDATE csptracker_requests SET `read` = 3 WHERE sptag = ?", [sptag], (err, results)=>{
-                if(err){
-                    console.log(err)
-                    res.status(401)
+            sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                let rejector = null
+                if(!results[0]){
+
                 }else{
-                    res.send({success: 1}).status(200)
-                   
+                    rejector = results[0].name
                 }
-            }) 
+                sql.query("UPDATE csptracker_requests SET `read` = 3 WHERE sptag = ?", [sptag], (err, results)=>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }else{
+                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [sent_user_id, "The request for the SP " + sptag + " has been rejected by " + rejector + "."], (err, results)=>{
+                            if(err){
+                                console.log(err)
+                                res.status(401)
+                            }else{
+                                res.send({success: 1}).status(200)
+                            }
+                        })     
+                    }
+                }) 
+            })           
         }
     })
     
@@ -758,27 +857,35 @@ const rejectRequest = async(req, res) =>{
 
 const acceptRequest = async(req, res) =>{
     const sptag = req.body.sptag
+    const email = req.body.email
     sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
+        const sent_user_id = results[0].sent_user_id
         if(!results[0]){
             res.status(401)
         }else{
-            const sp = results[0]
-            sql.query("UPDATE csptracker_requests SET `read` = 2 WHERE sptag = ?", [sptag], (err, results)=>{
-                if(err){
-                    console.log(err)
-                    res.status(401)
+            sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                let rejector = null
+                if(!results[0]){
+
                 }else{
-                    sql.query("INSERT INTO csptracker(tag) VALUES(?)", [sptag], (err, results)=>{
-                        if(err){
-                            console.log(err)
-                            res.status(401)
-                        }else{
-                            res.send({success: 1}).status(200)
-                        }
-                    })
-                   
+                    rejector = results[0].name
                 }
-            }) 
+                sql.query("UPDATE csptracker_requests SET `read` = 2 WHERE sptag = ?", [sptag], (err, results)=>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }else{
+                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [sent_user_id, "The request for the SP " + sptag + " has been accepted by " + rejector + "."], (err, results)=>{
+                            if(err){
+                                console.log(err)
+                                res.status(401)
+                            }else{
+                                res.send({success: 1}).status(200)
+                            }
+                        })     
+                    }
+                }) 
+            })           
         }
     })
     
