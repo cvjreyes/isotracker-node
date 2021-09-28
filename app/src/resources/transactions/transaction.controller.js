@@ -1168,7 +1168,7 @@ const returnIso = async(req, res) =>{
                     }
     
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, "Unclaimed by leader", username, dest_role], (err, results) => {
+                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, comments, username, dest_role], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
