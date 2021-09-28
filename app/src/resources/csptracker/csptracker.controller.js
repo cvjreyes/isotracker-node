@@ -858,8 +858,10 @@ const rejectRequest = async(req, res) =>{
 const acceptRequest = async(req, res) =>{
     const sptag = req.body.sptag
     const email = req.body.email
+    console.log("ACEPTAR")
     sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
         const sent_user_id = results[0].sent_user_id
+        const sptag = results[0].sptag
         if(!results[0]){
             res.status(401)
         }else{
@@ -875,14 +877,22 @@ const acceptRequest = async(req, res) =>{
                         console.log(err)
                         res.status(401)
                     }else{
-                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [sent_user_id, "The request for the SP " + sptag + " has been accepted by " + rejector + "."], (err, results)=>{
+                        sql.query("INSERT INTO csptracker(tag) VALUES(?)", [sptag], (err, results)=>{
                             if(err){
                                 console.log(err)
                                 res.status(401)
                             }else{
-                                res.send({success: 1}).status(200)
+                                sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [sent_user_id, "The request for the SP " + sptag + " has been accepted by " + rejector + "."], (err, results)=>{
+                                    if(err){
+                                        console.log(err)
+                                        res.status(401)
+                                    }else{
+                                        res.send({success: 1}).status(200)
+                                    }
+                                })  
                             }
-                        })     
+                        })
+                           
                     }
                 }) 
             })           
@@ -892,7 +902,7 @@ const acceptRequest = async(req, res) =>{
 }
 
 const deleteCSPNotification = async(req, res) =>{
-    console.log("ASD")
+
     const sptag = req.body.sptag
     const email = req.body.user
     sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
@@ -908,7 +918,26 @@ const deleteCSPNotification = async(req, res) =>{
     })  
 }
 
-
+const downloadCSP = async(req, res) =>{
+    if(process.env.REACT_APP_MMDN === "0"){
+        sql.query("SELECT tag, quantity, type, description, description_plan_code, description_iso, ident, p1diameter_nps, p2diameter_nps, p3diameter_nps, rating, spec, end_preparation, face_to_face, bolts, bolt_type, comments, ready_load, ready_e3d, updated FROM csptrackerfull_view", (err, results) =>{
+            if(!results[0]){
+              res.status(401)
+            }else{   
+              res.json(JSON.stringify(results)).status(200)
+            }
+          })
+    }else{
+        sql.query("SELECT tag, quantity, type, description, description_plan_code, description_iso, ident, p1diameter_dn, p2diameter_dn, p3diameter_dn, rating, spec, end_preparation, face_to_face, bolts, bolt_type, comments, ready_load, ready_e3d, updated FROM csptrackerfull_view", (err, results) =>{
+            if(!results[0]){
+              res.status(401)
+            }else{   
+              res.json(JSON.stringify(results)).status(200)
+            }
+          })
+    }
+    
+}
 
 module.exports = {
     csptracker,
@@ -931,4 +960,5 @@ module.exports = {
     rejectRequest,
     acceptRequest,
     deleteCSPNotification,
+    downloadCSP
   };

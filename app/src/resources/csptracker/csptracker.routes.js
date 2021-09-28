@@ -23,6 +23,7 @@ let routes = (app) => {
   router.post("/rejectRequest", controller.rejectRequest)
   router.post("/acceptRequest", controller.acceptRequest)
   router.post("/deleteCSPNotification", controller.deleteCSPNotification)
+  router.get("/downloadCSP", controller.downloadCSP)
   app.use(router);
 };
 
