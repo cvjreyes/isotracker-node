@@ -137,7 +137,6 @@ const updateDrawingDB = async(req, res) =>{
             res.status(401)
         }else{
             const description_plans_id = results[0].id
-            console.log(description_plans_id)
             sql.query("UPDATE csptracker SET updated = 1, ready_e3d = 0 WHERE description_plans_id = ? AND ready_e3d = 1", [description_plans_id], (err, results)=>{
                 if(err){
                     console.log(err)
@@ -723,7 +722,6 @@ const requestSP = async(req, res) =>{
     const pid = req.body.pid
     const sptag = req.body.sptag
     const email = req.body.user
-    console.log("Empieza request")
     sql.query("SELECT id FROM csptracker WHERE tag = ?", [sptag], (err, results)=>{
         if(typeof results === 'undefined' || !results[0]){
             sql.query("SELECT id FROM roles WHERE name = Materials)", (err, results1)=>{
@@ -858,7 +856,6 @@ const rejectRequest = async(req, res) =>{
 const acceptRequest = async(req, res) =>{
     const sptag = req.body.sptag
     const email = req.body.email
-    console.log("ACEPTAR")
     sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
         const sent_user_id = results[0].sent_user_id
         const sptag = results[0].sptag
