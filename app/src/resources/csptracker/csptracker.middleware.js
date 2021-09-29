@@ -6,8 +6,8 @@ const { SSL_OP_NO_QUERY_MTU } = require("constants");
 
 let storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const path_pdf = './app/storage/drawings/' + file.originalname.split('.').slice(0, -1) + ".pdf";
-    const path_png = './app/storage/drawings/' + file.originalname.split('.').slice(0, -1) + ".png";
+    const path_pdf = './app/storage/csptracker/drawings/' + file.originalname.split('.').slice(0, -1) + ".pdf";
+    const path_png = './app/storage/csptracker/drawings/' + file.originalname.split('.').slice(0, -1) + ".png";
 
 
     if (!fs.existsSync(path_pdf) && !fs.existsSync(path_png)) {
@@ -28,8 +28,8 @@ let storage = multer.diskStorage({
 
 let updateStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const path_pdf = './app/storage/drawings/' + file.originalname.split('.').slice(0, -1) + ".pdf";
-    const path_png = './app/storage/drawings/' + file.originalname.split('.').slice(0, -1) + ".png";
+    const path_pdf = './app/storage/csptracker/drawings/' + file.originalname.split('.').slice(0, -1) + ".pdf";
+    const path_png = './app/storage/csptracker/drawings/' + file.originalname.split('.').slice(0, -1) + ".png";
 
 
     if (fs.existsSync(path_pdf) || fs.existsSync(path_png)) {
