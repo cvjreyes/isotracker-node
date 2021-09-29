@@ -355,7 +355,7 @@ const submitCSP = async(req, res) =>{
         }else{
                    
                     for(let i = 0; i < rows.length; i++){  
-                        if(rows[i].quantity = ''){
+                        if(rows[i].quantity == ''){
                             rows[i].quantity = null
                         }
                         if(rows[i].tag != "" && rows[i].tag != null){ 
