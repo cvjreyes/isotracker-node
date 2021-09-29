@@ -786,11 +786,11 @@ const csptrackerRequests = async(req, res) =>{
 }
 
 const markAsRead = async(req, res) =>{
-    const sptag = req.body.sptag
+    const id = req.body.id
     const email = req.body.user
     sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
         const userid = results[0].id
-        sql.query("UPDATE csptracker_requests SET `read` = 1 WHERE rec_user_id = ? AND sptag = ?", [userid, sptag], (err, results)=>{
+        sql.query("UPDATE csptracker_requests SET `read` = 1 WHERE rec_user_id = ? AND id = ?", [userid, id], (err, results)=>{
             if(err){
                 console.log(err)
                 res.status(401)
@@ -802,11 +802,11 @@ const markAsRead = async(req, res) =>{
 }
 
 const markAsUnread = async(req, res) =>{
-    const sptag = req.body.sptag
+    const id = req.body.id
     const email = req.body.user
     sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
         const userid = results[0].id
-        sql.query("UPDATE csptracker_requests SET `read` = 0 WHERE rec_user_id = ? AND sptag = ?", [userid, sptag], (err, results)=>{
+        sql.query("UPDATE csptracker_requests SET `read` = 0 WHERE rec_user_id = ? AND id = ?", [userid, id], (err, results)=>{
             if(err){
                 console.log(err)
                 res.status(401)
@@ -818,10 +818,11 @@ const markAsUnread = async(req, res) =>{
 }
 
 const rejectRequest = async(req, res) =>{
-    const sptag = req.body.sptag
+    const id = req.body.id
     const email = req.body.email
-    sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
+    sql.query("SELECT * FROM csptracker_requests WHERE id = ? LIMIT 1", [id], (err, results)=>{
         const sent_user_id = results[0].sent_user_id
+        const sptag = results[0].sptag
         if(!results[0]){
             res.status(401)
         }else{
@@ -832,7 +833,7 @@ const rejectRequest = async(req, res) =>{
                 }else{
                     rejector = results[0].name
                 }
-                sql.query("UPDATE csptracker_requests SET `read` = 3 WHERE sptag = ?", [sptag], (err, results)=>{
+                sql.query("UPDATE csptracker_requests SET `read` = 3 WHERE id = ?", [id], (err, results)=>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -854,9 +855,9 @@ const rejectRequest = async(req, res) =>{
 }
 
 const acceptRequest = async(req, res) =>{
-    const sptag = req.body.sptag
+    const id = req.body.id
     const email = req.body.email
-    sql.query("SELECT * FROM csptracker_requests WHERE sptag = ? LIMIT 1", [sptag], (err, results)=>{
+    sql.query("SELECT * FROM csptracker_requests WHERE id = ? LIMIT 1", [id], (err, results)=>{
         const sent_user_id = results[0].sent_user_id
         const sptag = results[0].sptag
         if(!results[0]){
@@ -869,7 +870,7 @@ const acceptRequest = async(req, res) =>{
                 }else{
                     rejector = results[0].name
                 }
-                sql.query("UPDATE csptracker_requests SET `read` = 2 WHERE sptag = ?", [sptag], (err, results)=>{
+                sql.query("UPDATE csptracker_requests SET `read` = 2 WHERE id = ?", [id], (err, results)=>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -900,11 +901,11 @@ const acceptRequest = async(req, res) =>{
 
 const deleteCSPNotification = async(req, res) =>{
 
-    const sptag = req.body.sptag
+    const id = req.body.id
     const email = req.body.user
     sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
         const userid = results[0].id
-        sql.query("DELETE FROM csptracker_requests WHERE rec_user_id = ? AND sptag = ?", [userid, sptag], (err, results)=>{
+        sql.query("DELETE FROM csptracker_requests WHERE rec_user_id = ? AND id = ?", [userid, id], (err, results)=>{
             if(err){
                 console.log(err)
                 res.status(401)
