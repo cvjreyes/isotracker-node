@@ -3538,6 +3538,16 @@ const uploadNotifications = (req, res) =>{
 })
 }
 
+const lastUser = async(req, res) =>{
+  sql.query("SELECT `user` FROM hisoctrls WHERE filename = ? ORDER BY id DESC LIMIT 1", [req.params.filename], (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.send({user: results[0].user}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3626,5 +3636,6 @@ module.exports = {
   submitElecSteps,
   submitElecEstimated,
   submitPipingEstimated,
+  lastUser
   uploadNotifications
 };
