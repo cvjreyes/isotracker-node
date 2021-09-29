@@ -94,6 +94,8 @@ let routes = (app) => {
 
   router.get("/lastUser/:filename", controller.lastUser)
 
+  router.post("/uploadNotifications", controller.uploadNotifications)
+
   app.use(router);
 };
 

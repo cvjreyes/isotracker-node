@@ -3517,6 +3517,27 @@ const submitPipingEstimated = (req, res) =>{
 
 }
 
+const uploadNotifications = (req, res) =>{
+  const n = req.body.n
+  sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 1 OR role_id = 2 OR role_id = 9", (err, results)=>{
+    if(!results[0]){
+        res.send({success: 1}).status(200)
+    }else{
+        const users_ids = results
+        for(let j = 0; j < users_ids.length; j++){
+            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" new isometric/s uploaded to design."], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    
+                }
+            })
+        }
+    }
+})
+}
+
 const lastUser = async(req, res) =>{
   sql.query("SELECT `user` FROM hisoctrls WHERE filename = ? ORDER BY id DESC LIMIT 1", [req.params.filename], (err, results)=>{
     if(!results[0]){
@@ -3615,5 +3636,6 @@ module.exports = {
   submitElecSteps,
   submitElecEstimated,
   submitPipingEstimated,
-  lastUser
+  lastUser,
+  uploadNotifications
 };
