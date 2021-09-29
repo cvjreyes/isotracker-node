@@ -200,14 +200,14 @@ const updateDrawingDB = async(req, res) =>{
 
 const editCSP = async(req, res) =>{
     const email = req.body.user
-    sql.query("SELECT user_id FROM editing_csp", email, (err, results)=>{
+    sql.query("SELECT user_id FROM csptracker_editing_csp", email, (err, results)=>{
         if(!results[0]){
             sql.query("SELECT id FROM users WHERE email = ?", email, (err, results)=>{
                 if(!results[0]){
                     res.status(401)
                 }else{
                     const user_id = results[0].id
-                    sql.query("INSERT INTO editing_csp(user_id) VALUES(?)", user_id, (err, results)=>{
+                    sql.query("INSERT INTO csptracker_editing_csp(user_id) VALUES(?)", user_id, (err, results)=>{
                         if(err){
                             res.status(401)
                         }else{
@@ -237,11 +237,11 @@ const exitEditCSP = async(req, res) =>{
             res.status(401)
         }else{
             const user_id = results[0].id
-            sql.query("SELECT id FROM editing_csp WHERE user_id = ?", user_id, (err, results)=>{
+            sql.query("SELECT id FROM csptracker_editing_csp WHERE user_id = ?", user_id, (err, results)=>{
                 if(err || !results[0]){               
                     res.send({success: 1}).status(200)
                 }else{
-                    sql.query("TRUNCATE editing_csp", (err, results)=>{
+                    sql.query("TRUNCATE csptracker_editing_csp", (err, results)=>{
                         if(err){
                             res.status(401)
                         }else{
