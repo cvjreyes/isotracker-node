@@ -380,6 +380,7 @@ const submitCSP = async(req, res) =>{
                                     }
                                     if(!results[0]){
                                         drawing_code = null
+                                        rows[i].description_plan_code = null
                                     }else{
                                         drawing_code = rows[i].description_plan_code
                                         rows[i].description_plan_code = results[0].id
@@ -543,9 +544,9 @@ const submitCSP = async(req, res) =>{
                                                 results[0] = null
                                             }
                                             if(!results[0]){
-                                                p1_diameters_id = null
+                                                rows[i].p1diameter_dn = null
                                             }else{
-                                                p1_diameters_id = results[0].id 
+                                                rows[i].p1diameter_dn = results[0].id 
                                             }
                                             sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p2diameter_dn, (err, results)=>{
                                                 if(!results){
@@ -553,9 +554,9 @@ const submitCSP = async(req, res) =>{
                                                     results[0] = null
                                                 }
                                                 if(!results[0]){
-                                                    p2_diameters_id = null
+                                                    rows[i].p2diameter_dn = null
                                                 }else{
-                                                    p2_diameters_id = results[0].id
+                                                    rows[i].p2diameter_dn = results[0].id
                                                 } 
                                                 sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p3diameter_dn, (err, results)=>{
                                                     if(!results){
@@ -563,9 +564,9 @@ const submitCSP = async(req, res) =>{
                                                         results[0] = null
                                                     }
                                                     if(!results[0]){
-                                                        p3_diameters_id = null
+                                                        rows[i].p3diameter_dn = null
                                                     }else{
-                                                        p3_diameters_id = results[0].id 
+                                                        rows[i].p3diameter_dn = results[0].id 
                                                     }
                                                     sql.query("SELECT id FROM csptracker_ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
                                                         if(!results){
@@ -573,9 +574,9 @@ const submitCSP = async(req, res) =>{
                                                             results[0] = null
                                                         }
                                                         if(!results[0]){
-                                                            ratings_id = null
+                                                            rows[i].rating = null
                                                         }else{
-                                                            ratings_id = results[0].id
+                                                            rows[i].rating = results[0].id
                                                         }
                                                         sql.query("SELECT id FROM csptracker_specs WHERE spec = ?", rows[i].spec, (err, results)=>{
                                                             if(!results){
@@ -583,9 +584,9 @@ const submitCSP = async(req, res) =>{
                                                                 results[0] = null
                                                             }
                                                             if(!results[0]){
-                                                                specs_id = null
+                                                                rows[i].spec = null
                                                             }else{
-                                                                specs_id = results[0].id
+                                                                rows[i].spec = results[0].id
                                                             }
                                                             sql.query("SELECT id FROM csptracker_end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
                                                                 if(!results){
@@ -593,9 +594,9 @@ const submitCSP = async(req, res) =>{
                                                                     results[0] = null
                                                                 }
                                                                 if(!results[0]){
-                                                                    end_preparations_id = null
+                                                                    rows[i].end_preparation = null
                                                                 }else{
-                                                                    end_preparations_id = results[0].id
+                                                                    rows[i].end_preparation = results[0].id
                                                                 }
                                                                 sql.query("SELECT id FROM csptracker_bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
                                                                     if(!results){
@@ -603,11 +604,12 @@ const submitCSP = async(req, res) =>{
                                                                         results[0] = null
                                                                     }
                                                                     if(!results[0]){
-                                                                        bolt_types_id = null
+                                                                        rows[i].bolt_type = null
                                                                     }else{
-                                                                        bolt_types_id = results[0].id
+                                                                        rows[i].bolt_type = results[0].id
                                                                     }
-                                                                    sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                                                                    let description_drawings_id = 0
+                                                                    sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
                                                                         if(!results){
                                                                             results = []
                                                                             results[0] = null
@@ -626,7 +628,7 @@ const submitCSP = async(req, res) =>{
                                                                                         res.status(401)
                                                                                     }else{
                                                                                         sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                            if(results[0].updated_at != updated_at && rows[i].ready_e3d == 1){
+                                                                                            if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
                                                                                                 sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
                                                                                                     if(err){
                                                                                                         console.log(err)
@@ -662,7 +664,6 @@ const submitCSP = async(req, res) =>{
                                                                                     }
                                                                                 })
                                                                             })
-                                                                            
                                                                         }else{
                                                                             sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
                                                                                 if(err){
