@@ -155,7 +155,7 @@ const updateDrawingDB = async(req, res) =>{
                                     const revision = results[0].revision
                                     const extension = path.extname(fileName)
                                     const bakFileName = fileName.split('.').slice(0, -1) + "-" + revision + extension
-                                    fs.copyFile('./app/storage/drawings/'+ fileName, './app/storage/drawings/bak/'+ bakFileName, (err) => {
+                                    fs.copyFile('./app/storage/csptracker/drawings/'+ fileName, './app/storage/csptracker/drawings/bak/'+ bakFileName, (err) => {
                                         if (err) throw err;
                                         console.log('Created drawing backup');
                                       });
@@ -257,7 +257,7 @@ const exitEditCSP = async(req, res) =>{
 
 const getDrawing = async(req, res) =>{
     const fileName = req.params.fileName
-    let path = './app/storage/drawings/' + fileName;
+    let path = './app/storage/csptracker/drawings/' + fileName;
     if (fs.existsSync(path)) {
         var file = fs.createReadStream(path);
         file.pipe(res);

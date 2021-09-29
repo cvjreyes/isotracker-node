@@ -12,7 +12,7 @@ let storage = multer.diskStorage({
 
     if (!fs.existsSync(path_pdf) && !fs.existsSync(path_png)) {
         console.log("Se añade")
-        await cb(null, './app/storage/drawings')
+        await cb(null, './app/storage/csptracker/drawings')
     }else{
         
         cb("error", null)
@@ -35,7 +35,7 @@ let updateStorage = multer.diskStorage({
     if (fs.existsSync(path_pdf) || fs.existsSync(path_png)) {
         
         console.log("Se añade")
-        await cb(null, './app/storage/drawings')
+        await cb(null, './app/storage/csptracker/drawings')
     }else{
         
         cb("error", null)
