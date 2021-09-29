@@ -3636,6 +3636,6 @@ module.exports = {
   submitElecSteps,
   submitElecEstimated,
   submitPipingEstimated,
-  lastUser
+  lastUser,
   uploadNotifications
 };
