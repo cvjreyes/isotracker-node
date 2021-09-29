@@ -358,6 +358,9 @@ const submitCSP = async(req, res) =>{
                         if(rows[i].quantity == ''){
                             rows[i].quantity = null
                         }
+                        if(rows[i].ready_e3d == ''){
+                            rows[i].ready_e3d = null
+                        }
                         if(rows[i].tag != "" && rows[i].tag != null){ 
                             let drawing_code = null
                             sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
