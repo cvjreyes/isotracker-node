@@ -3600,10 +3600,10 @@ const isocontrolWeights = async(req, res) =>{
 
 
 cron.schedule("0 */1 * * * *", () => {
-  if(process.env.NODE_CRON == "1"){
-    updateIsocontrolNotModelled()
-    updateIsocontrolModelled()
-    updateLines()
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
+    //updateIsocontrolNotModelled()
+    //updateIsocontrolModelled()
+    //updateLines()
     updateHolds()
   }
   
@@ -3736,7 +3736,7 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag", (err, results)=>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.user, misoctrls.role FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3751,12 +3751,23 @@ function updateHolds(){
       if(err){
         console.log(err)
       }else{
+        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
         for(let i = 1; i < rows.length; i++){    
-          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
-            if(err){
-              console.log(err)
-            }
-          })
+          if(rows[i][0]){
+            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
+              if(err){
+                console.log(err)
+              }
+            })
+            sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", rows[i][0]], (err, results)=>{
+              if(err){
+                console.log(err)
+              }else{
+                
+              }
+            })
+          }      
+          
         }
         console.log("Holds updated")
       }
