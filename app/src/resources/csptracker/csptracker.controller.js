@@ -353,356 +353,372 @@ const submitCSP = async(req, res) =>{
             console.log(err)
             res.status(401)
         }else{
-                   
-                    for(let i = 0; i < rows.length; i++){  
-                        if(rows[i].quantity == ''){
-                            rows[i].quantity = null
+            sql.query("INSERT INTO csptracker_bak SELECT * FROM csptracker", (err, results)=>{
+                if(err){
+                    console.log(err)
+                }
+            })
+
+            for(let i = 0; i < rows.length; i++){  
+                if(rows[i].tag == null || rows[i].tag == ""){
+                    sql.query("DELETE FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
                         }
-                        if(rows[i].ready_e3d == ''){
-                            rows[i].ready_e3d = null
+                    })
+                }else{
+
+                
+                if(rows[i].quantity == ''){
+                    rows[i].quantity = null
+                }
+                if(rows[i].ready_e3d == ''){
+                    rows[i].ready_e3d = null
+                }
+                if(rows[i].tag != "" && rows[i].tag != null){ 
+                    let drawing_code = null
+                    sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                        if(!results){
+                            results = []
+                            results[0] = null
                         }
-                        if(rows[i].tag != "" && rows[i].tag != null){ 
-                            let drawing_code = null
-                            sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
-                                if(!results){
-                                    results = []
-                                    results[0] = null
+                        if(!results){
+                            results[0] = null
+                        }
+                        if(!results[0] && rows[i].description_plan_code != null && rows[i].description_plan_code != ""){
+                            sql.query("INSERT INTO csptracker_description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
                                 }
-                                if(!results){
-                                    results[0] = null
-                                }
-                                if(!results[0] && rows[i].description_plan_code != null && rows[i].description_plan_code != ""){
-                                    sql.query("INSERT INTO csptracker_description_plans(description_plan_code) VALUES(?)", rows[i].description_plan_code, (err, results)=>{
-                                        if(err){
-                                            console.log(err)
-                                            res.status(401)
-                                        }
-                                    })
-                                }
-                                sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                            })
+                        }
+                        sql.query("SELECT id FROM csptracker_description_plans WHERE description_plan_code = ?", rows[i].description_plan_code, (err, results)=>{
+                            if(!results){
+                                results = []
+                                results[0] = null
+                            }
+                            if(!results[0]){
+                                drawing_code = null
+                                rows[i].description_plan_code = null
+                            }else{
+                                drawing_code = rows[i].description_plan_code
+                                rows[i].description_plan_code = results[0].id
+                            }
+                            
+                            if(process.env.REACT_APP_MMDN == "0"){
+                                sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p1diameter_nps, (err, results)=>{
                                     if(!results){
                                         results = []
                                         results[0] = null
                                     }
                                     if(!results[0]){
-                                        drawing_code = null
-                                        rows[i].description_plan_code = null
+                                        rows[i].p1diameter_nps = null
                                     }else{
-                                        drawing_code = rows[i].description_plan_code
-                                        rows[i].description_plan_code = results[0].id
+                                        rows[i].p1diameter_nps = results[0].id 
                                     }
-                                    
-                                    if(process.env.REACT_APP_MMDN == "0"){
-                                        sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p1diameter_nps, (err, results)=>{
+                                    sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p2diameter_nps, (err, results)=>{
+                                        if(!results){
+                                            results = []
+                                            results[0] = null
+                                        }
+                                        if(!results[0]){
+                                            rows[i].p2diameter_nps = null
+                                        }else{
+                                            rows[i].p2diameter_nps = results[0].id
+                                        } 
+                                        sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p3diameter_nps, (err, results)=>{
                                             if(!results){
                                                 results = []
                                                 results[0] = null
                                             }
                                             if(!results[0]){
-                                                rows[i].p1diameter_nps = null
+                                                rows[i].p3diameter_nps = null
                                             }else{
-                                                rows[i].p1diameter_nps = results[0].id 
+                                                rows[i].p3diameter_nps = results[0].id 
                                             }
-                                            sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p2diameter_nps, (err, results)=>{
+                                            sql.query("SELECT id FROM csptracker_ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
                                                 if(!results){
                                                     results = []
                                                     results[0] = null
                                                 }
                                                 if(!results[0]){
-                                                    rows[i].p2diameter_nps = null
+                                                    rows[i].rating = null
                                                 }else{
-                                                    rows[i].p2diameter_nps = results[0].id
-                                                } 
-                                                sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p3diameter_nps, (err, results)=>{
-                                                    if(!results){
-                                                        results = []
-                                                        results[0] = null
-                                                    }
-                                                    if(!results[0]){
-                                                        rows[i].p3diameter_nps = null
-                                                    }else{
-                                                        rows[i].p3diameter_nps = results[0].id 
-                                                    }
-                                                    sql.query("SELECT id FROM csptracker_ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
-                                                        if(!results){
-                                                            results = []
-                                                            results[0] = null
-                                                        }
-                                                        if(!results[0]){
-                                                            rows[i].rating = null
-                                                        }else{
-                                                            rows[i].rating = results[0].id
-                                                        }
-                                                        sql.query("SELECT id FROM csptracker_specs WHERE spec = ?", rows[i].spec, (err, results)=>{
-                                                            if(!results){
-                                                                results = []
-                                                                results[0] = null
-                                                            }
-                                                            if(!results[0]){
-                                                                rows[i].spec = null
-                                                            }else{
-                                                                rows[i].spec = results[0].id
-                                                            }
-                                                            sql.query("SELECT id FROM csptracker_end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
-                                                                if(!results){
-                                                                    results = []
-                                                                    results[0] = null
-                                                                }
-                                                                if(!results[0]){
-                                                                    rows[i].end_preparation = null
-                                                                }else{
-                                                                    rows[i].end_preparation = results[0].id
-                                                                }
-                                                                sql.query("SELECT id FROM csptracker_bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
-                                                                    if(!results){
-                                                                        results = []
-                                                                        results[0] = null
-                                                                    }
-                                                                    if(!results[0]){
-                                                                        rows[i].bolt_type = null
-                                                                    }else{
-                                                                        rows[i].bolt_type = results[0].id
-                                                                    }
-                                                                    let description_drawings_id = 0
-                                                                    sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
-                                                                        if(!results){
-                                                                            results = []
-                                                                            results[0] = null
-                                                                        }
-                                                                        if(!results[0]){
-                                                                            description_drawings_id = null
-                                                                        }else{
-                                                                            description_drawings_id = results[0].description_drawings_id
-                                                                        }
-                                                                        if(rows[i].id){
-                                                                            sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
-                                                                                const updated_at = results[0].updated_at
-                                                                                sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
-                                                                                    if(err){
-                                                                                        console.log(err)
-                                                                                        res.status(401)
-                                                                                    }else{
-                                                                                        sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                            if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
-                                                                                                sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                                    if(err){
-                                                                                                        console.log(err)
-                                                                                                        res.status(401)
-                                                                                                    }else{
-                                                                                                        sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
-                                                                                                            let updater = null
-                                                                                                            if(results[0]){
-                                                                                                                updater = results[0].name
-                                                                                                            }
-                                                                                                            sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
-                                                                                                                if(!results[0]){
-                                                                                                                    res.send({success: 1}).status(200)
-                                                                                                                }else{
-                                                                                                                    const users_ids = results
-                                                                                                                    for(let j = 0; j < users_ids.length; j++){
-                                                                                                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
-                                                                                                                            if(err){
-                                                                                                                                console.log(err)
-                                                                                                                                res.status(401)
-                                                                                                                            }else{
-                                                                                                                                
-                                                                                                                            }
-                                                                                                                        })
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            })
-                                                                                                        })
-                                                                                                    }
-                                                                                                })
-                                                                                            }
-                                                                                        })
-                                                                                    }
-                                                                                })
-                                                                            })
-                                                                        }else{
-                                                                            sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
-                                                                                if(err){
-                                                                                    console.log(err)
-                                                                                }
-                                                                            })
-                                                                        }
-                                                                        
-                                                                    })
-                                                                    
-                                                                                            
-                                                                })
-                                                                                    
-                                                            })
-                                                                        
-                                                        })
-                                                                    
-                                                    })
-                                                            
-                                                })
-                                                    
-                                            })
-                                            
-                                        })
-                                    }else{
-                                        sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p1diameter_dn, (err, results)=>{
-                                            if(!results){
-                                                results = []
-                                                results[0] = null
-                                            }
-                                            if(!results[0]){
-                                                rows[i].p1diameter_dn = null
-                                            }else{
-                                                rows[i].p1diameter_dn = results[0].id 
-                                            }
-                                            sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p2diameter_dn, (err, results)=>{
-                                                if(!results){
-                                                    results = []
-                                                    results[0] = null
+                                                    rows[i].rating = results[0].id
                                                 }
-                                                if(!results[0]){
-                                                    rows[i].p2diameter_dn = null
-                                                }else{
-                                                    rows[i].p2diameter_dn = results[0].id
-                                                } 
-                                                sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p3diameter_dn, (err, results)=>{
+                                                sql.query("SELECT id FROM csptracker_specs WHERE spec = ?", rows[i].spec, (err, results)=>{
                                                     if(!results){
                                                         results = []
                                                         results[0] = null
                                                     }
                                                     if(!results[0]){
-                                                        rows[i].p3diameter_dn = null
+                                                        rows[i].spec = null
                                                     }else{
-                                                        rows[i].p3diameter_dn = results[0].id 
+                                                        rows[i].spec = results[0].id
                                                     }
-                                                    sql.query("SELECT id FROM csptracker_ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
+                                                    sql.query("SELECT id FROM csptracker_end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
                                                         if(!results){
                                                             results = []
                                                             results[0] = null
                                                         }
                                                         if(!results[0]){
-                                                            rows[i].rating = null
+                                                            rows[i].end_preparation = null
                                                         }else{
-                                                            rows[i].rating = results[0].id
+                                                            rows[i].end_preparation = results[0].id
                                                         }
-                                                        sql.query("SELECT id FROM csptracker_specs WHERE spec = ?", rows[i].spec, (err, results)=>{
+                                                        sql.query("SELECT id FROM csptracker_bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
                                                             if(!results){
                                                                 results = []
                                                                 results[0] = null
                                                             }
                                                             if(!results[0]){
-                                                                rows[i].spec = null
+                                                                rows[i].bolt_type = null
                                                             }else{
-                                                                rows[i].spec = results[0].id
+                                                                rows[i].bolt_type = results[0].id
                                                             }
-                                                            sql.query("SELECT id FROM csptracker_end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
+                                                            let description_drawings_id = 0
+                                                            sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
                                                                 if(!results){
                                                                     results = []
                                                                     results[0] = null
                                                                 }
                                                                 if(!results[0]){
-                                                                    rows[i].end_preparation = null
+                                                                    description_drawings_id = null
                                                                 }else{
-                                                                    rows[i].end_preparation = results[0].id
+                                                                    description_drawings_id = results[0].description_drawings_id
                                                                 }
-                                                                sql.query("SELECT id FROM csptracker_bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
-                                                                    if(!results){
-                                                                        results = []
-                                                                        results[0] = null
-                                                                    }
-                                                                    if(!results[0]){
-                                                                        rows[i].bolt_type = null
-                                                                    }else{
-                                                                        rows[i].bolt_type = results[0].id
-                                                                    }
-                                                                    let description_drawings_id = 0
-                                                                    sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
-                                                                        if(!results){
-                                                                            results = []
-                                                                            results[0] = null
-                                                                        }
-                                                                        if(!results[0]){
-                                                                            description_drawings_id = null
-                                                                        }else{
-                                                                            description_drawings_id = results[0].description_drawings_id
-                                                                        }
-                                                                        if(rows[i].id){
-                                                                            sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
-                                                                                const updated_at = results[0].updated_at
-                                                                                sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
-                                                                                    if(err){
-                                                                                        console.log(err)
-                                                                                        res.status(401)
-                                                                                    }else{
-                                                                                        sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                            if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
-                                                                                                sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                                    if(err){
-                                                                                                        console.log(err)
-                                                                                                        res.status(401)
-                                                                                                    }else{
-                                                                                                        sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
-                                                                                                            let updater = null
-                                                                                                            if(results[0]){
-                                                                                                                updater = results[0].name
-                                                                                                            }
-                                                                                                            sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
-                                                                                                                if(!results[0]){
-                                                                                                                    res.send({success: 1}).status(200)
-                                                                                                                }else{
-                                                                                                                    const users_ids = results
-                                                                                                                    for(let j = 0; j < users_ids.length; j++){
-                                                                                                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
-                                                                                                                            if(err){
-                                                                                                                                console.log(err)
-                                                                                                                                res.status(401)
-                                                                                                                            }else{
-                                                                                                                                
-                                                                                                                            }
-                                                                                                                        })
-                                                                                                                    }
-                                                                                                                }
-                                                                                                            })
-                                                                                                        })
+                                                                if(rows[i].id){
+                                                                    sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
+                                                                        const updated_at = results[0].updated_at
+                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                            if(err){
+                                                                                console.log(err)
+                                                                                res.status(401)
+                                                                            }else{
+                                                                                sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                    if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
+                                                                                        sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                            if(err){
+                                                                                                console.log(err)
+                                                                                                res.status(401)
+                                                                                            }else{
+                                                                                                sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                                                                                                    let updater = null
+                                                                                                    if(results[0]){
+                                                                                                        updater = results[0].name
                                                                                                     }
+                                                                                                    sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
+                                                                                                        if(!results[0]){
+                                                                                                            res.send({success: 1}).status(200)
+                                                                                                        }else{
+                                                                                                            const users_ids = results
+                                                                                                            for(let j = 0; j < users_ids.length; j++){
+                                                                                                                sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
+                                                                                                                    if(err){
+                                                                                                                        console.log(err)
+                                                                                                                        res.status(401)
+                                                                                                                    }else{
+                                                                                                                        
+                                                                                                                    }
+                                                                                                                })
+                                                                                                            }
+                                                                                                        }
+                                                                                                    })
                                                                                                 })
                                                                                             }
                                                                                         })
                                                                                     }
                                                                                 })
-                                                                            })
-                                                                        }else{
-                                                                            sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
-                                                                                if(err){
-                                                                                    console.log(err)
-                                                                                }
-                                                                            })
-                                                                        }
-                                                                        
+                                                                            }
+                                                                        })
                                                                     })
-                                                                    
-                                                                                            
-                                                                })
-                                                                                    
+                                                                }else{
+                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                        if(err){
+                                                                            console.log(err)
+                                                                        }
+                                                                    })
+                                                                }
+                                                                
                                                             })
-                                                                        
-                                                        })
-                                                                    
-                                                    })
                                                             
+                                                                                    
+                                                        })
+                                                                            
+                                                    })
+                                                                
                                                 })
-                                                    
+                                                            
                                             })
-                                            
+                                                    
                                         })
-                                    }
+                                            
+                                    })
                                     
                                 })
+                            }else{
+                                sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p1diameter_dn, (err, results)=>{
+                                    if(!results){
+                                        results = []
+                                        results[0] = null
+                                    }
+                                    if(!results[0]){
+                                        rows[i].p1diameter_dn = null
+                                    }else{
+                                        rows[i].p1diameter_dn = results[0].id 
+                                    }
+                                    sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p2diameter_dn, (err, results)=>{
+                                        if(!results){
+                                            results = []
+                                            results[0] = null
+                                        }
+                                        if(!results[0]){
+                                            rows[i].p2diameter_dn = null
+                                        }else{
+                                            rows[i].p2diameter_dn = results[0].id
+                                        } 
+                                        sql.query("SELECT id FROM diameters WHERE dn = ?", rows[i].p3diameter_dn, (err, results)=>{
+                                            if(!results){
+                                                results = []
+                                                results[0] = null
+                                            }
+                                            if(!results[0]){
+                                                rows[i].p3diameter_dn = null
+                                            }else{
+                                                rows[i].p3diameter_dn = results[0].id 
+                                            }
+                                            sql.query("SELECT id FROM csptracker_ratings WHERE rating = ?", rows[i].rating, (err, results)=>{
+                                                if(!results){
+                                                    results = []
+                                                    results[0] = null
+                                                }
+                                                if(!results[0]){
+                                                    rows[i].rating = null
+                                                }else{
+                                                    rows[i].rating = results[0].id
+                                                }
+                                                sql.query("SELECT id FROM csptracker_specs WHERE spec = ?", rows[i].spec, (err, results)=>{
+                                                    if(!results){
+                                                        results = []
+                                                        results[0] = null
+                                                    }
+                                                    if(!results[0]){
+                                                        rows[i].spec = null
+                                                    }else{
+                                                        rows[i].spec = results[0].id
+                                                    }
+                                                    sql.query("SELECT id FROM csptracker_end_preparations WHERE state = ?", rows[i].end_preparation, (err, results)=>{
+                                                        if(!results){
+                                                            results = []
+                                                            results[0] = null
+                                                        }
+                                                        if(!results[0]){
+                                                            rows[i].end_preparation = null
+                                                        }else{
+                                                            rows[i].end_preparation = results[0].id
+                                                        }
+                                                        sql.query("SELECT id FROM csptracker_bolt_types WHERE type = ?", rows[i].bolt_type, (err, results)=>{
+                                                            if(!results){
+                                                                results = []
+                                                                results[0] = null
+                                                            }
+                                                            if(!results[0]){
+                                                                rows[i].bolt_type = null
+                                                            }else{
+                                                                rows[i].bolt_type = results[0].id
+                                                            }
+                                                            let description_drawings_id = 0
+                                                            sql.query("SELECT description_drawings_id FROM csptracker_description_plans WHERE description_plan_code = ?", drawing_code, (err, results)=>{
+                                                                if(!results){
+                                                                    results = []
+                                                                    results[0] = null
+                                                                }
+                                                                if(!results[0]){
+                                                                    description_drawings_id = null
+                                                                }else{
+                                                                    description_drawings_id = results[0].description_drawings_id
+                                                                }
+                                                                if(rows[i].id){
+                                                                    sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
+                                                                        const updated_at = results[0].updated_at
+                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                            if(err){
+                                                                                console.log(err)
+                                                                                res.status(401)
+                                                                            }else{
+                                                                                sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                    if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
+                                                                                        sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                            if(err){
+                                                                                                console.log(err)
+                                                                                                res.status(401)
+                                                                                            }else{
+                                                                                                sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
+                                                                                                    let updater = null
+                                                                                                    if(results[0]){
+                                                                                                        updater = results[0].name
+                                                                                                    }
+                                                                                                    sql.query("SELECT model_id FROM model_has_roles WHERE role_id = 14", (err, results)=>{
+                                                                                                        if(!results[0]){
+                                                                                                            res.send({success: 1}).status(200)
+                                                                                                        }else{
+                                                                                                            const users_ids = results
+                                                                                                            for(let j = 0; j < users_ids.length; j++){
+                                                                                                                sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The SP " + rows[i].tag + " has been updated by " + updater + "."], (err, results)=>{
+                                                                                                                    if(err){
+                                                                                                                        console.log(err)
+                                                                                                                        res.status(401)
+                                                                                                                    }else{
+                                                                                                                        
+                                                                                                                    }
+                                                                                                                })
+                                                                                                            }
+                                                                                                        }
+                                                                                                    })
+                                                                                                })
+                                                                                            }
+                                                                                        })
+                                                                                    }
+                                                                                })
+                                                                            }
+                                                                        })
+                                                                    })
+                                                                }else{
+                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                        if(err){
+                                                                            console.log(err)
+                                                                        }
+                                                                    })
+                                                                }
+                                                                
+                                                            })
+                                                            
+                                                                                    
+                                                        })
+                                                                            
+                                                    })
+                                                                
+                                                })
+                                                            
+                                            })
+                                                    
+                                        })
+                                            
+                                    })
+                                    
+                                })
+                            }
+                            
+                        })
 
-                            })
-                    }
-                    }
+                    })
                 }
-            })
+            }
+        }
+    }
+})
             
 
 res.send({success: 1}).status(200)
