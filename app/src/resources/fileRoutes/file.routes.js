@@ -92,6 +92,17 @@ let routes = (app) => {
   router.post("/submit/electrical/estimated", controller.submitElecEstimated)
   router.post("/submit/piping/estimated", controller.submitPipingEstimated)
 
+  router.get("/getBom", controller.getBom)
+  router.post("/updateBOM", controller.updateBom)
+  router.get("/getNotModelled", controller.getNotModelled)
+  router.get("/isocontrolWeights", controller.isocontrolWeights)
+  router.get("/exportModelled", controller.exportModelled)
+  router.get("/exportNotModelled", controller.exportNotModelled)
+  router.get("/getIsocontrolFull", controller.getIsocontrolFull)
+  router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
+
+  router.get("/holds", controller.holds)
+
   router.get("/lastUser/:filename", controller.lastUser)
 
   router.post("/uploadNotifications", controller.uploadNotifications)

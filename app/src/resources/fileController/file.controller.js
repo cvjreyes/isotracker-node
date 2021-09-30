@@ -1,4 +1,5 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
+const uploadBom = require("../fileMiddleware/bom.middleware");
 const fs = require("fs");
 const bodyParser = require('body-parser')
 const sql = require("../../db.js");
@@ -6,6 +7,7 @@ const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
+const readXlsxFile = require('read-excel-file/node')
 
 const upload = async (req, res) => {
   try {
@@ -175,7 +177,6 @@ const download = (req, res) => {
     master += ".pdf"
   }
 
-  console.log(master)
   
   sql.query("SELECT isoid FROM misoctrls WHERE filename = ?", master, (err, results) =>{
     if(!results[0]){
@@ -2025,7 +2026,7 @@ async function uploadReportPeriod(){
             if(process.env.REACT_APP_MMDN == 0){
               sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("indalid diameter: ", csv[i].diameter)
+                  console.log("invalid diameter")
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -2044,7 +2045,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -2054,7 +2055,7 @@ async function uploadReportPeriod(){
             }else{
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("indalid diameter: ", csv[i].diameter)
+                  console.log("invalid diameter: ", csv[i].diameter)
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -2074,7 +2075,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -2297,7 +2298,7 @@ const equipModelled = (req, res) =>{
 
 const uploadEquisModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
-  const type_index = req.body[0].indexOf("TYPE")
+  const type_index = req.body[0].indexOf("TYPE")  
   const tag_index = req.body[0].indexOf("TAG")
   const progress_index = req.body[0].indexOf("PROGRESS")
  
@@ -3517,6 +3518,252 @@ const submitPipingEstimated = (req, res) =>{
 
 }
 
+const getBom = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_modelled", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+
+const updateBom = async(req, res) =>{
+
+  try {
+    await uploadBom.uploadFileMiddleware(req, res);
+
+    if (req.file == undefined) {
+      return res.status(400).send({ message: "Please upload a file!" });
+    }else{
+      res.status(200).send({
+        message: "Uploaded the file successfully: " + req.file.originalname,
+      });
+    }
+  }catch(error){
+    console.log(error)
+  }
+    
+
+  readXlsxFile(process.env.NODE_BOM_ROUTE).then((rows) => {
+    sql.query("TRUNCATE bomtbl", (err, results) =>{
+      if(err){
+        console.log(err)
+      }else{
+        for(let i = 9; i < rows.length; i++){    
+          sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code, weight) VALUES(?,?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6], rows[i][21]], (err, results)=>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+        console.log("Bom updated")
+        res.status(200)
+      }
+    })
+  })
+}
+
+
+const getNotModelled = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_not_modelled", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const isocontrolWeights = async(req, res) =>{
+  let modelledWeight, notModelledWeight
+  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_modelled", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      modelledWeight = results[0].modelledWeight
+      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_not_modelled", (err, results)=>{
+        if(err){
+          res.status(401)
+        }else{
+          notModelledWeight = results[0].notModelledWeight
+          res.json({
+            modelledWeight: modelledWeight,
+            notModelledWeight: notModelledWeight
+          })
+        }
+      })
+    }
+  })
+}
+
+
+cron.schedule("0 */1 * * * *", () => {
+  if(process.env.NODE_CRON == "1"){
+    updateIsocontrolNotModelled()
+    updateIsocontrolModelled()
+    updateLines()
+    updateHolds()
+  }
+  
+})
+
+async function updateIsocontrolNotModelled(){
+    sql.query("DROP TABLE isocontrol_not_modelled", (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+    sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM not_modelled_def_view)", (err, results)=>{
+      if(err){
+        console.log(err)
+      }else{
+        console.log("isocontrol not modelled updated")
+      }
+    })       
+}
+
+async function updateIsocontrolModelled(){
+  sql.query("DROP TABLE isocontrol_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+    }
+  })
+  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrol_fullview)", (err, results)=>{
+    if(err){
+      console.log(err)
+    }else{
+      console.log("isocontrol modelled updated")
+    }
+  })       
+}
+
+async function updateLines(){
+
+  sql.query("TRUNCATE `lines`", (err, results) =>{
+    if(err){
+      console.log(err)
+    }
+  })
+
+  await csv()
+  .fromFile(process.env.NODE_LINES_ROUTE)
+  .then((jsonObj)=>{
+    const csv = jsonObj
+    
+    for(let i = 0; i < csv.length; i++){    
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq + csv[i].spec).includes("unset")){
+        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code) VALUES(?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec], (err, results)=>{
+          if(err){
+            console.log(err)
+          }
+        })
+      }
+    }
+    console.log("Lines updated")
+      
+  })
+}
+
+const exportModelled = async(req, res) =>{
+  sql.query("SELECT unit, area, line, train, fluid, seq, unit as line_id, unit as iso_id, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight FROM isocontrol_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      let rows = results
+      for(let i = 0; i < rows.length; i++){
+        rows[i].line_id = rows[i].unit + rows[i].line
+        rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+      }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const exportNotModelled = async(req, res) =>{
+  sql.query("SELECT bom_unit as unit, area, line, train, bom_unit as line_id, bom_unit as iso_id, spec_code, total_weight, LDL, BOM FROM isocontrol_not_modelled", (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      let rows = results
+      sql.query("SELECT ldl_unit,spec_code_ldl FROM isocontrol_not_modelled", (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          for(let i = 0; i < rows.length; i++){ 
+            if(!rows[i].unit){
+              rows[i].unit = results[i].ldl_unit
+            }
+    
+            if(!rows[i].spec_code){
+              rows[i].spec_code = results[i].spec_code_ldl
+            }
+
+            rows[i].line_id = rows[i].unit + rows[i].line
+            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+    
+    
+          }
+          res.json(JSON.stringify(rows)).status(200)
+        }
+      })
+    }     
+  })
+}
+
+const getIsocontrolFull = async(req, res)=>{
+  sql.query("SELECT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.unit, isocontrol_all_view.area, isocontrol_all_view.line,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
+const isoControlGroupLineId = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
+const holds = async(req, res) =>{
+  sql.query("SELECT holds.*, dpipes_view.isoid FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
+function updateHolds(){
+  readXlsxFile(process.env.NODE_HOLDS_ROUTE).then((rows) => {
+    sql.query("TRUNCATE holds", (err, results) =>{
+      if(err){
+        console.log(err)
+      }else{
+        for(let i = 1; i < rows.length; i++){    
+          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+        console.log("Holds updated")
+      }
+    })
+  })
+}
+
 const uploadNotifications = (req, res) =>{
   const n = req.body.n
   sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 1 OR role_id = 2 OR role_id = 9", (err, results)=>{
@@ -3636,6 +3883,15 @@ module.exports = {
   submitElecSteps,
   submitElecEstimated,
   submitPipingEstimated,
+  getBom,
+  updateBom,
+  getNotModelled,
+  isocontrolWeights,
+  exportModelled,
+  exportNotModelled,
+  getIsocontrolFull,
+  isoControlGroupLineId,
+  holds,
   lastUser,
   uploadNotifications
 };
