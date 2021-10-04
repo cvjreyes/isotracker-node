@@ -3601,9 +3601,17 @@ const exportNotModelled = async(req, res) =>{
               rows[i].spec_code = results[i].spec_code_ldl
             }
 
-            rows[i].line_id = rows[i].unit + rows[i].line
-            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
-    
+            if(!rows[i].unit || !rows[i].line){
+              rows[i].line_id = null
+            }else{
+              rows[i].line_id = rows[i].unit + rows[i].line
+            }
+
+            if(!rows[i].unit || !rows[i].line || !rows[i].area || !rows[i].train  ){
+              rows[i].iso_id = null
+            }else{
+              rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train            
+            }
     
           }
           res.json(JSON.stringify(rows)).status(200)
@@ -3625,6 +3633,16 @@ const getIsocontrolFull = async(req, res)=>{
 
 const isoControlGroupLineId = async(req, res) =>{
   sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
+const exportFull = async(req, res) =>{
+  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight, diameter as modelled, LDL, BOM FROM isocontrol_all_view", (err, results) =>{
     if(err){
       res.status(401)
     }else{
@@ -3728,5 +3746,6 @@ module.exports = {
   exportModelled,
   exportNotModelled,
   getIsocontrolFull,
-  isoControlGroupLineId
+  isoControlGroupLineId,
+  exportFull
 };
