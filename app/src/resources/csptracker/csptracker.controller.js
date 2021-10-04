@@ -233,7 +233,7 @@ const editCSP = async(req, res) =>{
 const exitEditCSP = async(req, res) =>{
     const email = req.body.user
     sql.query("SELECT id FROM users WHERE email = ?", email, (err, results)=>{
-        if(!results[0]){
+        if(!results){
             res.status(401)
         }else{
             const user_id = results[0].id
