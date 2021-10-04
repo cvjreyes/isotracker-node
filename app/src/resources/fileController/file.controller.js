@@ -753,7 +753,10 @@ const statusFiles = (req,res) =>{
   if(process.env.REACT_APP_PROGRESS == "1"){
     sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
       if(!results[0]){
-        res.status(401).send("No files found");
+        console.log("No files found");
+        res.status(200).send({
+          rows : results
+        })
       }else{
         res.status(200).send({
           rows : results
@@ -763,7 +766,10 @@ const statusFiles = (req,res) =>{
   }else{
     sql.query('SELECT * FROM misoctrls', (err, results) =>{
       if(!results[0]){
-        res.status(401).send("No files found");
+        console.log("No files found");
+        res.status(200).send({
+          rows : results
+        })
       }else{
         res.status(200).send({
           rows : results
