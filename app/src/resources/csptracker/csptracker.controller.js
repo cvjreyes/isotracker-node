@@ -960,29 +960,74 @@ const downloadCSP = async(req, res) =>{
     
 }
 
-const getRatings = (req, res) =>{
-    sql.query("SELECT rating FROM csptracker_ratings", (err, results)=>{
+const getRatings = async(req, res) =>{
+    sql.query("SELECT id, rating FROM csptracker_ratings", (err, results)=>{
         res.send({rows:results}).status(200)
     })
 }
 
-const getSpecs = (req, res) =>{
-    sql.query("SELECT spec FROM csptracker_specs", (err, results)=>{
+const getSpecs = async(req, res) =>{
+    sql.query("SELECT id, spec FROM csptracker_specs", (err, results)=>{
         res.send({rows:results}).status(200)
     })
 }
 
-const getEndPreparations = (req, res) =>{
-    sql.query("SELECT state FROM csptracker_end_preparations", (err, results)=>{
+const getEndPreparations = async(req, res) =>{
+    sql.query("SELECT id, state FROM csptracker_end_preparations", (err, results)=>{
         res.send({rows:results}).status(200)
     })
 }
 
-const getBoltTypes = (req, res) =>{
-    console.log("a")
-    sql.query("SELECT type FROM csptracker_bolt_types", (err, results)=>{
+const getBoltTypes = async(req, res) =>{
+    sql.query("SELECT id, type FROM csptracker_bolt_types", (err, results)=>{
         res.send({rows:results}).status(200)
     })
+}
+
+const submitRatings = async(req, res) =>{
+    const ratings = req.body.rows
+    for(let i = 0; i < ratings.length; i++){
+        if(!ratings[i]["Name"] || ratings[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_ratings WHERE id = ?", [ratings[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_ratings WHERE id = ?", [ratings[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_ratings(rating) VALUES(?)", [ratings[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_ratings SET rating = ? WHERE id = ?", [ratings[i]["Name"], ratings[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
+const submitSpecs = async(req, res) =>{
+
+}
+
+const submitEndPreparations = async(req, res) =>{
+
+}
+
+const submitBoltTypes = async(req, res) =>{
+
 }
 
 module.exports = {
@@ -1010,5 +1055,9 @@ module.exports = {
     getRatings,
     getSpecs,
     getEndPreparations,
-    getBoltTypes
+    getBoltTypes,
+    submitRatings,
+    submitSpecs,
+    submitEndPreparations,
+    submitBoltTypes
   };
