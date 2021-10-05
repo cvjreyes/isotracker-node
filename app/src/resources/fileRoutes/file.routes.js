@@ -101,6 +101,7 @@ let routes = (app) => {
   router.get("/getIsocontrolFull", controller.getIsocontrolFull)
   router.get("/exportFull", controller.exportFull)
   router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
+  router.get("/exportLineIdGroup", controller.exportLineIdGroup)
 
   app.use(router);
 };

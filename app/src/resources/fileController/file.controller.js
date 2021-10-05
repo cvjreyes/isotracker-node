@@ -3646,7 +3646,66 @@ const exportFull = async(req, res) =>{
     if(err){
       res.status(401)
     }else{
-      res.send({rows: results}).status(200)
+      let rows = results
+      for(let i = 0; i < rows.length; i++){
+
+        if(rows[i].line_id === null){
+            rows[i].modelled = "Not modelled"
+        }else{
+            rows[i].modelled = "Modelled"
+        }
+
+        rows[i].line_id = rows[i].unit + rows[i].line
+        rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+
+        if(rows[i].LDL === "In LDL" && rows[i].BOM === "Not in BOM"){
+            rows[i].line_id = rows[i].LDL_unit + rows[i].fluid + rows[i].seq
+            rows[i].iso_id = " "
+
+            rows[i].unit = rows[i].LDL_unit
+            rows[i].line = rows[i].fluid + rows[i].seq
+            rows[i].spec_code = rows[i].spec_code_ldl
+        }else{
+            rows[i].line_id = rows[i].unit + rows[i].line
+            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+
+            rows[i].unit = rows[i].unit
+        }
+
+        if(rows[i].diameter === null){
+            rows[i].modelled = "Not modelled"
+        }else{
+            rows[i].modelled = "Modelled"
+        }
+
+        if(!rows[i].spec_code){
+          rows[i].spec_code = ""
+        }
+
+        if(!rows[i].BOM){
+            rows[i].BOM = ""
+        }
+
+        if(!rows[i].LDL){
+            rows[i].LDL = ""
+        }
+
+        if(!rows[i].calc_notes){
+            rows[i].calc_notes = ""
+        }
+
+    }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const exportLineIdGroup = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
     }
   })
 }
@@ -3747,5 +3806,6 @@ module.exports = {
   exportNotModelled,
   getIsocontrolFull,
   isoControlGroupLineId,
-  exportFull
+  exportFull,
+  exportLineIdGroup
 };
