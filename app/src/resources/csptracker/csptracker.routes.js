@@ -24,6 +24,11 @@ let routes = (app) => {
   router.post("/acceptRequest", controller.acceptRequest)
   router.post("/deleteCSPNotification", controller.deleteCSPNotification)
   router.get("/downloadCSP", controller.downloadCSP)
+
+  router.get("/csptracker/ratings", controller.getRatings)
+  router.get("/csptracker/specs", controller.getSpecs)
+  router.get("/csptracker/endPreparations", controller.getEndPreparations)
+  router.get("/csptracker/boltTypes", controller.getBoltTypes)
   app.use(router);
 };
 

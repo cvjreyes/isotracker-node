@@ -960,6 +960,31 @@ const downloadCSP = async(req, res) =>{
     
 }
 
+const getRatings = (req, res) =>{
+    sql.query("SELECT rating FROM csptracker_ratings", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getSpecs = (req, res) =>{
+    sql.query("SELECT spec FROM csptracker_specs", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getEndPreparations = (req, res) =>{
+    sql.query("SELECT state FROM csptracker_end_preparations", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getBoltTypes = (req, res) =>{
+    console.log("a")
+    sql.query("SELECT type FROM csptracker_bolt_types", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -981,5 +1006,9 @@ module.exports = {
     rejectRequest,
     acceptRequest,
     deleteCSPNotification,
-    downloadCSP
+    downloadCSP,
+    getRatings,
+    getSpecs,
+    getEndPreparations,
+    getBoltTypes
   };
