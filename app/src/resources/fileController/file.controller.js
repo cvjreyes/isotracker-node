@@ -1990,7 +1990,7 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 cron.schedule('0 */1 * * * *', () => {
-  if(process.env.NODE_CRON == "0" && process.env.REACT_APP_PROGRESS == "1"){
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
     uploadReportPeriod()
   }
   
