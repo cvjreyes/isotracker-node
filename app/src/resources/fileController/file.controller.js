@@ -3996,7 +3996,7 @@ module.exports = {
   getIsocontrolFull,
   holds,
   lastUser,
-  uploadNotifications
+  uploadNotifications,
   isoControlGroupLineId,
   exportFull,
   exportLineIdGroup
