@@ -3831,8 +3831,9 @@ const lastUser = async(req, res) =>{
 }
 
 const exportFull = async(req, res) =>{
-  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight, diameter as modelled, LDL, BOM FROM isocontrol_all_view", (err, results) =>{
+  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, isocontrol_all_view.calc_notes, insulation, total_weight, diameter as modelled, misoctrls.`to`, misoctrls.progress, holds.hold1, LDL, BOM FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.line,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results) =>{
     if(err){
+      console.log(err)
       res.status(401)
     }else{
       let rows = results
@@ -3883,6 +3884,12 @@ const exportFull = async(req, res) =>{
             rows[i].calc_notes = ""
         }
 
+        if(rows[i].hold1){
+          rows[i].hold1 = "Yes"
+        }else{
+          rows[i].hold1 = "No"
+        }
+
     }
       res.json(JSON.stringify(rows)).status(200)
     }
@@ -3891,6 +3898,16 @@ const exportFull = async(req, res) =>{
 
 const exportLineIdGroup = async(req, res) =>{
   sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
+
+const exportHolds = async(req, res) =>{
+  sql.query("SELECT tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10 FROM holds", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3999,5 +4016,6 @@ module.exports = {
   uploadNotifications,
   isoControlGroupLineId,
   exportFull,
-  exportLineIdGroup
+  exportLineIdGroup,
+  exportHolds
 };

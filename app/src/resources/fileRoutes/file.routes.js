@@ -102,6 +102,7 @@ let routes = (app) => {
   router.get("/exportFull", controller.exportFull)
   router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
   router.get("/exportLineIdGroup", controller.exportLineIdGroup)
+  router.get("/exportHolds", controller.exportHolds)
 
   router.get("/holds", controller.holds)
 
