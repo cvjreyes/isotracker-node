@@ -3605,11 +3605,11 @@ const isocontrolWeights = async(req, res) =>{
 }
 
 
-cron.schedule("0 */1 * * * *", () => {
-  if(process.env.NODE_CRON == "0" && process.env.REACT_APP_PROGRESS === "1"){
-    //updateIsocontrolNotModelled()
-    //updateIsocontrolModelled()
-    //updateLines()
+cron.schedule("0 */5 * * * *", () => {
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
+    updateIsocontrolNotModelled()
+    updateIsocontrolModelled()
+    updateLines()
     updateHolds()
   }
   
