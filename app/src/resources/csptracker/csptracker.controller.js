@@ -960,6 +960,166 @@ const downloadCSP = async(req, res) =>{
     
 }
 
+const getRatings = async(req, res) =>{
+    sql.query("SELECT id, rating FROM csptracker_ratings", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getSpecs = async(req, res) =>{
+    sql.query("SELECT id, spec FROM csptracker_specs", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getEndPreparations = async(req, res) =>{
+    sql.query("SELECT id, state FROM csptracker_end_preparations", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const getBoltTypes = async(req, res) =>{
+    sql.query("SELECT id, type FROM csptracker_bolt_types", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
+const submitRatings = async(req, res) =>{
+    const ratings = req.body.rows
+    for(let i = 0; i < ratings.length; i++){
+        if(!ratings[i]["Name"] || ratings[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_ratings WHERE id = ?", [ratings[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_ratings WHERE id = ?", [ratings[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_ratings(rating) VALUES(?)", [ratings[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_ratings SET rating = ? WHERE id = ?", [ratings[i]["Name"], ratings[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
+const submitSpecs = async(req, res) =>{
+    const specs = req.body.rows
+    for(let i = 0; i < specs.length; i++){
+        if(!specs[i]["Name"] || specs[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_specs WHERE id = ?", [specs[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_specs WHERE id = ?", [specs[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_specs(spec) VALUES(?)", [specs[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_specs SET spec = ? WHERE id = ?", [specs[i]["Name"], specs[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
+const submitEndPreparations = async(req, res) =>{
+    const endPreparations = req.body.rows
+    for(let i = 0; i < endPreparations.length; i++){
+        if(!endPreparations[i]["Name"] || endPreparations[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_end_preparations WHERE id = ?", [endPreparations[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_end_preparations WHERE id = ?", [endPreparations[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_end_preparations(state) VALUES(?)", [endPreparations[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_end_preparations SET state = ? WHERE id = ?", [endPreparations[i]["Name"], endPreparations[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
+const submitBoltTypes = async(req, res) =>{
+    const boltTypes = req.body.rows
+    for(let i = 0; i < boltTypes.length; i++){
+        if(!boltTypes[i]["Name"] || boltTypes[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_bolt_types WHERE id = ?", [boltTypes[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_bolt_types WHERE id = ?", [boltTypes[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_bolt_types(type) VALUES(?)", [boltTypes[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_bolt_types SET type = ? WHERE id = ?", [boltTypes[i]["Name"], boltTypes[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -981,5 +1141,13 @@ module.exports = {
     rejectRequest,
     acceptRequest,
     deleteCSPNotification,
-    downloadCSP
+    downloadCSP,
+    getRatings,
+    getSpecs,
+    getEndPreparations,
+    getBoltTypes,
+    submitRatings,
+    submitSpecs,
+    submitEndPreparations,
+    submitBoltTypes
   };
