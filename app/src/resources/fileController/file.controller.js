@@ -3753,42 +3753,42 @@ const holds = async(req, res) =>{
 
 async function updateHolds(){
 
+  let data = null
   await csv()
   .fromFile(process.env.NODE_HOLDS_ROUTE)
   .then((jsonObj)=>{
-    const csv = jsonObj
-    sql.query("TRUNCATE holds", (err, results) =>{
-      if(err){
-        console.log(err)
-      }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"],)
-        for(let i = 0; i < csv.length; i++){    
-          if(csv[i].tag){
-            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [csv[i].tag, csv[i].hold1, csv[i].description1, csv[i].hold2, csv[i].description2, csv[i].hold3, csv[i].description3, csv[i].hold4, csv[i].description4, csv[i].hold5, csv[i].description5, csv[i].hold6, csv[i].description6, csv[i].hold7, csv[i].description7, csv[i].hold8, csv[i].description8, csv[i].hold9, csv[i].description9, csv[i].hold10, csv[i].description10], (err, results)=>{
-              if(err){
-                console.log(err)
-              }
-            })
-            if(csv[i].hold1){
-              
-              sql.query("SELECT misoctrls.isoid as isoid FROM misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE dpipes_view.tag COLLATE utf8mb4_unicode_ci = D1-60-WW3-05096-100-16SS01-PFET_01", ["D1-60-WW3-05096-100-16SS01-PFET_01"], (err, results)=>{
-                if(err){
-                  console.log(err)
-                }else{
-                  if(results[0]){
-                    console.log(results[0].isoid)
-                  }
-                }
-              })
-            }
-            
-          }      
-          
-        }
-        console.log("Holds updated")
-      }
-    })
+    data = jsonObj
   })
+
+  sql.query("TRUNCATE holds", (err, results) =>{
+    if(err){
+      console.log(err)
+    }else{
+      sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
+      for(let i = 0; i < data.length; i++){    
+        if(data[i].tag){
+          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
+            if(err){
+              console.log(err)
+            }else{
+              if(data[i].hold1){
+                sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+            }
+          })
+          
+          
+        }      
+        
+      }
+      console.log("Holds updated")
+    }
+  })
+
 }
 
 const uploadNotifications = (req, res) =>{
