@@ -1019,15 +1019,105 @@ const submitRatings = async(req, res) =>{
 }
 
 const submitSpecs = async(req, res) =>{
-
+    const specs = req.body.rows
+    for(let i = 0; i < specs.length; i++){
+        if(!specs[i]["Name"] || specs[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_specs WHERE id = ?", [specs[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_specs WHERE id = ?", [specs[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_specs(spec) VALUES(?)", [specs[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_specs SET spec = ? WHERE id = ?", [specs[i]["Name"], specs[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
 }
 
 const submitEndPreparations = async(req, res) =>{
-
+    const endPreparations = req.body.rows
+    for(let i = 0; i < endPreparations.length; i++){
+        if(!endPreparations[i]["Name"] || endPreparations[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_end_preparations WHERE id = ?", [endPreparations[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_end_preparations WHERE id = ?", [endPreparations[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_end_preparations(state) VALUES(?)", [endPreparations[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_end_preparations SET state = ? WHERE id = ?", [endPreparations[i]["Name"], endPreparations[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
 }
 
 const submitBoltTypes = async(req, res) =>{
-
+    const boltTypes = req.body.rows
+    for(let i = 0; i < boltTypes.length; i++){
+        if(!boltTypes[i]["Name"] || boltTypes[i]["Name"] == ""){
+            sql.query("DELETE FROM csptracker_bolt_types WHERE id = ?", [boltTypes[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM csptracker_bolt_types WHERE id = ?", [boltTypes[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO csptracker_bolt_types(type) VALUES(?)", [boltTypes[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE csptracker_bolt_types SET type = ? WHERE id = ?", [boltTypes[i]["Name"], boltTypes[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
 }
 
 module.exports = {
