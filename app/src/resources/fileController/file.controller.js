@@ -3606,7 +3606,7 @@ const isocontrolWeights = async(req, res) =>{
 
 
 cron.schedule("0 */1 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
+  if(process.env.NODE_CRON == "0" && process.env.REACT_APP_PROGRESS === "1"){
     //updateIsocontrolNotModelled()
     //updateIsocontrolModelled()
     //updateLines()
@@ -3751,27 +3751,37 @@ const holds = async(req, res) =>{
   })
 }
 
-function updateHolds(){
-  readXlsxFile(process.env.NODE_HOLDS_ROUTE).then((rows) => {
+async function updateHolds(){
+
+  await csv()
+  .fromFile(process.env.NODE_HOLDS_ROUTE)
+  .then((jsonObj)=>{
+    const csv = jsonObj
     sql.query("TRUNCATE holds", (err, results) =>{
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
-        for(let i = 1; i < rows.length; i++){    
-          if(rows[i][0]){
-            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
+        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"],)
+        for(let i = 0; i < csv.length; i++){    
+          if(csv[i].tag){
+            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [csv[i].tag, csv[i].hold1, csv[i].description1, csv[i].hold2, csv[i].description2, csv[i].hold3, csv[i].description3, csv[i].hold4, csv[i].description4, csv[i].hold5, csv[i].description5, csv[i].hold6, csv[i].description6, csv[i].hold7, csv[i].description7, csv[i].hold8, csv[i].description8, csv[i].hold9, csv[i].description9, csv[i].hold10, csv[i].description10], (err, results)=>{
               if(err){
                 console.log(err)
               }
             })
-            sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", rows[i][0]], (err, results)=>{
-              if(err){
-                console.log(err)
-              }else{
-                
-              }
-            })
+            if(csv[i].hold1){
+              
+              sql.query("SELECT misoctrls.isoid as isoid FROM misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE dpipes_view.tag COLLATE utf8mb4_unicode_ci = D1-60-WW3-05096-100-16SS01-PFET_01", ["D1-60-WW3-05096-100-16SS01-PFET_01"], (err, results)=>{
+                if(err){
+                  console.log(err)
+                }else{
+                  if(results[0]){
+                    console.log(results[0].isoid)
+                  }
+                }
+              })
+            }
+            
           }      
           
         }
