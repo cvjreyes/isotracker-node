@@ -298,13 +298,6 @@ exports.createUser = (req, res) =>{
                                   if (err) {
                                       console.log(err);
                                       res.status(401).send({error: "Error"});
-                                  }else{
-                                      sql.query('INSERT INTO model_has_roles (role_id, model_id, model_type) VALUES (?,?,?)', [15, user_id, "App/User"], async(err, result) =>{
-                                          if (err) {
-                                              console.log(err);
-                                              res.status(401).send({error: "Error"});
-                                          }
-                                      })
                                   }
                               })
                           }
@@ -417,6 +410,74 @@ exports.downloadUsers = (req, res) =>{
       res.status(401)
     }else{
       res.json(results).status(200)
+    }
+  })
+}
+
+exports.notifications = (req, res) =>{
+  const email = req.params.email
+  sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const userid = results[0].id
+      sql.query("SELECT * FROM notifications WHERE users_id = ? ORDER BY id DESC", [userid], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }else{
+              res.send({rows: results}).status(200)
+          }
+      })
+    }
+      
+  })
+}
+
+exports.markAllNotificationsAsRead = (req, res) =>{
+  const email = req.body.email
+  sql.query("SELECT id FROM users WHERE email = ?", [email],(err, results)=>{
+      const userid = results[0].id
+      sql.query("UPDATE notifications SET `read` = 1 WHERE users_id = ?", [userid], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }else{
+              res.send({success: 1}).status(200)
+          }
+      })
+  })
+}
+
+exports.markNotificationAsUnread = (req, res) =>{
+  sql.query("UPDATE notifications SET `read` = 0 WHERE id = ?", [req.body.id], (err, results)=>{
+    if(err){
+        console.log(err)
+        res.status(401)
+    }else{
+        res.send({success: 1}).status(200)
+    }
+  })
+}
+
+exports.markNotificationAsRead = (req, res) =>{
+  sql.query("UPDATE notifications SET `read` = 1 WHERE id = ?", [req.body.id], (err, results)=>{
+    if(err){
+        console.log(err)
+        res.status(401)
+    }else{
+        res.send({success: 1}).status(200)
+    }
+  })
+}
+
+exports.deleteNotification = (req, res) =>{
+  sql.query("DELETE FROM notifications  WHERE id = ?", [req.body.id], (err, results)=>{
+    if(err){
+        console.log(err)
+        res.status(401)
+    }else{
+        res.send({success: 1}).status(200)
     }
   })
 }

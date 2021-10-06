@@ -103,6 +103,12 @@ let routes = (app) => {
   router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
   router.get("/exportLineIdGroup", controller.exportLineIdGroup)
 
+  router.get("/holds", controller.holds)
+
+  router.get("/lastUser/:filename", controller.lastUser)
+
+  router.post("/uploadNotifications", controller.uploadNotifications)
+
   app.use(router);
 };
 

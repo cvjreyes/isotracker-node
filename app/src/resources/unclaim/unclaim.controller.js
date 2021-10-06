@@ -104,7 +104,7 @@ const singleUnclaimProc = async(req, res) =>{
       if(!results[0]){
           res.status(401).send("No files found");
       }else{
-        sql.query("SELECT forced FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
+        sql.query("SELECT forced, claimed, comments, user FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
             if(results[0].forced == 1){
                 res.status(401).send("Iso is forced")
             }else{
@@ -114,8 +114,8 @@ const singleUnclaimProc = async(req, res) =>{
                         last = results[i]
                     }
                 }
-                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, spoclaimed, `from`, `to`, comments, user, role, spouser, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                [fileName, 0, 0, 0, last.claimed, 0, "Claimed", "Process" , last.comments, last.user, req.body.role, "None", last.created_at], (err, results) => {
+                sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, spoclaimed, `from`, `to`, comments, user, role, spouser) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
+                [fileName, 0, 0, 0, last.claimed, 0, "Claimed", "Process" , last.comments, last.user, req.body.role, "None"], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{

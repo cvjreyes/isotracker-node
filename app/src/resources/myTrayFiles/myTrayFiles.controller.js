@@ -57,7 +57,7 @@ exports.getFilesByTray = async(req, res) => {
               })
             }else{
               sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1', [folder, username, role], async (err, results) => { 
-                console.log(results)
+                
                 res.json({
                   rows: results
                 })
@@ -78,7 +78,7 @@ exports.getFilesByTray = async(req, res) => {
               })
             }else{
               sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1', [folder, username, role], async (err, results) => { 
-                console.log(results)
+                
                 res.json({
                   rows: results
                 })

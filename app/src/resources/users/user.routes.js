@@ -38,4 +38,14 @@ module.exports = app => {
     app.post("/users/manageRoles", users.manageRoles)
 
     app.get("/downloadUsers", users.downloadUsers)
+    
+    app.get("/notifications/:email", users.notifications)
+
+    app.post("/markAllNotificationsAsRead", users.markAllNotificationsAsRead)
+
+    app.post("/markNotificationAsRead", users.markNotificationAsRead)
+
+    app.post("/markNotificationAsUnread", users.markNotificationAsUnread)
+
+    app.post("/deleteNotification", users.deleteNotification)
   };

@@ -161,75 +161,176 @@ const piStatus = (req, res) =>{
 
 const download = (req, res) => {
   const fileName = req.params.fileName;
-  let where, path = null
-  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
-      './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach'];
+  let master = fileName.split('.').slice(0, -1)[0]
+  let issued = false
+  if(master.substring(master.length-3, master.length) === "-0" || master.substring(master.length-3, master.length) === "-1" || master.substring(master.length-3, master.length) === "-2" || master.substring(master.length-3, master.length) === "-3"){
+    issued = true
+  }
+
+  if(master.includes("-CL")){
+    master = master.substring(0, master.length - 3)+".pdf"
+  }else if(master.includes("-INST")){
+    master = master.substring(0, master.length - 5)+".pdf"
+  }else if(master.includes("-PROC")){
+    master = master.substring(0, master.length - 5)+".pdf"
+  }else{
+    master += ".pdf"
+  }
 
   
-  for(let i = 0; i < folders.length; i++){
-    path = folders[i] + '/' + req.params.fileName
-    if (fs.existsSync(path)) {
-      exists = true;
-      where = folders[i]
-    }
-  }
-  res.download(where + '/' + fileName, fileName, (err) => {
-    if (err) {
-      res.status(500).send({
-        message: "Could not download the file. " + err,
-      });
+  sql.query("SELECT isoid FROM misoctrls WHERE filename = ?", master, (err, results) =>{
+    if(!results[0]){
+      res.status(401)
     }else{
+      let fileName_noext = results[0].isoid
+      let where, path = null
+  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE filename = ?", master, (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      if(results[0].issued != 1){
+        const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+        './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
+        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/TRASH/attach', './app/storage/isoctrl/issuer/TRASH/attach', './app/storage/isoctrl/lde/TRASH/attach', 
+        './app/storage/isoctrl/materials/TRASH/attach', './app/storage/isoctrl/stress/TRASH/attach','./app/storage/isoctrl/supports/TRASH/attach'];
+
+        for(let i = 0; i < folders.length; i++){
+          path = folders[i] + '/' + req.params.fileName
+          if (fs.existsSync(path)) {
+            exists = true;
+            where = folders[i]
+          }
+        }
+        res.download(where + '/' + fileName, fileName, (err) => {
+          if (err) {
+            res.status(500).send({
+              message: "Could not download the file. " + err,
+            });
+          }else{
+            res.status(200)
+          }
+        });
+      }else{  
+        const trn = results[0].transmittal
+        const date = results[0].issued_date
+        res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
+          if (err) {
+            console.log("error")
+            res.status(500).send({
+              message: "Could not download the file. " + err,
+            });
+          }else{
+            
+          }
+        })
+      } 
     }
-  });
+  })
+    }
+  })
+  
 };
 
 const getAttach = (req,res) =>{
   const fileName = req.params.fileName;
   let where, path = null
   let allFiles = []
-  const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+  let folders = null
 
+  sql.query("SELECT transmittal, issued_date FROM misoctrls WHERE filename = ?", fileName, (err, results)=>{
+    if(!results[0].transmittal){
+      const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
+        './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
+        './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH'];
   
-  for(let i = 0; i < folders.length; i++){
-    path = folders[i] + '/' + req.params.fileName
-    if (fs.existsSync(path)) {
-      exists = true;
-      where = folders[i]
-    }
-  }
-
-  let masterName = fileName.split('.').slice(0, -1)
-  let origin_attach_path = where + "/attach/"
-  let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-  let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
-  let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
-
-  fs.readdir(origin_attach_path, (err, files) => {
-    files.forEach(file => {                          
-      let attachName = file.split('.').slice(0, -1)
-      if(String(masterName).trim() == String(attachName).trim()){
-        allFiles.push(file)
+      for(let i = 0; i < folders.length; i++){
+        path = folders[i] + '/' + req.params.fileName
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
       }
-    });
-    if(fs.existsSync(origin_cl_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
-    }
 
-    if(fs.existsSync(origin_proc_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
-    }
+      let masterName = fileName.split('.').slice(0, -1)
+      let origin_attach_path = where + "/attach/"
+      let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-    if(fs.existsSync(origin_inst_path)){
-      allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+      let trash_attach_path = where + "/TRASH/tattach/"
+      let trash_cl_path = where + "/TRASH/tattach/"+ fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let trash_proc_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let trash_inst_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
+      fs.readdir(origin_attach_path, (err, files) => {
+        if(files){
+          files.forEach(file => {                          
+            let attachName = file.split('.').slice(0, -1)
+            if(String(masterName).trim() == String(attachName).trim()){
+              allFiles.push(file)
+            }
+          });
+          if(fs.existsSync(origin_cl_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+          }
+  
+          if(fs.existsSync(origin_proc_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+          }
+  
+          if(fs.existsSync(origin_inst_path)){
+            allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+          }
+        }
+        
+        res.status(200).json(allFiles)
+      });
+    }else{
+      folders = ['./app/storage/isoctrl/lde/transmittals/' + results[0].transmittal + "/" + results[0].issued_date];
+  
+      for(let i = 0; i < folders.length; i++){
+        path = folders[i] + '/' + req.params.fileName
+        if (fs.existsSync(path)) {
+          exists = true;
+          where = folders[i]
+        }
+      }
+
+      let masterName = fileName.split('.').slice(0, -1)
+      let origin_attach_path = where + "/"
+      let origin_cl_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+      let origin_proc_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+      let origin_inst_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
+      fs.readdir(origin_attach_path, (err, files) => {
+        files.forEach(file => {                          
+          let attachName = file.split('.').slice(0, -1)
+          if(String(masterName).trim() == String(attachName).trim()){
+            allFiles.push(file)
+          }
+        });
+        if(fs.existsSync(origin_cl_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-CL.pdf')
+        }
+
+        if(fs.existsSync(origin_proc_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf')
+        }
+
+        if(fs.existsSync(origin_inst_path)){
+          allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
+        }
+        
+        res.status(200).json(allFiles)
+      });
     }
-    res.status(200).json(allFiles)
-  });
+  })
+  
 
   
 }
-
 
 const uploadHis = async (req, res) => {
   var username = "";
@@ -652,7 +753,10 @@ const statusFiles = (req,res) =>{
   if(process.env.REACT_APP_PROGRESS == "1"){
     sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
       if(!results[0]){
-        res.status(401).send("No files found");
+        console.log("No files found");
+        res.status(200).send({
+          rows : results
+        })
       }else{
         res.status(200).send({
           rows : results
@@ -662,7 +766,10 @@ const statusFiles = (req,res) =>{
   }else{
     sql.query('SELECT * FROM misoctrls', (err, results) =>{
       if(!results[0]){
-        res.status(401).send("No files found");
+        console.log("No files found");
+        res.status(200).send({
+          rows : results
+        })
       }else{
         res.status(200).send({
           rows : results
@@ -1571,7 +1678,7 @@ const newRev = (req, res) =>{
   const destiny_path = './app/storage/isoctrl/design/' + newFileName
 
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results && process.env.REACT_APP_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
       })
@@ -1581,7 +1688,7 @@ const newRev = (req, res) =>{
           res.status(401).send("file not found")
         }else{
           if(results[0].requested == 2){
-            res.status(401).send("Already sent for revision")
+            res.status(401).send({already: "Already sent for revision"})
           }else{
             fs.copyFile(origin_path, destiny_path, (err) => {
               if (err) throw err;
@@ -1882,8 +1989,8 @@ function downloadStatus3DPeriod(){
   })
   console.log("Generated 3d report")
 }
-cron.schedule('0 */5 * * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+cron.schedule('0 */1 * * * *', () => {
+  if(process.env.NODE_CRON == "0" && process.env.REACT_APP_PROGRESS == "1"){
     uploadReportPeriod()
   }
   
@@ -3498,11 +3605,12 @@ const isocontrolWeights = async(req, res) =>{
 }
 
 
-cron.schedule("0 */1 * * * *", () => {
-  if(process.env.NODE_CRON == "1"){
+cron.schedule("0 */5 * * * *", () => {
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
     updateLines()
+    updateHolds()
   }
   
 })
@@ -3637,6 +3745,87 @@ const isoControlGroupLineId = async(req, res) =>{
       res.status(401)
     }else{
       res.send({rows: results}).status(200)
+    }
+  })
+}
+
+const holds = async(req, res) =>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.user, misoctrls.role FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
+async function updateHolds(){
+
+  let data = null
+  await csv()
+  .fromFile(process.env.NODE_HOLDS_ROUTE)
+  .then((jsonObj)=>{
+    data = jsonObj
+  })
+
+  sql.query("TRUNCATE holds", (err, results) =>{
+    if(err){
+      console.log(err)
+    }else{
+      sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
+      for(let i = 0; i < data.length; i++){    
+        if(data[i].tag){
+          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
+            if(err){
+              console.log(err)
+            }else{
+              if(data[i].hold1){
+                sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+            }
+          })
+          
+          
+        }      
+        
+      }
+      console.log("Holds updated")
+    }
+  })
+
+}
+
+const uploadNotifications = (req, res) =>{
+  const n = req.body.n
+  sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 1 OR role_id = 2 OR role_id = 9", (err, results)=>{
+    if(!results[0]){
+        res.send({success: 1}).status(200)
+    }else{
+        const users_ids = results
+        for(let j = 0; j < users_ids.length; j++){
+            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" new isometric/s uploaded to design."], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }else{
+                    
+                }
+            })
+        }
+    }
+})
+}
+
+const lastUser = async(req, res) =>{
+  sql.query("SELECT `user` FROM hisoctrls WHERE filename = ? ORDER BY id DESC LIMIT 1", [req.params.filename], (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.send({user: results[0].user}).status(200)
     }
   })
 }
@@ -3805,6 +3994,9 @@ module.exports = {
   exportModelled,
   exportNotModelled,
   getIsocontrolFull,
+  holds,
+  lastUser,
+  uploadNotifications
   isoControlGroupLineId,
   exportFull,
   exportLineIdGroup

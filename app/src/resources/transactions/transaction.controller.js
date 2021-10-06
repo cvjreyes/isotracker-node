@@ -66,7 +66,6 @@ const transaction = async (req, res) => {
                                 origin_inst_path = './app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
                                 destiny_inst_path = './app/storage/isoctrl/' + local_to + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
     
-                                console.log(origin_path)
                                 if(fs.existsSync(origin_path)){
                                   fs.rename(origin_path, destiny_path, function (err) {
                                       if (err) throw err
@@ -186,6 +185,8 @@ const transaction = async (req, res) => {
                             })
                           }
                         })
+                      
+                        
                       }else{
                         const from = results[0].to
                         let created_at = results[0].created_at
@@ -379,6 +380,94 @@ const transaction = async (req, res) => {
     
                           });
                         }
+                        const destiny = req.body.to
+                        let role = req.body.role
+
+                        if(role == "LOS/Isocontrol"){
+                          role = "SpecialityLead"
+                        }
+
+                        sql.query("SELECT id FROM roles WHERE name = ?", [role], (err, results) =>{
+                          if(!results[0]){
+                            res.status(401)
+                          }else{
+                            const id = results[0].id
+
+                            if(id == 1){
+                              sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 1 OR role_id = 2", (err, results)=>{
+                                if(!results[0]){
+                                    res.send({success: 1}).status(200)
+                                }else{
+                                    const users_ids = results
+                                    for(let j = 0; j < users_ids.length; j++){
+                                      sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The isometric "+ fileName + " has been moved to " + destiny + "."], (err, results)=>{
+                                        if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }else{
+                                                
+                                            }
+                                        })
+                                    }
+                                }
+                              })
+                            }else if(id == 3){
+                              sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 3 OR role_id = 4", (err, results)=>{
+                                if(!results[0]){
+                                    res.send({success: 1}).status(200)
+                                }else{
+                                    const users_ids = results
+                                    for(let j = 0; j < users_ids.length; j++){
+                                      sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The isometric "+ fileName + " has been moved to " + destiny + "."], (err, results)=>{
+                                        if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }else{
+                                                
+                                            }
+                                        })
+                                    }
+                                }
+                              })
+                            }else if(id == 5){
+                              sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 5 OR role_id = 6", (err, results)=>{
+                                if(!results[0]){
+                                    res.send({success: 1}).status(200)
+                                }else{
+                                    const users_ids = results
+                                    for(let j = 0; j < users_ids.length; j++){
+                                      sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The isometric "+ fileName + " has been moved to " + destiny + "."], (err, results)=>{
+                                        if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }else{
+                                                
+                                            }
+                                        })
+                                    }
+                                }
+                              })
+                            }else{
+                              sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = ?", [id], (err, results)=>{
+                                if(!results[0]){
+                                    res.send({success: 1}).status(200)
+                                }else{
+                                    const users_ids = results
+                                    for(let j = 0; j < users_ids.length; j++){
+                                        sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, "The isometric "+ fileName + " has been moved to " + destiny + "."], (err, results)=>{
+                                            if(err){
+                                                console.log(err)
+                                                res.status(401)
+                                            }else{
+                                                
+                                            }
+                                        })
+                                    }
+                                }
+                              })
+                            }
+                          }
+                        })
                     }
                   }
               })
@@ -671,7 +760,6 @@ const returnLeadStress = async(req, res) =>{
                                   }
                               }
   
-                              console.log("viene de ",from)
                               if(process.env.REACT_APP_PROGRESS == "1"){
                                   let type = ""
                                   if(process.env.REACT_APP_IFC == "0"){
@@ -905,6 +993,7 @@ const returnIso = async(req, res) =>{
   const comments = req.body.comments
   let username = "";
   let dest_role = destiny;
+
   
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
     if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
@@ -1065,7 +1154,32 @@ const returnIso = async(req, res) =>{
                                                             console.log("error: ", err);
                                                         }else{
                                                             console.log("iso moved" );
-                                                            res.status(200).send({"moved": 1})
+                                                            
+                                                            sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+                                                              let rejector = null
+                                                              if(!results[0]){
+                                              
+                                                              }else{
+                                                                  rejector = results[0].name
+                                                                  sql.query("SELECT id FROM users WHERE email = ?", [user], (err, results)=>{
+                                                                    let reciever = null
+                                                                    if(!results[0]){
+                                                    
+                                                                    }else{
+                                                                      reciever = results[0].id
+                                                                      sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "The user "+ rejector + " has returned you the isometric " + fileName + "."], (err, results)=>{
+                                                                        if(err){
+                                                                            console.log(err)
+                                                                            res.status(401)
+                                                                        }else{
+                                                                          res.status(200).send({"moved": 1})
+                                                                        }
+                                                                      })  
+                                                                    }
+                                                                  })
+                                                              }
+                                                            })    
+                                                            
                                                         }
                                                       })
                                                     }
@@ -1081,10 +1195,34 @@ const returnIso = async(req, res) =>{
                                                   console.log("error: ", err);
                                               }else{
                                                   console.log("iso moved returnISO" );
-                                                  res.status(200).send({"moved": 1})
+                                                  sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+                                                    let rejector = null
+                                                    if(!results[0]){
+                                    
+                                                    }else{
+                                                        rejector = results[0].name
+                                                        sql.query("SELECT id FROM users WHERE email = ?", [user], (err, results)=>{
+                                                          let reciever = null
+                                                          if(!results[0]){
+                                          
+                                                          }else{
+                                                            reciever = results[0].id
+                                                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "The user "+ rejector + " has returned you the isometric " + fileName + "."], (err, results)=>{
+                                                              if(err){
+                                                                  console.log(err)
+                                                                  res.status(401)
+                                                              }else{
+                                                                res.status(200).send({"moved": 1})
+                                                              }
+                                                            })  
+                                                          }
+                                                        })
+                                                    }
+                                                  })    
                                               }
                                           })
-                                        }        
+                                        }    
+                                        
                                   
                                 }
         
@@ -1096,7 +1234,6 @@ const returnIso = async(req, res) =>{
                 }
             })
             }else{
-              console.log(results, destiny)
               const dest_user = results[0].user
               const dest_role = results[0].role
               sql.query('SELECT * from misoctrls WHERE filename = ?', [fileName], (err, results)=>{
@@ -1168,7 +1305,7 @@ const returnIso = async(req, res) =>{
                     }
     
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, "Unclaimed by leader", username, dest_role], (err, results) => {
+                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, comments, username, dest_role], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -1215,7 +1352,31 @@ const returnIso = async(req, res) =>{
                                             console.log("error: ", err);
                                         }else{
                                             console.log("iso moved" );
-                                            res.status(200).send({"moved": 1})
+                                            
+                                            sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+                                              let rejector = null
+                                              if(!results[0]){
+                              
+                                              }else{
+                                                  rejector = results[0].name
+                                                  sql.query("SELECT id FROM users WHERE email = ?", [user], (err, results)=>{
+                                                    let reciever = null
+                                                    if(!results[0]){
+                                    
+                                                    }else{
+                                                      reciever = results[0].id
+                                                      sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "The user "+ rejector + " has returned you the isometric " + fileName + "."], (err, results)=>{
+                                                        if(err){
+                                                            console.log(err)
+                                                            res.status(401)
+                                                        }else{
+                                                          res.status(200).send({"moved": 1})
+                                                        }
+                                                      })  
+                                                    }
+                                                  })
+                                              }
+                                            }) 
                                         }
                                       })
                                     }
@@ -1231,7 +1392,30 @@ const returnIso = async(req, res) =>{
                                   console.log("error: ", err);
                               }else{
                                   console.log("iso moved" );
-                                  res.status(200).send({"moved": 1})
+                                  sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+                                    let rejector = null
+                                    if(!results[0]){
+                    
+                                    }else{
+                                        rejector = results[0].name
+                                        sql.query("SELECT id FROM users WHERE email = ?", [user], (err, results)=>{
+                                          let reciever = null
+                                          if(!results[0]){
+                          
+                                          }else{
+                                            reciever = results[0].id
+                                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "The user "+ rejector + " has returned you the isometric " + fileName + "."], (err, results)=>{
+                                              if(err){
+                                                  console.log(err)
+                                                  res.status(401)
+                                              }else{
+                                                res.status(200).send({"moved": 1})
+                                              }
+                                            })  
+                                          }
+                                        })
+                                    }
+                                  }) 
                               }
                           })
                         }
@@ -1250,10 +1434,102 @@ const returnIso = async(req, res) =>{
    
 }
 
+const transactionNotifications = (req, res) =>{
+  const n = req.body.n
+  const destiny = req.body.destiny
+  let role = req.body.destiny
+
+  if(role == "LOS/Isocontrol"){
+    role = "SpecialityLead"
+  }
+
+  sql.query("SELECT id FROM roles WHERE name = ?", [role], (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const id = results[0].id
+
+      if(id == 1){
+        sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 1 OR role_id = 2", (err, results)=>{
+          if(!results[0]){
+              res.send({success: 1}).status(200)
+          }else{
+              const users_ids = results
+              for(let j = 0; j < users_ids.length; j++){
+                  sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" isometric/s moved to " + destiny + "."], (err, results)=>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }else{
+                          
+                      }
+                  })
+              }
+          }
+        })
+      }else if(id == 3){
+        sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 3 OR role_id = 4", (err, results)=>{
+          if(!results[0]){
+              res.send({success: 1}).status(200)
+          }else{
+              const users_ids = results
+              for(let j = 0; j < users_ids.length; j++){
+                  sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" isometric/s moved to " + destiny + "."], (err, results)=>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }else{
+                          
+                      }
+                  })
+              }
+          }
+        })
+      }else if(id == 5){
+        sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = 5 OR role_id = 6", (err, results)=>{
+          if(!results[0]){
+              res.send({success: 1}).status(200)
+          }else{
+              const users_ids = results
+              for(let j = 0; j < users_ids.length; j++){
+                  sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" isometric/s moved to " + destiny + "."], (err, results)=>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }else{
+                          
+                      }
+                  })
+              }
+          }
+        })
+      }else{
+        sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = ?", [id], (err, results)=>{
+          if(!results[0]){
+              res.send({success: 1}).status(200)
+          }else{
+              const users_ids = results
+              for(let j = 0; j < users_ids.length; j++){
+                  sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [users_ids[j].model_id, n +" isometric/s moved to " + destiny + "."], (err, results)=>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }else{
+                          
+                      }
+                  })
+              }
+          }
+        })
+      }
+    }
+  })
+}
 
 module.exports = {
   transaction,
   returnLead,
   returnLeadStress,
-  returnIso
+  returnIso,
+  transactionNotifications
 };
