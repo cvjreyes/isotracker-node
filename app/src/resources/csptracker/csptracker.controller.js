@@ -286,11 +286,11 @@ const getListsData = async(req, res) =>{
                 }else{
                     if(process.env.REACT_APP_MMDN === "0"){
                         for(let i = 0; i < results.length; i++){
-                            diametersData.push(results[i].nps)
+                            diametersData.push(results[i].dn)
                         }
                     }else{
                         for(let i = 0; i < results.length; i++){
-                            diametersData.push(results[i].dn)
+                            diametersData.push(results[i].nps)
                         }
                     }
                     sql.query("SELECT rating FROM csptracker_ratings", (err, results)=>{
@@ -407,7 +407,7 @@ const submitCSP = async(req, res) =>{
                                 rows[i].description_plan_code = results[0].id
                             }
                             
-                            if(process.env.REACT_APP_MMDN == "0"){
+                            if(process.env.REACT_APP_MMDN == "1"){
                                 sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p1diameter_nps, (err, results)=>{
                                     if(!results){
                                         results = []
@@ -940,7 +940,7 @@ const deleteCSPNotification = async(req, res) =>{
 }
 
 const downloadCSP = async(req, res) =>{
-    if(process.env.REACT_APP_MMDN === "0"){
+    if(process.env.REACT_APP_MMDN === "1"){
         sql.query("SELECT tag, quantity, type, description, description_plan_code, description_iso, ident, p1diameter_nps, p2diameter_nps, p3diameter_nps, rating, spec, end_preparation, face_to_face, bolts, bolt_type, comments, ready_load, ready_e3d, updated FROM csptrackerfull_view", (err, results) =>{
             if(!results[0]){
               res.status(401)
