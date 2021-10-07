@@ -2065,14 +2065,13 @@ async function uploadReportPeriod(){
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
-                  if(csv[i].calc_notes != null){
-                    calc_notes = 1
-                    
+                  if(csv[i].calc_notes != "" && csv[i].calc_notes != null){
+                    calc_notes = 1                  
                   }
       
                   let tl = 0
       
-                  if(calc_notes == 0){
+                  if(calc_notes == 1){
                     tl = 3
                   }else{
                     if(csv[i].diameter < 2.00){
