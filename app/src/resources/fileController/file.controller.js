@@ -1316,7 +1316,7 @@ const uploadReport = async(req,res) =>{
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
           if(process.env.REACT_APP_MMDN == 0){
-            sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
+            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 res.status(401).send({invalid: "Invaid diameter in some lines"})
               }else{
@@ -1345,7 +1345,7 @@ const uploadReport = async(req,res) =>{
               }
             })
           }else{
-            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
+            sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 
                 res.status(401).send("Invaid diameter in some lines")
@@ -2030,7 +2030,7 @@ async function uploadReportPeriod(){
             }
             const areaid = results[0].id
             if(process.env.REACT_APP_MMDN == 0){
-              sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
+              sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter")
                 }else{
@@ -2059,7 +2059,7 @@ async function uploadReportPeriod(){
                 }
               })
             }else{
-              sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
+              sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter: ", csv[i].diameter)
                 }else{
