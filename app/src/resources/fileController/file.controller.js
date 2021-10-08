@@ -3734,7 +3734,7 @@ const exportNotModelled = async(req, res) =>{
 }
 
 const getIsocontrolFull = async(req, res)=>{
-  sql.query("SELECT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, holds.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results)=>{
+  sql.query("SELECT DISTINCT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN isocontrol_holds_view ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.isoid", (err, results)=>{
     if(err){
       res.status(401)
     }else{
