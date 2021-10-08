@@ -3811,6 +3811,16 @@ const lastUser = async(req, res) =>{
   })
 }
 
+const getPids = async(req, res) =>{
+  sql.query("SELECT pid FROM pids", (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3909,5 +3919,6 @@ module.exports = {
   isoControlGroupLineId,
   holds,
   lastUser,
-  uploadNotifications
+  uploadNotifications,
+  getPids
 };

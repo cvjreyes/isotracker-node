@@ -107,6 +107,8 @@ let routes = (app) => {
 
   router.post("/uploadNotifications", controller.uploadNotifications)
 
+  router.get("/pids", controller.getPids)
+
   app.use(router);
 };
 
