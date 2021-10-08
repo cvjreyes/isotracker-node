@@ -271,7 +271,8 @@ const getListsData = async(req, res) =>{
     let ratingData = []
     let specData = []
     let endPreparationData = []
-    let boltTypesData = []
+    let boltTypesData = ["None"]
+    let pidData = []
 
     sql.query("SELECT description_plan_code FROM csptracker_description_plans", (err, results)=>{
         if(err){
@@ -321,14 +322,24 @@ const getListsData = async(req, res) =>{
                                                     for(let i = 0; i < results.length; i++){
                                                         boltTypesData.push(results[i].type)
                                                     }
-                                                    res.json({
-                                                        descriptionPlaneData: descriptionPlaneData,
-                                                        diametersData: diametersData,
-                                                        ratingData: ratingData,
-                                                        specData: specData,
-                                                        endPreparationData: endPreparationData,
-                                                        boltTypesData: boltTypesData
-                                                    }).status(200)
+                                                    sql.query("SELECT pid FROM pids", (err, results)=>{
+                                                        if(err){
+                                                            res.status(401)
+                                                        }else{                          
+                                                            for(let i = 0; i < results.length; i++){
+                                                                pidData.push(results[i].pid)
+                                                            }
+                                                            res.json({
+                                                                descriptionPlaneData: descriptionPlaneData,
+                                                                diametersData: diametersData,
+                                                                ratingData: ratingData,
+                                                                specData: specData,
+                                                                endPreparationData: endPreparationData,
+                                                                boltTypesData: boltTypesData,
+                                                                pidData: pidData
+                                                            }).status(200)
+                                                        }
+                                                    })
                                                 }
                                             })
                                         }
@@ -492,7 +503,8 @@ const submitCSP = async(req, res) =>{
                                                                 if(rows[i].id){
                                                                     sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
                                                                         const updated_at = results[0].updated_at
-                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                        console.log(rows[i].pid)
+                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolt_types_id = ?, ready_e3d = ?, comments = ?, pid = ?, line_id = ?, requisition = ?, equipnozz = ?, utility_station = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].pid, rows[i].line_id, rows[i].requisition, rows[i].equipnozz, rows[i].utility_station, rows[i].id], (err, results)=>{
                                                                             if(err){
                                                                                 console.log(err)
                                                                                 res.status(401)
@@ -535,7 +547,7 @@ const submitCSP = async(req, res) =>{
                                                                         })
                                                                     })
                                                                 }else{
-                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolt_types_id, ready_e3d, comments, pid, line_id, requisition, equipnozz, utility_station) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].pid, rows[i].line_id, rows[i].requisition, rows[i].equipnozz, rows[i].utility_station, rows[i].id], (err, results)=>{
                                                                         if(err){
                                                                             console.log(err)
                                                                         }
@@ -643,7 +655,7 @@ const submitCSP = async(req, res) =>{
                                                                 if(rows[i].id){
                                                                     sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
                                                                         const updated_at = results[0].updated_at
-                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolts = ?, bolt_types_id = ?, ready_e3d = ?, comments = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                        sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolt_types_id = ?, ready_e3d = ?, comments = ?, pid = ?, line_id = ?, requisition = ?, equipnozz = ?, utility_station = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].pid, rows[i].line_id, rows[i].requisition, rows[i].equipnozz, rows[i].utility_station, rows[i].id], (err, results)=>{
                                                                             if(err){
                                                                                 console.log(err)
                                                                                 res.status(401)
@@ -686,7 +698,7 @@ const submitCSP = async(req, res) =>{
                                                                         })
                                                                     })
                                                                 }else{
-                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolts, bolt_types_id, ready_e3d, comments) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolts, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].id], (err, results)=>{
+                                                                    sql.query("INSERT INTO csptracker(tag, quantity, description, description_plans_id, description_iso, ident, p1_diameters_id, p2_diameters_id, p3_diameters_id, ratings_id, specs_id, type, end_preparations_id, description_drawings_id, face_to_face, bolt_types_id, ready_e3d, comments, pid, line_id, requisition, equipnozz, utility_station) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",  [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_dn, rows[i].p2diameter_dn, rows[i].p3diameter_dn, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].pid, rows[i].line_id, rows[i].requisition, rows[i].equipnozz, rows[i].utility_station, rows[i].id], (err, results)=>{
                                                                         if(err){
                                                                             console.log(err)
                                                                         }
@@ -883,6 +895,8 @@ const acceptRequest = async(req, res) =>{
     sql.query("SELECT * FROM csptracker_requests WHERE id = ? LIMIT 1", [id], (err, results)=>{
         const sent_user_id = results[0].sent_user_id
         const sptag = results[0].sptag
+        const tag = results[0].tag
+        const pid = results[0].pid
         if(!results[0]){
             res.status(401)
         }else{
@@ -898,7 +912,7 @@ const acceptRequest = async(req, res) =>{
                         console.log(err)
                         res.status(401)
                     }else{
-                        sql.query("INSERT INTO csptracker(tag) VALUES(?)", [sptag], (err, results)=>{
+                        sql.query("INSERT INTO csptracker(tag, pid, line_id) VALUES(?,?,?)", [sptag, pid, tag], (err, results)=>{
                             if(err){
                                 console.log(err)
                                 res.status(401)
@@ -941,7 +955,7 @@ const deleteCSPNotification = async(req, res) =>{
 
 const downloadCSP = async(req, res) =>{
     if(process.env.REACT_APP_MMDN === "1"){
-        sql.query("SELECT tag, quantity, type, description, description_plan_code, description_iso, ident, p1diameter_nps, p2diameter_nps, p3diameter_nps, rating, spec, end_preparation, face_to_face, bolts, bolt_type, comments, ready_load, ready_e3d, updated FROM csptrackerfull_view", (err, results) =>{
+        sql.query("SELECT tag, spec, p1diameter_nps, p2diameter_nps, p3diameter_nps, rating, end_preparation, line_id, pid, type, description_plan_code, quantity, requisition, description, description_iso, ident, face_to_face, bolt_type, equipnozz, utility_station, comments, ready_load, `ready_e3d`, updated FROM csptrackerfull_view", (err, results) =>{
             if(!results[0]){
               res.status(401)
             }else{   
@@ -949,7 +963,7 @@ const downloadCSP = async(req, res) =>{
             }
           })
     }else{
-        sql.query("SELECT tag, quantity, type, description, description_plan_code, description_iso, ident, p1diameter_dn, p2diameter_dn, p3diameter_dn, rating, spec, end_preparation, face_to_face, bolts, bolt_type, comments, ready_load, ready_e3d, updated FROM csptrackerfull_view", (err, results) =>{
+        sql.query("SELECT tag, spec, p1diameter_dn, p2diameter_dn, p3diameter_dn, rating, end_preparation, line_id, pid, type, description_plan_code, quantity, requisition, description, description_iso, ident, face_to_face, bolt_type, equipnozz, utility_station, comments, ready_load, `ready_e3d`, updated FROM csptrackerfull_view", (err, results) =>{
             if(!results[0]){
               res.status(401)
             }else{   
