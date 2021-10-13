@@ -3920,6 +3920,17 @@ const exportHolds = async(req, res) =>{
   })
 }
 
+const exportHoldsNoProgress = async(req, res) =>{
+  sql.query('SELECT isoid, revision, updated_at, `from`, user, comments FROM misoctrls WHERE misoctrls.to = ?', ["On hold"], (err, results) =>{
+    for(let i = 0; i < results.length; i++){
+      results[i].updated_at = results[i].updated_at.toString().substring(0,10) + " "+ results[i].updated_at.toString().substring(11,24)
+    }
+    console.log(results)
+    res.json(JSON.stringify(results)).status(200)
+  
+})
+}
+
 module.exports = {
   upload,
   update,
@@ -4021,5 +4032,6 @@ module.exports = {
   isoControlGroupLineId,
   exportFull,
   exportLineIdGroup,
-  exportHolds
+  exportHolds,
+  exportHoldsNoProgress
 };

@@ -103,6 +103,7 @@ let routes = (app) => {
   router.get("/isoControlGroupLineId", controller.isoControlGroupLineId)
   router.get("/exportLineIdGroup", controller.exportLineIdGroup)
   router.get("/exportHolds", controller.exportHolds)
+  router.get("/exportHoldsNoProgress", controller.exportHoldsNoProgress)
 
   router.get("/holds", controller.holds)
 
