@@ -998,6 +998,12 @@ const getBoltTypes = async(req, res) =>{
     })
 }
 
+const getPids = async(req, res) =>{
+    sql.query("SELECT id, pid FROM pids", (err, results)=>{
+        res.send({rows:results}).status(200)
+    })
+}
+
 const submitRatings = async(req, res) =>{
     const ratings = req.body.rows
     for(let i = 0; i < ratings.length; i++){
@@ -1134,6 +1140,40 @@ const submitBoltTypes = async(req, res) =>{
     res.status(200)
 }
 
+const submitPids = async(req, res) =>{
+    const pids = req.body.rows
+    for(let i = 0; i < pids.length; i++){
+        if(!pids[i]["Name"] || pids[i]["Name"] == ""){
+            sql.query("DELETE FROM pids WHERE id = ?", [pids[i]["id"]], (err, results)=>{
+                if(err){
+                    console.log(err)
+                    res.status(401)
+                }
+            })
+        }else{
+            sql.query("SELECT * FROM pids WHERE id = ?", [pids[i]["id"]], (err, results)=>{
+                if(!results[0]){
+                    sql.query("INSERT INTO pids(pid) VALUES(?)", [pids[i]["Name"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }else{
+                    sql.query("UPDATE pids SET pid = ? WHERE id = ?", [pids[i]["Name"], pids[i]["id"]], (err, results) =>{
+                        if(err){
+                            console.log(err)
+                            res.status(401)
+                        }
+                    })
+                }
+            }) 
+        }
+        
+    }
+    res.status(200)
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -1160,8 +1200,10 @@ module.exports = {
     getSpecs,
     getEndPreparations,
     getBoltTypes,
+    getPids,
     submitRatings,
     submitSpecs,
     submitEndPreparations,
-    submitBoltTypes
+    submitBoltTypes,
+    submitPids
   };
