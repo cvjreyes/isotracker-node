@@ -192,8 +192,10 @@ const download = (req, res) => {
         const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
         './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
         './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
-        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/TRASH/attach', './app/storage/isoctrl/issuer/TRASH/attach', './app/storage/isoctrl/lde/TRASH/attach', 
-        './app/storage/isoctrl/materials/TRASH/attach', './app/storage/isoctrl/stress/TRASH/attach','./app/storage/isoctrl/supports/TRASH/attach'];
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/TRASH/tattach', './app/storage/isoctrl/issuer/TRASH/tattach', './app/storage/isoctrl/lde/TRASH/tattach', 
+        './app/storage/isoctrl/materials/TRASH/tattach', './app/storage/isoctrl/stress/TRASH/tattach','./app/storage/isoctrl/supports/TRASH/tattach', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', 
+        './app/storage/isoctrl/materials/HOLD', './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD','./app/storage/isoctrl/design/HOLD/hattach', './app/storage/isoctrl/issuer/HOLD/hattach', './app/storage/isoctrl/lde/HOLD/hattach', 
+        './app/storage/isoctrl/materials/HOLD/hattach', './app/storage/isoctrl/stress/HOLD/hattach','./app/storage/isoctrl/supports/HOLD/hattach'];
 
         for(let i = 0; i < folders.length; i++){
           path = folders[i] + '/' + req.params.fileName
@@ -243,7 +245,8 @@ const getAttach = (req,res) =>{
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
         './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
         './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
-        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH'];
+        './app/storage/isoctrl/materials/TRASH', './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', 
+        './app/storage/isoctrl/materials/HOLD', './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
   
       for(let i = 0; i < folders.length; i++){
         path = folders[i] + '/' + req.params.fileName
@@ -254,15 +257,25 @@ const getAttach = (req,res) =>{
       }
 
       let masterName = fileName.split('.').slice(0, -1)
-      let origin_attach_path = where + "/attach/"
-      let origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-      let origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
-      let origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+      let origin_attach_path, origin_cl_path, origin_proc_path, origin_inst_path
 
-      let trash_attach_path = where + "/TRASH/tattach/"
-      let trash_cl_path = where + "/TRASH/tattach/"+ fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-      let trash_proc_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
-      let trash_inst_path = where + "/TRASH/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+      if(where.includes("TRASH")){
+        origin_attach_path = where + "/tattach/"
+        origin_cl_path = where + "/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+        origin_proc_path = where + "/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+        origin_inst_path = where + "/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+      }else if(where.includes("HOLD")){
+        origin_attach_path = where + "/hattach/"
+        origin_cl_path = where + "/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+        origin_proc_path = where + "/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+        origin_inst_path = where + "/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+      }else{
+        origin_attach_path = where + "/attach/"
+        origin_cl_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+        origin_proc_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+        origin_inst_path = where + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+      }
+
 
       fs.readdir(origin_attach_path, (err, files) => {
         if(files){
