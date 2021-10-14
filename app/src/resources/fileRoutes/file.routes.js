@@ -104,6 +104,7 @@ let routes = (app) => {
   router.get("/exportLineIdGroup", controller.exportLineIdGroup)
   router.get("/exportHolds", controller.exportHolds)
   router.get("/exportHoldsNoProgress", controller.exportHoldsNoProgress)
+  router.get("/downloadBOM", controller.downloadBOM)
 
   router.get("/holds", controller.holds)
 

@@ -3931,6 +3931,11 @@ const exportHoldsNoProgress = async(req, res) =>{
 })
 }
 
+const downloadBOM = async(req, res) =>{
+  var file = fs.createReadStream("./app/storage/marian.xlsx");
+  file.pipe(res);
+}
+
 module.exports = {
   upload,
   update,
@@ -4033,5 +4038,6 @@ module.exports = {
   exportFull,
   exportLineIdGroup,
   exportHolds,
-  exportHoldsNoProgress
+  exportHoldsNoProgress,
+  downloadBOM
 };
