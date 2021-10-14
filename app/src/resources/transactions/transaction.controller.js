@@ -235,6 +235,10 @@ const transaction = async (req, res) => {
                                       destiny_attach_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/"
                                       origin_cl_path = './app/storage/isoctrl/' + fromH + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                                       destiny_cl_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                                      origin_proc_path = './app/storage/isoctrl/' + fromH + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                      destiny_proc_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                                      origin_inst_path = './app/storage/isoctrl/' + fromH + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                                      destiny_inst_path = './app/storage/isoctrl/' + fromH + "/HOLD/hattach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
     
                                   }else{
                                       let local_to = req.body.to

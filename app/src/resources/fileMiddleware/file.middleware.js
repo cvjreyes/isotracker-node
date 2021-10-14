@@ -132,7 +132,8 @@ let updateStorage = multer.diskStorage({
 let uploadProcStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
+      './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
       for(let i = 0; i < folders.length; i++){
         const path = folders[i] + '/' + file.originalname;
         if (fs.existsSync(path)) {
@@ -140,8 +141,11 @@ let uploadProcStorage = multer.diskStorage({
           where = folders[i]
         }
       }
-      
-      cb(null, where + '/attach')
+      if(where.includes("HOLD")){
+        cb(null, where + '/hattach')
+      }else{
+        cb(null, where + '/attach')
+      }
 
   },
   filename: (req, file, cb) => {
@@ -153,7 +157,8 @@ let uploadProcStorage = multer.diskStorage({
 let uploadInstStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+    './app/storage/isoctrl/stress','./app/storage/isoctrl/supports', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
+    './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
       for(let i = 0; i < folders.length; i++){
         const path = folders[i] + '/' + file.originalname;
         if (fs.existsSync(path)) {
@@ -162,7 +167,12 @@ let uploadInstStorage = multer.diskStorage({
         }
       }
       
-      cb(null, where + '/attach')
+      if(where.includes("HOLD")){
+        cb(null, where + '/hattach')
+      }else{
+        cb(null, where + '/attach')
+      }
+
 
   },
   filename: (req, file, cb) => {

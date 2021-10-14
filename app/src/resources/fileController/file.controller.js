@@ -703,7 +703,7 @@ const restore = async(req,res) =>{
                   }
 
                   let masterName = req.body.fileName.split('.').slice(0, -1)
-                  let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path = ""
+                  let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path, origin_proc_path, origin_inst_path, destiny_proc_path, destiny_inst_path = ""
 
                   if (origin == "Recycle bin"){
                     origin_path = './app/storage/isoctrl/' + destiny + "/TRASH/" + fileName
@@ -719,6 +719,11 @@ const restore = async(req,res) =>{
                     destiny_attach_path = './app/storage/isoctrl/' + destiny+ "/attach/"
                     origin_cl_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
                     destiny_cl_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                    origin_proc_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                    destiny_proc_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
+                    origin_inst_path = './app/storage/isoctrl/' + destiny + "/HOLD/hattach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+                    destiny_inst_path = './app/storage/isoctrl/' + destiny + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
+
                   }
                 
                   if(fs.existsSync(origin_path)){
@@ -747,7 +752,19 @@ const restore = async(req,res) =>{
                         })
                     }
 
-                    
+                    if(fs.existsSync(origin_proc_path)){
+                      fs.rename(origin_proc_path, destiny_proc_path, function (err) {
+                          if (err) throw err
+                          console.log('Successfully renamed - AKA moved!')
+                      })
+                  }
+
+                  if(fs.existsSync(origin_inst_path)){
+                      fs.rename(origin_inst_path, destiny_inst_path, function (err) {
+                          if (err) throw err
+                          console.log('Successfully renamed - AKA moved!')
+                      })
+                  }
                     
                 }
                 res.status(200).send("Restored")
@@ -1025,7 +1042,8 @@ const uploadProc = async(req, res) =>{
     return res.status(400).send({ message: "Please upload a file!" });
   }else{
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
+      './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
       for(let i = 0; i < folders.length; i++){
         const path = folders[i] + '/' + req.file.originalname;
         if (fs.existsSync(path)) {
@@ -1033,9 +1051,16 @@ const uploadProc = async(req, res) =>{
           where = folders[i]
         }
       }
-    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
-      if ( err ) console.log('ERROR: ' + err);
-    });
+      if(where.includes("HOLD")){
+        fs.rename(where + '/hattach/' + req.file.originalname, where + '/hattach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
+          if ( err ) console.log('ERROR: ' + err);
+        });
+      }else{
+        fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
+          if ( err ) console.log('ERROR: ' + err);
+        });
+      }
+    
     
     res.status(200).send("File uploaded")
   }
@@ -1048,7 +1073,8 @@ const uploadInst = async(req, res) =>{
     return res.status(400).send({ message: "Please upload a file!" });
   }else{
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
-      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
+      './app/storage/isoctrl/stress','./app/storage/isoctrl/supports', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
+      './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
       for(let i = 0; i < folders.length; i++){
         const path = folders[i] + '/' + req.file.originalname;
         if (fs.existsSync(path)) {
@@ -1056,9 +1082,16 @@ const uploadInst = async(req, res) =>{
           where = folders[i]
         }
       }
-    fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-INST.pdf', function(err) {
-      if ( err ) console.log('ERROR: ' + err);
-    });
+      if(where.includes("HOLD")){
+        fs.rename(where + '/hattach/' + req.file.originalname, where + '/hattach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-INST.pdf', function(err) {
+          if ( err ) console.log('ERROR: ' + err);
+        });
+      }else{
+        fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-INST.pdf', function(err) {
+          if ( err ) console.log('ERROR: ' + err);
+        });
+      }
+    
     
     res.status(200).send("File uploaded")
   }
@@ -1863,7 +1896,7 @@ const newRev = (req, res) =>{
                       origin_inst_path = './app/storage/isoctrl/' + local_from + "/attach/" + oldName.split('.').slice(0, -1).join('.') + '-INST.pdf'
                       destiny_inst_path = './app/storage/isoctrl/' + local_from + "/attach/" + newName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-                      console.log(origin_path)
+                     
                       if(fs.existsSync(origin_path)){
                         console.log("existe",origin_path)
                           fs.rename(origin_path, destiny_path, function (err) {
