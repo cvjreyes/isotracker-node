@@ -106,7 +106,7 @@ const update = async (req, res) => {
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   if(process.env.REACT_APP_PROGRESS === "1"){
-    sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = ?', [tab], (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? GROUP BY misoctrls.isoid', [tab], (err, results) =>{
       
       res.json({
         rows: results
