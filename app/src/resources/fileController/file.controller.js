@@ -3657,7 +3657,7 @@ cron.schedule("0 */5 * * * *", () => {
 })
 
 cron.schedule("0 */5 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_ISOCONTROL === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
     updateLines()
