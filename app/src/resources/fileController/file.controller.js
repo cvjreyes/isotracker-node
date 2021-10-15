@@ -3655,7 +3655,7 @@ cron.schedule("0 */5 * * * *", () => {
   }
 })
 
-cron.schedule("0 */5 * * * *", () => {
+cron.schedule("0 */30 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
@@ -3802,6 +3802,11 @@ const holds = async(req, res) =>{
     if(err){
       res.status(401)
     }else{
+      for(let i = 0; i < results.length; i++){
+        if(!results[i].isoid || results[0].isoid == ""){
+          results[i].isoid = results[i].tag
+        }
+      }
       res.send({rows: results}).status(200)
     }
   })
