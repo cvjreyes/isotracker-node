@@ -3670,7 +3670,7 @@ async function updateIsocontrolNotModelled(){
         console.log(err)
       }
     })
-    sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM not_modelled_def_view)", (err, results)=>{
+    sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM isocontrol_not_modelled_def_view)", (err, results)=>{
       if(err){
         console.log(err)
       }else{
@@ -3977,7 +3977,7 @@ const exportHoldsNoProgress = async(req, res) =>{
 }
 
 const downloadBOM = async(req, res) =>{
-  var file = fs.createReadStream("./app/storage/marian.xlsx");
+  var file = fs.createReadStream(process.env.NODE_BOM_ROUTE);
   file.pipe(res);
 }
 
