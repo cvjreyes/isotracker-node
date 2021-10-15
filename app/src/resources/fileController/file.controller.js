@@ -4094,6 +4094,6 @@ module.exports = {
   exportLineIdGroup,
   exportHolds,
   exportHoldsNoProgress,
-  downloadBOM
+  downloadBOM,
   getPids
 };
