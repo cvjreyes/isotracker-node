@@ -1364,7 +1364,7 @@ const uploadReport = async(req,res) =>{
           if(process.env.REACT_APP_MMDN == 1){
             sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                res.status(401).send({invalid: "Invaid diameter in some lines"})
+                console.log("ivalid diameter")
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
@@ -1393,8 +1393,7 @@ const uploadReport = async(req,res) =>{
           }else{
             sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                
-                res.status(401).send("Invaid diameter in some lines")
+                console.log("ivalid diameter")
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
