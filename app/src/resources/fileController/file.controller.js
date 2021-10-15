@@ -1361,7 +1361,7 @@ const uploadReport = async(req,res) =>{
       if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
-          if(process.env.REACT_APP_MMDN == 0){
+          if(process.env.REACT_APP_MMDN == 1){
             sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 res.status(401).send({invalid: "Invaid diameter in some lines"})
