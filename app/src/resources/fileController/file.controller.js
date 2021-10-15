@@ -2074,7 +2074,7 @@ async function uploadReportPeriod(){
             if(!results[0]){
             }
             const areaid = results[0].id
-            if(process.env.REACT_APP_MMDN == 0){
+            if(process.env.REACT_APP_MMDN == 1){
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter")
