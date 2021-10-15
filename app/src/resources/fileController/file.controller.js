@@ -1362,7 +1362,7 @@ const uploadReport = async(req,res) =>{
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
           if(process.env.REACT_APP_MMDN == 0){
-            sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
+            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 res.status(401).send({invalid: "Invaid diameter in some lines"})
               }else{
@@ -1391,7 +1391,7 @@ const uploadReport = async(req,res) =>{
               }
             })
           }else{
-            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
+            sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 
                 res.status(401).send("Invaid diameter in some lines")
@@ -2076,7 +2076,7 @@ async function uploadReportPeriod(){
             }
             const areaid = results[0].id
             if(process.env.REACT_APP_MMDN == 0){
-              sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
+              sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter")
                 }else{
@@ -2105,7 +2105,7 @@ async function uploadReportPeriod(){
                 }
               })
             }else{
-              sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
+              sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter: ", csv[i].diameter)
                 }else{
@@ -3650,14 +3650,18 @@ const isocontrolWeights = async(req, res) =>{
 }
 
 
-cron.schedule("0 */1 * * * *", () => {
+cron.schedule("0 */5 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
-    //updateIsocontrolNotModelled()
-    //updateIsocontrolModelled()
-    //updateLines()
     updateHolds()
   }
-  
+})
+
+cron.schedule("0 */5 * * * *", () => {
+  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_ISOCONTROL === "1"){
+    updateIsocontrolNotModelled()
+    updateIsocontrolModelled()
+    updateLines()
+  }
 })
 
 async function updateIsocontrolNotModelled(){
@@ -3681,7 +3685,7 @@ async function updateIsocontrolModelled(){
       console.log(err)
     }
   })
-  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrol_fullview)", (err, results)=>{
+  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
     if(err){
       console.log(err)
     }else{
@@ -3754,9 +3758,17 @@ const exportNotModelled = async(req, res) =>{
               rows[i].spec_code = results[i].spec_code_ldl
             }
 
-            rows[i].line_id = rows[i].unit + rows[i].line
-            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
-    
+            if(!rows[i].unit || !rows[i].line){
+              rows[i].line_id = null
+            }else{
+              rows[i].line_id = rows[i].unit + rows[i].line
+            }
+
+            if(!rows[i].unit || !rows[i].line || !rows[i].area || !rows[i].train  ){
+              rows[i].iso_id = null
+            }else{
+              rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train            
+            }
     
           }
           res.json(JSON.stringify(rows)).status(200)
@@ -3767,7 +3779,7 @@ const exportNotModelled = async(req, res) =>{
 }
 
 const getIsocontrolFull = async(req, res)=>{
-  sql.query("SELECT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.unit, isocontrol_all_view.area, isocontrol_all_view.line,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid", (err, results)=>{
+  sql.query("SELECT DISTINCT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN isocontrol_holds_view ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.isoid", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3787,7 +3799,7 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.user, misoctrls.role FROM holds JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3796,34 +3808,44 @@ const holds = async(req, res) =>{
   })
 }
 
-function updateHolds(){
-  readXlsxFile(process.env.NODE_HOLDS_ROUTE).then((rows) => {
-    sql.query("TRUNCATE holds", (err, results) =>{
-      if(err){
-        console.log(err)
-      }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
-        for(let i = 1; i < rows.length; i++){    
-          if(rows[i][0]){
-            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [rows[i][0], rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][5], rows[i][6], rows[i][7], rows[i][8], rows[i][9], rows[i][10], rows[i][11], rows[i][12], rows[i][13], rows[i][14], rows[i][15], rows[i][16], rows[i][17], rows[i][18], rows[i][19], rows[i][20]], (err, results)=>{
-              if(err){
-                console.log(err)
-              }
-            })
-            sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", rows[i][0]], (err, results)=>{
-              if(err){
-                console.log(err)
-              }else{
-                
-              }
-            })
-          }      
-          
-        }
-        console.log("Holds updated")
-      }
-    })
+async function updateHolds(){
+
+  let data = null
+  await csv()
+  .fromFile(process.env.NODE_HOLDS_ROUTE)
+  .then((jsonObj)=>{
+    data = jsonObj
   })
+
+  sql.query("TRUNCATE holds", (err, results) =>{
+    if(err){
+      console.log(err)
+    }else{
+      sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
+      for(let i = 0; i < data.length; i++){    
+        if(data[i].tag){
+          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
+            if(err){
+              console.log(err)
+            }else{
+              if(data[i].hold1){
+                sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+            }
+          })
+          
+          
+        }      
+        
+      }
+      console.log("Holds updated")
+    }
+  })
+
 }
 
 const uploadNotifications = (req, res) =>{
@@ -3855,6 +3877,108 @@ const lastUser = async(req, res) =>{
       res.send({user: results[0].user}).status(200)
     }
   })
+}
+
+const exportFull = async(req, res) =>{
+  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, isocontrol_all_view.calc_notes, insulation, total_weight, diameter as modelled, misoctrls.`to`, misoctrls.progress, holds.hold1, LDL, BOM FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      let rows = results
+      for(let i = 0; i < rows.length; i++){
+
+        if(rows[i].line_id === null){
+            rows[i].modelled = "Not modelled"
+        }else{
+            rows[i].modelled = "Modelled"
+        }
+
+        rows[i].line_id = rows[i].unit + rows[i].line
+        rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+
+        if(rows[i].LDL === "In LDL" && rows[i].BOM === "Not in BOM"){
+            rows[i].line_id = rows[i].LDL_unit + rows[i].fluid + rows[i].seq
+            rows[i].iso_id = " "
+
+            rows[i].unit = rows[i].LDL_unit
+            rows[i].line = rows[i].fluid + rows[i].seq
+            rows[i].spec_code = rows[i].spec_code_ldl
+        }else{
+            rows[i].line_id = rows[i].unit + rows[i].line
+            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
+
+            rows[i].unit = rows[i].unit
+        }
+
+        if(rows[i].diameter === null){
+            rows[i].modelled = "Not modelled"
+        }else{
+            rows[i].modelled = "Modelled"
+        }
+
+        if(!rows[i].spec_code){
+          rows[i].spec_code = ""
+        }
+
+        if(!rows[i].BOM){
+            rows[i].BOM = ""
+        }
+
+        if(!rows[i].LDL){
+            rows[i].LDL = ""
+        }
+
+        if(!rows[i].calc_notes){
+            rows[i].calc_notes = ""
+        }
+
+        if(rows[i].hold1){
+          rows[i].hold1 = "Yes"
+        }else{
+          rows[i].hold1 = "No"
+        }
+
+    }
+      res.json(JSON.stringify(rows)).status(200)
+    }
+  })
+}
+
+const exportLineIdGroup = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
+
+const exportHolds = async(req, res) =>{
+  sql.query("SELECT tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10 FROM holds", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
+
+const exportHoldsNoProgress = async(req, res) =>{
+  sql.query('SELECT isoid, revision, updated_at, `from`, user, comments FROM misoctrls WHERE misoctrls.to = ?', ["On hold"], (err, results) =>{
+    for(let i = 0; i < results.length; i++){
+      results[i].updated_at = results[i].updated_at.toString().substring(0,10) + " "+ results[i].updated_at.toString().substring(11,24)
+    }
+    console.log(results)
+    res.json(JSON.stringify(results)).status(200)
+  
+})
+}
+
+const downloadBOM = async(req, res) =>{
+  var file = fs.createReadStream("./app/storage/marian.xlsx");
+  file.pipe(res);
 }
 
 const getPids = async(req, res) =>{
@@ -3962,9 +4086,14 @@ module.exports = {
   exportModelled,
   exportNotModelled,
   getIsocontrolFull,
-  isoControlGroupLineId,
   holds,
   lastUser,
   uploadNotifications,
+  isoControlGroupLineId,
+  exportFull,
+  exportLineIdGroup,
+  exportHolds,
+  exportHoldsNoProgress,
+  downloadBOM,
   getPids
 };
