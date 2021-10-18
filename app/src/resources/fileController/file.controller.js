@@ -7,7 +7,8 @@ const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
-const readXlsxFile = require('read-excel-file/node')
+const readXlsxFile = require('read-excel-file/node');
+const { verify } = require("crypto");
 
 const upload = async (req, res) => {
   try {
@@ -1109,10 +1110,10 @@ const downloadHistory = async(req,res) =>{
 }
 
 const downloadStatus = async(req,res) =>{
-  sql.query("SELECT deleted, onhold, issued, `from` FROM misoctrls", (err, results)=>{
+  sql.query("SELECT isoid, deleted, onhold, issued, `from`, role, verifydesign FROM misoctrls ORDER BY isoid ASC", (err, results)=>{
     const delhold = results
     if(process.env.NODE_PROGRESS === "1"){
-      sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
+      sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results) =>{
         if(!results[0]){
           res.status(401).send("El historial esta vacio")
         }else{
@@ -1137,17 +1138,34 @@ const downloadStatus = async(req,res) =>{
               results[i].to = "LOS/Isocontrol"
             }
 
+            if(results[i].to == "Design"){
+              if(delhold[i].verifydesign == 1 || delhold[i].role == "DesignLead"){
+                results[i].to = "DESIGN LEAD"
+              }
+            }
+
+            if(results[i].to == "Stress"){
+              if(delhold[i].verifydesign == 1 || delhold[i].role == "StressLead"){
+                results[i].to = "STRESS LEAD"
+              }
+            }
+
+            if(results[i].to == "Supports"){
+              if(delhold[i].verifydesign == 1 || delhold[i].role == "SupportsLead"){
+                results[i].to = "SUPPORTS LEAD"
+              }
+            }
+
             results[i].to = results[i].to.toUpperCase()
 
             results[i].created_at = format(pattern, results[i].created_at)
             results[i].updated_at = format(pattern, results[i].updated_at)
           }
-          
           res.json(JSON.stringify(results)).status(200)
         }
       })
    }else{             
-    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls", (err, results) =>{
+    sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls ORDER BY misoctrls.isoid ASC", (err, results) =>{
       if(!results[0]){
         res.status(401).send("El historial esta vacio")
       }else{
@@ -1172,6 +1190,25 @@ const downloadStatus = async(req,res) =>{
             results[i].to = "LOS/Isocontrol"
           }
 
+          if(results[i].to == "Design"){
+            if(delhold[i].verifydesign == 1 || delhold[i].role == "DesignLead"){
+              results[i].to = "DESIGN LEAD"
+            }
+          }
+
+          if(results[i].to == "Stress"){
+            if(delhold[i].verifydesign == 1 || delhold[i].role == "StressLead"){
+              results[i].to = "STRESS LEAD"
+            }
+          }
+
+          if(results[i].to == "Supports"){
+            if(delhold[i].verifydesign == 1 || delhold[i].role == "SupportsLead"){
+              results[i].to = "SUPPORTS LEAD"
+            }
+          }
+
+          
           results[i].to = results[i].to.toUpperCase()
 
 
