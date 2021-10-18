@@ -789,6 +789,31 @@ const statusFiles = (req,res) =>{
           rows : results
         })
       }else{
+        for(let i = 0; i < results.length; i++){
+          
+          if(results[i].to == "LDE/Isocontrol"){
+            results[i].to = "LOS/Isocontrol"
+          }
+
+          if(results[i].to == "Design"){
+            if(results[i].verifydesign == 1 || results[i].role == "DesignLead"){
+              results[i].to = "Design lead"
+            }
+          }
+
+          if(results[i].to == "Stress"){
+            if(results[i].verifydesign == 1 || results[i].role == "StressLead"){
+              results[i].to = "Stress lead"
+            }
+          }
+
+          if(results[i].to == "Supports"){
+            if(results[i].verifydesign == 1 || results[i].role == "SupportsLead"){
+              results[i].to = "Supports lead"
+            }
+          }
+        }
+
         res.status(200).send({
           rows : results
         })
@@ -802,6 +827,31 @@ const statusFiles = (req,res) =>{
           rows : results
         })
       }else{
+
+        for(let i = 0; i < results.length; i++){
+          
+          if(results[i].to == "LDE/Isocontrol"){
+            results[i].to = "LOS/Isocontrol"
+          }
+
+          if(results[i].to == "Design"){
+            if(results[i].verifydesign == 1 || results[i].role == "DesignLead"){
+              results[i].to = "Design lead"
+            }
+          }
+
+          if(results[i].to == "Stress"){
+            if(results[i].verifydesign == 1 || results[i].role == "StressLead"){
+              results[i].to = "Stress lead"
+            }
+          }
+
+          if(results[i].to == "Supports"){
+            if(results[i].verifydesign == 1 || results[i].role == "SupportsLead"){
+              results[i].to = "Supports lead"
+            }
+          }
+        }
         res.status(200).send({
           rows : results
         })
