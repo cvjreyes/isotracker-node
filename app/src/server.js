@@ -38,7 +38,7 @@ require("./resources/progress/progress.routes.js")(app);
 require("./resources/csptracker/csptracker.routes.js")(app);
 
 // set port, listen for requests
-app.listen(process.env.REACT_APP_DB_PORT, () => {
-  console.log("Server is running on port "+process.env.REACT_APP_DB_PORT+".");
+app.listen(process.env.NODE_DB_PORT, () => {
+  console.log("Server is running on port "+process.env.NODE_DB_PORT+".");
 });
 

@@ -13,7 +13,7 @@ const login = async(req, res) => {
       else if(md5(password) !== results[0].password){
         res.status(401).send("Username or password incorrect");
       }else{
-        const token = jwt.sign({email: email, role: 'admin'}, process.env.REACT_APP_TOKEN_SECRET);
+        const token = jwt.sign({email: email, role: 'admin'}, process.env.NODE_TOKEN_SECRET);
         
         res.json({
           token: token,

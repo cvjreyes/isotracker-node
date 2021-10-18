@@ -285,7 +285,7 @@ const getListsData = async(req, res) =>{
                 if(err){
                     res.status(401)
                 }else{
-                    if(process.env.REACT_APP_MMDN === "0"){
+                    if(process.env.NODE_MMDN === "0"){
                         for(let i = 0; i < results.length; i++){
                             diametersData.push(results[i].dn)
                         }
@@ -418,7 +418,7 @@ const submitCSP = async(req, res) =>{
                                 rows[i].description_plan_code = results[0].id
                             }
                             
-                            if(process.env.REACT_APP_MMDN == "1"){
+                            if(process.env.NODE_MMDN == "1"){
                                 sql.query("SELECT id FROM diameters WHERE nps = ?", rows[i].p1diameter_nps, (err, results)=>{
                                     if(!results){
                                         results = []
@@ -954,7 +954,7 @@ const deleteCSPNotification = async(req, res) =>{
 }
 
 const downloadCSP = async(req, res) =>{
-    if(process.env.REACT_APP_MMDN === "1"){
+    if(process.env.NODE_MMDN === "1"){
         sql.query("SELECT tag, spec, p1diameter_nps, p2diameter_nps, p3diameter_nps, rating, end_preparation, line_id, pid, type, description_plan_code, quantity, requisition, description, description_iso, ident, face_to_face, bolt_type, equipnozz, utility_station, comments, ready_load, `ready_e3d`, updated FROM csptrackerfull_view", (err, results) =>{
             if(!results[0]){
               res.status(401)

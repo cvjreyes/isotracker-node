@@ -8,7 +8,7 @@ const transaction = async (req, res) => {
     let username = "";
 
     sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
-      if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+      if(!results[0] && process.env.NODE_PROGRESS == "1"){
         sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
           res.status(200).send({blocked:"1"})
           
@@ -112,9 +112,9 @@ const transaction = async (req, res) => {
                                       console.log("error: ", err);
                                     }else{
                                       console.log("created return in hisoctrls");
-                                      if(process.env.REACT_APP_PROGRESS == "1"){
+                                      if(process.env.NODE_PROGRESS == "1"){
                                         let type = ""
-                                        if(process.env.REACT_APP_IFC == "0"){
+                                        if(process.env.NODE_IFC == "0"){
                                           type = "value_ifd"
                                         }else{
                                           type = "value_ifc"
@@ -303,7 +303,7 @@ const transaction = async (req, res) => {
                                   let ld = 0;
                                   let u = "None";
                                   let r = null;
-                                  if (process.env.REACT_APP_IFC == "1"){
+                                  if (process.env.NODE_IFC == "1"){
                                       if ((req.body.role == "StressLead" || req.body.role == "SupportsLead") && (from == "stress" && req.body.to == "supports" || from == "supports" && req.body.to == "stress")){
                                           ld = 1;
                                       }
@@ -313,9 +313,9 @@ const transaction = async (req, res) => {
                                       u = username
                                       r = req.body.role
                                   }
-                                  if(process.env.REACT_APP_PROGRESS == "1" && req.body.to !== "Recycle bin" && req.body.to !== "On hold"){
+                                  if(process.env.NODE_PROGRESS == "1" && req.body.to !== "Recycle bin" && req.body.to !== "On hold"){
                                       let type = ""
-                                      if(process.env.REACT_APP_IFC == "0"){
+                                      if(process.env.NODE_IFC == "0"){
                                         type = "value_ifd"
                                       }else{
                                         type = "value_ifc"
@@ -486,7 +486,7 @@ const transaction = async (req, res) => {
 const returnLead = async(req, res) =>{
   const fileName = req.body.fileName
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
         
@@ -576,9 +576,9 @@ const returnLead = async(req, res) =>{
                                         
                           }
       
-                          if(process.env.REACT_APP_PROGRESS == "1"){
+                          if(process.env.NODE_PROGRESS == "1"){
                               let type = ""
-                              if(process.env.REACT_APP_IFC == "0"){
+                              if(process.env.NODE_IFC == "0"){
                                 type = "value_ifd"
                               }else{
                                 type = "value_ifc"
@@ -656,7 +656,7 @@ const returnLeadStress = async(req, res) =>{
   let dest_role = "StressLead";
 
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
         
@@ -758,15 +758,15 @@ const returnLeadStress = async(req, res) =>{
                               let ld = 0;
                               let u = "None";
                               let r = null;
-                              if (process.env.REACT_APP_IFC == "1"){
+                              if (process.env.NODE_IFC == "1"){
                                   if ((req.body.role == "StressLead" || req.body.role == "SupportsLead") && (from == "stress" && req.body.to == "supports" || from == "supports" && req.body.to == "stress")){
                                       ld = 1;
                                   }
                               }
   
-                              if(process.env.REACT_APP_PROGRESS == "1"){
+                              if(process.env.NODE_PROGRESS == "1"){
                                   let type = ""
-                                  if(process.env.REACT_APP_IFC == "0"){
+                                  if(process.env.NODE_IFC == "0"){
                                     type = "value_ifd"
                                   }else{
                                     type = "value_ifc"
@@ -910,9 +910,9 @@ const returnLeadStress = async(req, res) =>{
                       console.log("error: ", err);
                     }else{
                       console.log("created return in hisoctrls");
-                      if(process.env.REACT_APP_PROGRESS == "1"){
+                      if(process.env.NODE_PROGRESS == "1"){
                         let type = ""
-                        if(process.env.REACT_APP_IFC == "0"){
+                        if(process.env.NODE_IFC == "0"){
                           type = "value_ifd"
                         }else{
                           type = "value_ifc"
@@ -1000,7 +1000,7 @@ const returnIso = async(req, res) =>{
 
   
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
         
@@ -1110,15 +1110,15 @@ const returnIso = async(req, res) =>{
                                       let ld = 0;
                                       let u = "None";
                                       let r = null;
-                                      if (process.env.REACT_APP_IFC == "1"){
+                                      if (process.env.NODE_IFC == "1"){
                                           if ((req.body.role == "StressLead" || req.body.role == "SupportsLead") && (from == "stress" && req.body.to == "supports" || from == "supports" && req.body.to == "stress")){
                                               ld = 1;
                                           }
                                       }
         
-                                      if(process.env.REACT_APP_PROGRESS == "1"){
+                                      if(process.env.NODE_PROGRESS == "1"){
                                           let type = ""
-                                          if(process.env.REACT_APP_IFC == "0"){
+                                          if(process.env.NODE_IFC == "0"){
                                             type = "value_ifd"
                                           }else{
                                             type = "value_ifc"
@@ -1314,9 +1314,9 @@ const returnIso = async(req, res) =>{
                         console.log("error: ", err);
                       }else{
                         console.log("created return in hisoctrls");
-                        if(process.env.REACT_APP_PROGRESS == "1"){
+                        if(process.env.NODE_PROGRESS == "1"){
                           let type = ""
-                          if(process.env.REACT_APP_IFC == "0"){
+                          if(process.env.NODE_IFC == "0"){
                             type = "value_ifd"
                           }else{
                             type = "value_ifc"

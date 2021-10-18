@@ -105,7 +105,7 @@ const update = async (req, res) => {
 
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
-  if(process.env.REACT_APP_PROGRESS === "1"){
+  if(process.env.NODE_PROGRESS === "1"){
     sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? GROUP BY misoctrls.isoid', [tab], (err, results) =>{
       
       res.json({
@@ -359,9 +359,9 @@ const uploadHis = async (req, res) => {
           res.status(401)
         }else{
           console.log("created hisoctrls");
-          if(process.env.REACT_APP_PROGRESS == "1"){
+          if(process.env.NODE_PROGRESS == "1"){
             let type = ""
-            if(process.env.REACT_APP_IFC == "0"){
+            if(process.env.NODE_IFC == "0"){
               type = "value_ifd"
             }else{
               type = "value_ifc"
@@ -780,7 +780,7 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  if(process.env.REACT_APP_PROGRESS == "1"){
+  if(process.env.NODE_PROGRESS == "1"){
     sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
       if(!results[0]){
         console.log("No files found");
@@ -1111,7 +1111,7 @@ const downloadHistory = async(req,res) =>{
 const downloadStatus = async(req,res) =>{
   sql.query("SELECT deleted, onhold, issued, `from` FROM misoctrls", (err, results)=>{
     const delhold = results
-    if(process.env.REACT_APP_PROGRESS === "1"){
+    if(process.env.NODE_PROGRESS === "1"){
       sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results) =>{
         if(!results[0]){
           res.status(401).send("El historial esta vacio")
@@ -1293,7 +1293,7 @@ const downloadStatus3D = async(req, res) =>{
     let log = []
     let ifc_ifd = ""
     let status = ""
-    if(process.env.REACT_APP_IFC == 0){
+    if(process.env.NODE_IFC == 0){
       ifc_ifd = "IFD"
     }else{
       ifc_ifd = "IFC"
@@ -1361,7 +1361,7 @@ const uploadReport = async(req,res) =>{
       if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           const areaid = results[0].id
-          if(process.env.REACT_APP_MMDN == 1){
+          if(process.env.NODE_MMDN == 1){
             sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 console.log("ivalid diameter")
@@ -1516,7 +1516,7 @@ const toIssue = async(req,res) =>{
 
 
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
-    if(!results[0] && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
         
@@ -1597,7 +1597,7 @@ const toIssue = async(req,res) =>{
                           if (err) {
                             console.log("error: ", err);
                           }else{
-                            if(process.env.REACT_APP_PROGRESS == "0"){
+                            if(process.env.NODE_PROGRESS == "0"){
                               sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
                                 if (err) {
                                   console.log("error: ", err);
@@ -1608,7 +1608,7 @@ const toIssue = async(req,res) =>{
                               })
                             }else{
                                 let type = ""
-                                if(process.env.REACT_APP_IFC == "0"){
+                                if(process.env.NODE_IFC == "0"){
                                   type = "value_ifd"
                                 }else{
                                   type = "value_ifc"
@@ -1723,7 +1723,7 @@ const newRev = (req, res) =>{
   const destiny_path = './app/storage/isoctrl/design/' + newFileName
 
   sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
-    if(!results && process.env.REACT_APP_PROGRESS == "1"){
+    if(!results && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
       })
@@ -1748,7 +1748,7 @@ const newRev = (req, res) =>{
                     res.status(401).send("File not found")
                   }else{
                     const revision = results[0].revision
-                    if(process.env.REACT_APP_PROGRESS == "0"){
+                    if(process.env.NODE_PROGRESS == "0"){
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
                       [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
                         if (err) {
@@ -1775,7 +1775,7 @@ const newRev = (req, res) =>{
                       })
                     }else{
                       let type = ""
-                      if(process.env.REACT_APP_IFC == "0"){
+                      if(process.env.NODE_IFC == "0"){
                         type = "value_ifd"
                       }else{
                         type = "value_ifc"
@@ -1971,14 +1971,14 @@ const newRev = (req, res) =>{
 
   
 cron.schedule('0 0 0 * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     downloadStatus3DPeriod()
   }
   
 })
 
 cron.schedule('0 0 12 * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     downloadStatus3DPeriod()
   }
  
@@ -1990,7 +1990,7 @@ function downloadStatus3DPeriod(){
     let log = []
     let ifc_ifd = ""
     let status = ""
-    if(process.env.REACT_APP_IFC == 0){
+    if(process.env.NODE_IFC == 0){
       ifc_ifd = "IFD"
     }else{
       ifc_ifd = "IFC"
@@ -2035,7 +2035,7 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 cron.schedule('0 */1 * * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS == "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     uploadReportPeriod()
   }
   
@@ -2074,7 +2074,7 @@ async function uploadReportPeriod(){
             if(!results[0]){
             }
             const areaid = results[0].id
-            if(process.env.REACT_APP_MMDN == 1){
+            if(process.env.NODE_MMDN == 1){
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
                   console.log("invalid diameter")
@@ -2155,7 +2155,7 @@ async function refreshProgress(){
       console.log("Empty misoctrls")
     }else{
       const lines = results
-      if(process.env.REACT_APP_IFC == "0"){
+      if(process.env.NODE_IFC == "0"){
         type = "value_ifd"
       }else{
         type = "value_ifc"
@@ -3650,7 +3650,7 @@ const isocontrolWeights = async(req, res) =>{
 
 
 cron.schedule("0 */5 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.REACT_APP_PROGRESS === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){
     updateHolds()
   }
 })

@@ -42,7 +42,7 @@ exports.getFilesByTray = async(req, res) => {
             }
             
           }
-          if(process.env.REACT_APP_PROGRESS === "1"){
+          if(process.env.NODE_PROGRESS === "1"){
             if(role == "Process"){
               sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE spouser = ? AND spoclaimed = 1 GROUP BY misoctrls.isoid', [username], async (err, results) => { 
                 res.json({
