@@ -3771,7 +3771,7 @@ async function updateIsocontrolModelled(){
       console.log(err)
     }
   })
-  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
+  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT unit, area, line, train, spec_code, diameter, pid, stress_level, calc_notes, insulation, fluid, seq, total_weight FROM isocontrolfull_view)", (err, results)=>{
     if(err){
       console.log(err)
     }else{
