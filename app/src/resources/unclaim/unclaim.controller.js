@@ -12,11 +12,11 @@ const singleUnclaim = async (req, res) => {
         }else{
             username  = results[0].name
             sql.query("SELECT forced, returned FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
-                if(results[0].forced == 1){
+                /*if(results[0].forced == 1){
                     res.status(401).send({"error": "forced"})
                 }else if(results[0].returned == 1){
                     res.status(401).send({"error": "returned"})
-                }else{
+                }else{*/
                     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
                         if(!results[0]){
                             res.status(401).send("No files found");
@@ -49,7 +49,7 @@ const singleUnclaim = async (req, res) => {
                             })
                         }
                     })
-                }
+                //}
             })   
         
         }
@@ -105,9 +105,9 @@ const singleUnclaimProc = async(req, res) =>{
           res.status(401).send("No files found");
       }else{
         sql.query("SELECT forced, claimed, comments, user FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
-            if(results[0].forced == 1){
+            /*if(results[0].forced == 1){
                 res.status(401).send("Iso is forced")
-            }else{
+            }else{*/
                 let last = results[0]
                 for (let i = 1; i < results.length; i++){
                     if(results[i].updated_at > last.updated_at){
@@ -130,7 +130,7 @@ const singleUnclaimProc = async(req, res) =>{
                     })
                     }
                 })
-            }
+            //}
         })
       }
   })
@@ -144,9 +144,9 @@ const singleUnclaimInst = async(req, res) =>{
             res.status(401).send("No files found");
         }else{
             sql.query("SELECT * FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
-                if(results[0].forced == 1){
+                /*if(results[0].forced == 1){
                     res.status(401).send("Iso is forced")
-                }else{
+                }else{*/
                     let last = results[0]
                     for (let i = 1; i < results.length; i++){
                         if(results[i].updated_at > last.updated_at){
@@ -169,7 +169,7 @@ const singleUnclaimInst = async(req, res) =>{
                         })
                         }
                     })
-                }
+               // }
             })
         }
     })
