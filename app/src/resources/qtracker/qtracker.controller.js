@@ -574,6 +574,18 @@ const uploadAttach = async(req, res) =>{
     }
 }
 
+const getNWC = async(req, res) =>{
+    sql.query("SELECT qtracker_not_working_component.*, users.name as user FROM qtracker_not_working_component LEFT JOIN users ON qtracker_not_working_component.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
+const getNVN = async(req, res) =>{
+    sql.query("SELECT qtracker_not_view_in_navis.*, users.name as user FROM qtracker_not_view_in_navis LEFT JOIN users ON qtracker_not_view_in_navis.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
 module.exports = {
     requestNWC,
     requestNVN,
@@ -581,5 +593,7 @@ module.exports = {
     requestNRB,
     requestNRIDS,
     requestRR,
-    uploadAttach
+    uploadAttach,
+    getNWC,
+    getNVN
   };

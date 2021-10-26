@@ -9,4 +9,7 @@ module.exports = app => {
     app.post("/qtracker/requestRR", qtracker.requestRR)
     app.post("/qtracker/uploadAttach", qtracker.uploadAttach)
 
+    app.get("/qtracker/getNWC", qtracker.getNWC)
+    app.get("/qtracker/getNVN", qtracker.getNVN)
+
   };
