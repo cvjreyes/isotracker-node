@@ -120,7 +120,7 @@ const singleUnclaimProc = async(req, res) =>{
                     console.log("error: ", err);
                 }else{
                     console.log("created unclaim in hisoctrls");
-                    sql.query("UPDATE misoctrls SET spoclaimed = 0, spouser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
+                    sql.query("UPDATE misoctrls SET spoclaimed = 0, spo = 5, spouser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
@@ -159,7 +159,7 @@ const singleUnclaimInst = async(req, res) =>{
                         console.log("error: ", err);
                     }else{
                         console.log("created unclaim in hisoctrls");
-                        sql.query("UPDATE misoctrls SET sitclaimed = 0, situser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
+                        sql.query("UPDATE misoctrls SET sitclaimed = 0, sit = 5, situser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
                             if (err) {
                                 console.log("error: ", err);
                             }else{

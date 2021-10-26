@@ -996,8 +996,10 @@ const cancelProc = (req, res) =>{
       prev = 0
     }else if(results[0].from == "Accepted Proc"){
       prev = 2
-    }else{
+    }else if(results[0].from == "Denied Proc"){
       prev = 3
+    }else{
+      prev = 0
     }
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
       if (!results[0]){
@@ -1032,8 +1034,10 @@ const cancelInst = (req,res) =>{
       prev = 0
     }else if(results[0].from == "Accepted Inst"){
       prev = 2
-    }else{
+    }else if(results[0].from == "Denied Inst"){
       prev = 3
+    }else{
+      prev = 0
     }
 
     sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
