@@ -1,11 +1,14 @@
 const sql = require("../../db.js");
 const qtrackerMiddleware = require("../qtracker/qtracker.middleware");
 const nodemailer = require("nodemailer");
+const path = require('path');
+const fs = require("fs");
 
 const requestNWC = async(req, res) =>{
     const spref = req.body.spref
     const description = req.body.description
     const email = req.body.user
+    const has_attach = req.body.has_attach
     let user_id = null
     let ref_code = "NWC000001"
 
@@ -24,7 +27,7 @@ const requestNWC = async(req, res) =>{
                 res.status(401)
             }else{
                 user_id = results[0].id
-                sql.query("INSERT INTO qtracker_not_working_component(incidence_number, spref, description, user_id) VALUES(?,?,?,?)", [ref_code, spref, description, user_id], (err, results) =>{
+                sql.query("INSERT INTO qtracker_not_working_component(incidence_number, spref, description, user_id, attach) VALUES(?,?,?,?,?)", [ref_code, spref, description, user_id, has_attach], (err, results) =>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -98,6 +101,7 @@ const requestNVN = async(req, res) =>{
     const name = req.body.name
     const description = req.body.description
     const email = req.body.user
+    const has_attach = req.body.has_attach
     let user_id = null
     let ref_code = "NVN000001"
 
@@ -116,7 +120,7 @@ const requestNVN = async(req, res) =>{
                 res.status(401)
             }else{
                 user_id = results[0].id
-                sql.query("INSERT INTO qtracker_not_view_in_navis(incidence_number, name, description, user_id) VALUES(?,?,?,?)", [ref_code, name, description, user_id], (err, results) =>{
+                sql.query("INSERT INTO qtracker_not_view_in_navis(incidence_number, name, description, user_id, attach) VALUES(?,?,?,?,?)", [ref_code, name, description, user_id, has_attach], (err, results) =>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -190,6 +194,7 @@ const requestNRI = async(req, res) =>{
     const pipe = req.body.pipe
     const description = req.body.description
     const email = req.body.user
+    const has_attach = req.body.has_attach
     let user_id = null
     let ref_code = "NRI000001"
 
@@ -208,7 +213,7 @@ const requestNRI = async(req, res) =>{
                 res.status(401)
             }else{
                 user_id = results[0].id
-                sql.query("INSERT INTO qtracker_not_reporting_isometric(incidence_number, pipe, description, user_id) VALUES(?,?,?,?)", [ref_code, pipe, description, user_id], (err, results) =>{
+                sql.query("INSERT INTO qtracker_not_reporting_isometric(incidence_number, pipe, description, user_id, attach) VALUES(?,?,?,?,?)", [ref_code, pipe, description, user_id, has_attach], (err, results) =>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -282,6 +287,7 @@ const requestNRB = async(req, res) =>{
     const pipe = req.body.pipe
     const description = req.body.description
     const email = req.body.user
+    const has_attach = req.body.has_attach
     let user_id = null
     let ref_code = "NRB000001"
 
@@ -300,7 +306,7 @@ const requestNRB = async(req, res) =>{
                 res.status(401)
             }else{
                 user_id = results[0].id
-                sql.query("INSERT INTO qtracker_not_reporting_bfile(incidence_number, pipe, description, user_id) VALUES(?,?,?,?)", [ref_code, pipe, description, user_id], (err, results) =>{
+                sql.query("INSERT INTO qtracker_not_reporting_bfile(incidence_number, pipe, description, user_id, attach) VALUES(?,?,?,?,?)", [ref_code, pipe, description, user_id, has_attach], (err, results) =>{
                     if(err){
                         console.log(err)
                         res.status(401)
@@ -574,6 +580,42 @@ const uploadAttach = async(req, res) =>{
     }
 }
 
+const existsAttach = async(req, res) =>{
+    fileName = req.params.incidence_number
+    
+    let file = null
+
+    fs.readdir('./app/storage/qtracker', function (err, files) {
+        //handling error
+        if (err) {
+            return console.log('Unable to scan directory: ' + err);
+        } 
+        //listing all files using forEach
+        files.forEach(function (filename) {
+            // Do whatever you want to do with the file
+            if(fileName == path.parse(filename).name){
+                file = filename
+            }
+        });
+         if(file){
+            console.log(file)
+            res.send({filename: file}).status(200)
+         }else{
+             res.send({filename: null}).status(200)
+         }
+    });
+  
+  }
+
+  const getAttach = async(req, res) =>{
+    fileName = req.params.fileName
+
+    var file = fs.createReadStream('./app/storage/qtracker/'+fileName);
+    file.pipe(res);
+      
+  
+  }
+
 const getNWC = async(req, res) =>{
     sql.query("SELECT qtracker_not_working_component.*, users.name as user FROM qtracker_not_working_component LEFT JOIN users ON qtracker_not_working_component.user_id = users.id", (err, results) =>{
         res.json({rows: results}).status(200)
@@ -586,6 +628,236 @@ const getNVN = async(req, res) =>{
     })
 }
 
+const getNRI = async(req, res) =>{
+    sql.query("SELECT qtracker_not_reporting_isometric.*, users.name as user FROM qtracker_not_reporting_isometric LEFT JOIN users ON qtracker_not_reporting_isometric.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
+const getNRB = async(req, res) =>{
+    sql.query("SELECT qtracker_not_reporting_bfile.*, users.name as user FROM qtracker_not_reporting_bfile LEFT JOIN users ON qtracker_not_reporting_bfile.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
+const getNRIDS = async(req, res) =>{
+    sql.query("SELECT qtracker_not_reporting_ifc_dgn_step.*, users.name as user FROM qtracker_not_reporting_ifc_dgn_step LEFT JOIN users ON qtracker_not_reporting_ifc_dgn_step.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
+const getRP = async(req, res) =>{
+    sql.query("SELECT qtracker_request_report.*, users.name as user FROM qtracker_request_report LEFT JOIN users ON qtracker_request_report.user_id = users.id", (err, results) =>{
+        res.json({rows: results}).status(200)
+    })
+}
+
+const updateStatus = async(req, res) =>{
+    const incidence_number = req.body.incidence_number
+    const status_id = req.body.status_id
+    const type = req.body.type
+    const email = req.body.email
+
+    console.log(incidence_number)
+    
+
+    if(type == "NWC"){
+        sql.query("UPDATE qtracker_not_working_component SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_not_working_component WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(type == "NVN"){
+        sql.query("UPDATE qtracker_not_view_in_navis SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_not_view_in_navis WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(type == "NRI"){
+        sql.query("UPDATE qtracker_not_reporting_isometric SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_not_reporting_isometric WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(type == "NRB"){
+        sql.query("UPDATE qtracker_not_reporting_bfile SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_not_reporting_bfile WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(type == "NRIDS"){
+        sql.query("UPDATE qtracker_not_reporting_ifc_dgn_step SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_not_reporting_ifc_dgn_step WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(type == "RP"){
+        sql.query("UPDATE qtracker_request_report SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                if(status_id == 2 || status_id == 3){
+                    let new_status
+                    if(status_id == 2){
+                        new_status = "set to ready"
+                    }else{
+                        new_status = "rejected"
+                    }
+                    sql.query("SELECT user_id FROM qtracker_request_report WHERE incidence_number = ?", [incidence_number],(err, results)=>{
+                        const reciever = results[0].user_id
+                        sql.query("SELECT name FROM users WHERE email = ?", [email],(err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO notifications(users_id, text) VALUES(?,?)", [reciever, "Your request " + incidence_number + " has been " + new_status + " by " + username + "."], (err, results)=>{
+                                if(err){
+                                    console.log(err)
+                                    res.status(401)
+                                }else{
+                                    
+                                }
+                            })
+                        })
+
+                    })
+                }
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else{
+        res.send({success: 1}).status(200)
+    }
+}
+
 module.exports = {
     requestNWC,
     requestNVN,
@@ -594,6 +866,13 @@ module.exports = {
     requestNRIDS,
     requestRR,
     uploadAttach,
+    existsAttach,
+    getAttach,
     getNWC,
-    getNVN
+    getNVN,
+    getNRI,
+    getNRB,
+    getNRIDS,
+    getRP,
+    updateStatus
   };
