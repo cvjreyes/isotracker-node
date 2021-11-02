@@ -23,8 +23,8 @@ const verify = async(req, res) => {
                     last = results[i]
                 }
             }
-            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-            [fileName, 0, 0, 0, last.claimed, 1, last.from, "Verify" , last.comments, username, role, last.created_at], (err, results) => {
+            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
+            [fileName, 0, 0, 0, last.claimed, 1, last.from, "Verify" , last.comments, username, role], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{

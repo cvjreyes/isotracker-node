@@ -15,6 +15,7 @@ let routes = (app) => {
   router.get("/getDrawing/:fileName", controller.getDrawing)
   router.get("/getListsData", controller.getListsData)
   router.post("/submitCSP", controller.submitCSP)
+  router.post("/update_ready_load", controller.update_ready_load)
   router.get("/tags", controller.tags)
   router.post("/requestSP", controller.requestSP)
   router.get("/csptrackerRequests/:email", controller.csptrackerRequests)
