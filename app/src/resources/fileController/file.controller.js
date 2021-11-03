@@ -2419,10 +2419,22 @@ const equipTypes = (req, res) =>{
 }
 
 const equipModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, dequis.tag as tag, dequis.elements, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+
+        if(results[i].elements == 0){
+          results[i].progress = 50
+        }else if(results[i].percentage != 100){
+          results[i].progress = 65
+        }else{
+          results[i].progress = 100
+        }
+      }
+
       res.json({
         rows: results
       }).status(200)
@@ -2624,6 +2636,13 @@ const instModelled = (req, res) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+      }
+      
       res.json({
         rows: results
       }).status(200)
@@ -2838,6 +2857,13 @@ const elecModelled = (req, res) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+      }
+
       res.json({
         rows: results
       }).status(200)
@@ -3228,6 +3254,11 @@ const downloadInstrumentationModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+        
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
@@ -3242,6 +3273,15 @@ const downloadEquipmentModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].elements == 0){
+          results[i].progress = 50
+        }else if(results[i].percentage != 100){
+          results[i].progress = 65
+        }else{
+          results[i].progress = 100
+        }
+        
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
@@ -3270,6 +3310,10 @@ const downloadElectricalModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
