@@ -50,7 +50,7 @@ const requestNWC = async(req, res) =>{
                           transporter.sendMail({
                             from: 'alex.dominguez-ortega@external.technipenergies.com"',
                             to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: 'Not working component '+ ref_code,
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                             text: ref_code,
                             
                             html: html_message
@@ -143,7 +143,7 @@ const requestNVN = async(req, res) =>{
                         transporter.sendMail({
                           from: 'alex.dominguez-ortega@external.technipenergies.com"',
                           to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: 'Not view in Navis '+ ref_code,
+                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                           text: ref_code,
                           
                           html: html_message
@@ -236,7 +236,7 @@ const requestNRI = async(req, res) =>{
                         transporter.sendMail({
                           from: 'alex.dominguez-ortega@external.technipenergies.com"',
                           to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: 'Not reporting in Isometric '+ ref_code,
+                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                           text: ref_code,
                           
                           html: html_message
@@ -329,7 +329,7 @@ const requestNRB = async(req, res) =>{
                         transporter.sendMail({
                           from: 'alex.dominguez-ortega@external.technipenergies.com"',
                           to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: 'Not reporting in Bfile '+ ref_code,
+                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                           text: ref_code,
                           
                           html: html_message
@@ -420,7 +420,7 @@ const requestNRIDS = async(req, res) =>{
                         transporter.sendMail({
                           from: 'alex.dominguez-ortega@external.technipenergies.com"',
                           to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: 'Not reporting in IFC/DGN/STEP '+ ref_code,
+                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                           text: ref_code,
                           
                           html: html_message
@@ -513,7 +513,7 @@ const requestRR = async(req, res) =>{
                         transporter.sendMail({
                           from: 'alex.dominguez-ortega@external.technipenergies.com"',
                           to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: 'Request report '+ ref_code,
+                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                           text: ref_code,
                           
                           html: html_message
@@ -683,7 +683,14 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_not_working_component SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
+
                                 }
                             })
                         })
@@ -715,7 +722,13 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_not_view_in_navis SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
                                 }
                             })
                         })
@@ -747,7 +760,13 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_not_reporting_isometric SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
                                 }
                             })
                         })
@@ -779,7 +798,13 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_not_reporting_bfile SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
                                 }
                             })
                         })
@@ -811,7 +836,13 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_not_reporting_ifc_dgn_step SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
                                 }
                             })
                         })
@@ -843,7 +874,13 @@ const updateStatus = async(req, res) =>{
                                     console.log(err)
                                     res.status(401)
                                 }else{
-                                    
+                                    let currentDate = new Date()
+                                    sql.query("UPDATE qtracker_request_report SET accept_reject_date = ? WHERE incidence_number = ?", [currentDate, incidence_number], (err, results) =>{
+                                        if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                        }
+                                    })
                                 }
                             })
                         })
@@ -855,6 +892,71 @@ const updateStatus = async(req, res) =>{
         })
     }else{
         res.send({success: 1}).status(200)
+    }
+}
+
+const updateObservations = async(req, res) =>{
+    const incidence_number = req.body.incidence_number
+    const observation = req.body.observation
+
+    if(incidence_number.includes("NRIDS")){
+        sql.query("UPDATE qtracker_not_reporting_ifc_dgn_step SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{        
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(incidence_number.includes("NWC")){
+        sql.query("UPDATE qtracker_not_working_component SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{   
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(incidence_number.includes("NVN")){
+        sql.query("UPDATE qtracker_not_view_in_navis SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(incidence_number.includes("NRI")){
+        sql.query("UPDATE qtracker_not_reporting_isometric SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(incidence_number.includes("NRB")){
+        sql.query("UPDATE qtracker_not_reporting_bfile SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                
+                res.send({success: 1}).status(200)
+            }
+        })
+    }else if(incidence_number.includes("RP")){
+        sql.query("UPDATE qtracker_request_report SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: 1}).status(401)
+            }else{
+                
+                res.send({success: 1}).status(200)
+            }
+        })
     }
 }
 
@@ -874,5 +976,6 @@ module.exports = {
     getNRB,
     getNRIDS,
     getRP,
-    updateStatus
+    updateStatus,
+    updateObservations
   };

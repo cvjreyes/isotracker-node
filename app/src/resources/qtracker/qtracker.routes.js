@@ -19,4 +19,5 @@ module.exports = app => {
     app.get("/qtracker/getRP", qtracker.getRP)
 
     app.post("/qtracker/updateStatus", qtracker.updateStatus)
+    app.post("/qtracker/updateObservations", qtracker.updateObservations)
   };
