@@ -2181,7 +2181,7 @@ async function uploadReportPeriod(){
                   if(calc_notes == 1){
                     tl = 3
                   }else{
-                    if(csv[i].diameter < 50){
+                    if(csv[i].diameter < 2.00){
                       tl = 1
                     }else{
                       tl = 2
@@ -2210,7 +2210,7 @@ async function uploadReportPeriod(){
                   if(calc_notes == 1){
                     tl = 3
                   }else{
-                    if(csv[i].diameter < 2.00){
+                    if(csv[i].diameter < 50){
                       tl = 1
                     }else{
                       tl = 2
@@ -3869,7 +3869,7 @@ const exportNotModelled = async(req, res) =>{
 }
 
 const getIsocontrolFull = async(req, res)=>{
-  sql.query("SELECT DISTINCT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN isocontrol_holds_view ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid,isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.isoid", (err, results)=>{
+  sql.query("SELECT DISTINCT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN isocontrol_holds_view ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid,isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.isoid", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -3975,7 +3975,7 @@ const lastUser = async(req, res) =>{
 }
 
 const exportFull = async(req, res) =>{
-  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, isocontrol_all_view.calc_notes, insulation, total_weight, diameter as modelled, misoctrls.`to`, misoctrls.progress, holds.hold1, LDL, BOM FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results) =>{
+  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, isocontrol_all_view.calc_notes, insulation, total_weight, diameter as modelled, misoctrls.`to`, misoctrls.progress, holds.hold1, LDL, BOM FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results) =>{
     if(err){
       console.log(err)
       res.status(401)
@@ -4028,7 +4028,7 @@ const exportFull = async(req, res) =>{
             rows[i].calc_notes = ""
         }
 
-        if(rows[i].hold1){
+        if(rows[i].hold1 && rows[i].hold != ""){
           rows[i].hold1 = "Yes"
         }else{
           rows[i].hold1 = "No"
