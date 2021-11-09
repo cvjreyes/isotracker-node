@@ -947,7 +947,7 @@ const updateObservations = async(req, res) =>{
                 res.send({success: 1}).status(200)
             }
         })
-    }else if(incidence_number.includes("RP")){
+    }else if(incidence_number.includes("RR")){
         sql.query("UPDATE qtracker_request_report SET observations = ? WHERE incidence_number = ?", [observation, incidence_number], (err, results) =>{
             if(err){
                 console.log(err)
