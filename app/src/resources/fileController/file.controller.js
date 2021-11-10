@@ -1679,7 +1679,7 @@ const toIssue = async(req,res) =>{
                         }
                     }
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                    [fileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -2375,41 +2375,34 @@ const equipSteps = (req, res) =>{
 
 const equipWeight = (req,res) =>{
 
-  sql.query('SELECT qty, weight FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
-    const elines = results
-    let eweight = 0
-    for(let i = 0; i < elines.length; i++){
-      eweight += elines[i].qty * elines[i].weight
-    }
-    sql.query('SELECT SUM(weight) as w FROM dequis JOIN tequis ON dequis.tequis_id = tequis.id', (err, results)=>{
-      if(!results[0].w){
-        res.json({
-          weight: eweight,
-          progress: 0
-        })
+  sql.query('SELECT elements, pequis.percentage FROM dequis LEFT JOIN pequis ON dequis.pequis_id = pequis.id', (err, results)=>{
+    let total_progress = 0
+    for(let i = 0; i < results.length; i++){
+      if(results[i].elements == 0){
+        total_progress += 50
+      }else if(results[i].percentage != 100 && results[i].elements == 1){
+        total_progress += 65
       }else{
-        const maxweight = results[0].w
-        
-        sql.query('SELECT weight, percentage FROM dequis JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
-          if(!results[0]){
-            res.status(401)
-          }else{
-            const dlines = results
-            let dweight = 0
-            for(let i = 0; i < dlines.length; i++){
-              dweight += dlines[i].weight * dlines[i].percentage/100
-            }
-           
-            res.json({
-              weight: eweight,
-              progress: (dweight/eweight*100).toFixed(2)
-            })
-          }
-        })
-        
+        total_progress += 100
       }
+    }
+
+    total_progress = total_progress/results.length
+
+    sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
+      const elines = results
+      let eweight = 0
+      for(let i = 0; i < elines.length; i++){
+        eweight += elines[i].qty * elines[i].weight
+      }
+
+      res.json({
+        weight: eweight,
+        progress: total_progress.toFixed(2)
+      }).status(200)
+
     })
-      
+
   })
 }
 
@@ -2426,10 +2419,22 @@ const equipTypes = (req, res) =>{
 }
 
 const equipModelled = (req, res) =>{
-  sql.query('SELECT areas.`name` as area, dequis.tag as tag, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
+  sql.query('SELECT areas.`name` as area, dequis.tag as tag, dequis.elements, tequis.`name` as type, tequis.weight as weight, pequis.`name` as status, pequis.percentage as progress FROM dequis JOIN areas ON dequis.areas_id = areas.id JOIN tequis ON dequis.tequis_id = tequis.id JOIN pequis ON dequis.pequis_id = pequis.id', (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+
+        if(results[i].elements == 0){
+          results[i].progress = 50
+        }else if(results[i].percentage != 100){
+          results[i].progress = 65
+        }else{
+          results[i].progress = 100
+        }
+      }
+
       res.json({
         rows: results
       }).status(200)
@@ -2442,8 +2447,9 @@ const uploadEquisModelledReport = (req, res) =>{
   const type_index = req.body[0].indexOf("TYPE")  
   const tag_index = req.body[0].indexOf("TAG")
   const progress_index = req.body[0].indexOf("PROGRESS")
+  const elements_index = req.body[0].indexOf("ELEMENTS")
  
-  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1){
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1 || elements_index == -1){
     console.log("error",area_index,tag_index,type_index,progress_index)
     res.status(401).send("Missing columns!")
   }else{
@@ -2458,6 +2464,7 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
+                console.log(req.body[i][type_index])
                 res.json({invalid: i}).status(401)
                 return;
               }else{
@@ -2469,7 +2476,7 @@ const uploadEquisModelledReport = (req, res) =>{
                   }else{
                     const percentageid = results[0].id
                     
-                    sql.query("INSERT INTO dequis(areas_id, tag, pequis_id, tequis_id) VALUES (?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid], (err, results)=>{
+                    sql.query("INSERT INTO dequis(areas_id, tag, pequis_id, tequis_id, elements) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid, req.body[i][elements_index]], (err, results)=>{
                       if(err){
                         console.log(err)
                       }
@@ -2480,10 +2487,6 @@ const uploadEquisModelledReport = (req, res) =>{
               }
             })
           })
-        }else{
-          res.json({invalid: i}).status(401)
-          
-          return;
         }
         
       }
@@ -2606,32 +2609,23 @@ const instWeight = (req,res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id', (err, results)=>{
-      if(!results[0].w){
-        res.json({
-          weight: eweight,
-          progress: 0
-        })
-      }else{
-        const maxweight = results[0].w
-        
-        sql.query('SELECT weight, percentage FROM dinsts JOIN tinsts ON dinsts.tinsts_id = tinsts.id JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results) =>{
-          if(!results[0]){
-            res.status(401)
-          }else{
-            const dlines = results
-            let dweight = 0
-            for(let i = 0; i < dlines.length; i++){
-              dweight += dlines[i].weight * dlines[i].percentage/100
-            }
-            res.json({
-              weight: eweight,
-              progress: (dweight/eweight*100).toFixed(2)
-            })
-          }
-        })
-        
+    sql.query('SELECT pinsts.percentage FROM dinsts LEFT JOIN pinsts ON dinsts.pinsts_id = pinsts.id', (err, results)=>{
+      let total_progress = 0
+      for(let i = 0; i < results.length; i++){
+        if(results[i].percentage == 100){
+          total_progress += 100
+       }else{
+          total_progress += 70
+        }
       }
+
+      total_progress = total_progress/results.length
+      
+      res.json({
+        weight: eweight,
+        progress: total_progress.toFixed(2)
+      }).status(200)
+
     })
       
   })
@@ -2642,6 +2636,13 @@ const instModelled = (req, res) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+      }
+      
       res.json({
         rows: results
       }).status(200)
@@ -2856,6 +2857,13 @@ const elecModelled = (req, res) =>{
     if(!results[0]){
       res.status(401)
     }else{
+
+      for(let i = 0; i < results.length; i++){
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+      }
+
       res.json({
         rows: results
       }).status(200)
@@ -2882,32 +2890,23 @@ const elecWeight = (req, res) =>{
     for(let i = 0; i < elines.length; i++){
       eweight += elines[i].qty * elines[i].weight
     }
-    sql.query('SELECT SUM(weight) as w FROM delecs JOIN telecs ON delecs.telecs_id = telecs.id', (err, results)=>{
-      if(!results[0].w){
-        res.json({
-          weight: eweight,
-          progress: 0
-        })
-      }else{
-        const maxweight = results[0].w
-        
-        sql.query('SELECT weight, percentage FROM delecs JOIN telecs ON delecs.telecs_id = telecs.id JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results) =>{
-          if(!results[0]){
-            res.status(401)
-          }else{
-            const dlines = results
-            let dweight = 0
-            for(let i = 0; i < dlines.length; i++){
-              dweight += dlines[i].weight * dlines[i].percentage/100
-            }
-            res.json({
-              weight: eweight,
-              progress: (dweight/eweight*100).toFixed(2)
-            })
-          }
-        })
-        
+    sql.query('SELECT pelecs.percentage FROM delecs LEFT JOIN pelecs ON delecs.pelecs_id = pelecs.id', (err, results)=>{
+      let total_progress = 0
+      for(let i = 0; i < results.length; i++){
+        if(results[i].percentage == 100){
+          total_progress += 100
+       }else{
+          total_progress += 70
+        }
       }
+
+      total_progress = total_progress/results.length
+      
+      res.json({
+        weight: eweight,
+        progress: total_progress.toFixed(2)
+      }).status(200)
+
     })
       
   })
@@ -3255,6 +3254,11 @@ const downloadInstrumentationModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
+        
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
@@ -3269,6 +3273,15 @@ const downloadEquipmentModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].elements == 0){
+          results[i].progress = 50
+        }else if(results[i].percentage != 100){
+          results[i].progress = 65
+        }else{
+          results[i].progress = 100
+        }
+        
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
@@ -3297,6 +3310,10 @@ const downloadElectricalModelled = (req, res) =>{
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
+
+        if(results[i].progress != 100){
+          results[i].progress = 70
+        }
         rows.push(results[i])
       }
       res.json(JSON.stringify(rows)).status(200)
@@ -4086,6 +4103,16 @@ const getPids = async(req, res) =>{
   })
 }
 
+const timeTrack = async(req, res) =>{
+  sql.query("SELECT * FROM hisoctrlstimetrack_view", (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4190,5 +4217,6 @@ module.exports = {
   exportHolds,
   exportHoldsNoProgress,
   downloadBOM,
-  getPids
+  getPids,
+  timeTrack
 };
