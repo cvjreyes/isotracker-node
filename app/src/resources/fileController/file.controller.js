@@ -9,6 +9,7 @@ var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
 const { verify } = require("crypto");
+const { isAsyncFunction } = require("util/types");
 
 const upload = async (req, res) => {
   try {
@@ -4082,7 +4083,6 @@ const exportHoldsNoProgress = async(req, res) =>{
     for(let i = 0; i < results.length; i++){
       results[i].updated_at = results[i].updated_at.toString().substring(0,10) + " "+ results[i].updated_at.toString().substring(11,24)
     }
-    console.log(results)
     res.json(JSON.stringify(results)).status(200)
   
 })
@@ -4112,6 +4112,20 @@ const timeTrack = async(req, res) =>{
     }
   })
 }
+
+const exportTimeTrack = async(req, res) =>{
+  sql.query("SELECT * FROM hisoctrlstimetrack_view", (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      for(let i = 0; i < results.length; i++){
+        results[i].revision = "*R" + results[i].revision
+      }
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
+
 
 module.exports = {
   upload,
@@ -4218,5 +4232,6 @@ module.exports = {
   exportHoldsNoProgress,
   downloadBOM,
   getPids,
-  timeTrack
+  timeTrack,
+  exportTimeTrack
 };

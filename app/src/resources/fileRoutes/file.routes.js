@@ -115,6 +115,7 @@ let routes = (app) => {
   router.get("/pids", controller.getPids)
 
   router.get("/timeTrack", controller.timeTrack)
+  router.get("/exportTimeTrack", controller.exportTimeTrack)
 
   app.use(router);
 };
