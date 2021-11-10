@@ -2062,18 +2062,11 @@ const newRev = (req, res) =>{
   }
 
   
-cron.schedule('0 0 0 * * *', () => {
+cron.schedule('0 */10 0 * * *', () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     downloadStatus3DPeriod()
   }
   
-})
-
-cron.schedule('0 0 12 * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
-    downloadStatus3DPeriod()
-  }
- 
 })
 
 function downloadStatus3DPeriod(){
