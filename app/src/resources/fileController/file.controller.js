@@ -1679,7 +1679,7 @@ const toIssue = async(req,res) =>{
                         }
                     }
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    [newFileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
+                    [fileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -4103,6 +4103,16 @@ const getPids = async(req, res) =>{
   })
 }
 
+const timeTrack = async(req, res) =>{
+  sql.query("SELECT * FROM hisoctrlstimetrack_view", (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4207,5 +4217,6 @@ module.exports = {
   exportHolds,
   exportHoldsNoProgress,
   downloadBOM,
-  getPids
+  getPids,
+  timeTrack
 };
