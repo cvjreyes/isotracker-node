@@ -1179,7 +1179,8 @@ const downloadStatus = async(req,res) =>{
             if(delhold[i].issued == null){
               results[i].revision = "ON GOING R" + results[i].revision
             }else{
-              results[i].revision = "ISSUED R" + results[i].revision - 1
+              let r = results[i].revision - 1
+              results[i].revision = "ISSUED R" + r
             }
             if(delhold[i].deleted == 1){
               results[i].revision = "DELETED"
@@ -1231,7 +1232,8 @@ const downloadStatus = async(req,res) =>{
           if(delhold[i].issued == null){             
             results[i].revision = "ON GOING R" + results[i].revision
           }else{
-            results[i].revision = "ISSUED R" + results[i].revision - 1
+            let r = results[i].revision - 1
+            results[i].revision = "ISSUED R" + r
           }
           if(delhold[i].deleted == 1){
             results[i].revision = "DELETED"
