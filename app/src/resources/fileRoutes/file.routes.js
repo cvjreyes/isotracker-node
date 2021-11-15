@@ -92,6 +92,12 @@ let routes = (app) => {
   router.post("/submit/electrical/estimated", controller.submitElecEstimated)
   router.post("/submit/piping/estimated", controller.submitPipingEstimated)
 
+  router.get("/equipEstimatedExcel", controller.equipEstimatedExcel)
+  router.get("/instsEstimatedExcel", controller.instsEstimatedExcel)
+  router.get("/elecsEstimatedExcel", controller.elecsEstimatedExcel)
+  router.get("/civilsEstimatedExcel", controller.civilsEstimatedExcel)
+
+
   router.get("/getBom", controller.getBom)
   router.post("/updateBOM", controller.updateBom)
   router.get("/getNotModelled", controller.getNotModelled)

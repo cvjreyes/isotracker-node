@@ -9,6 +9,7 @@ var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
 const { verify } = require("crypto");
+const { type } = require("os");
 
 
 const upload = async (req, res) => {
@@ -655,7 +656,7 @@ const updateStatus = async(req,res) =>{
                             totalR2: totalR2, 
                             totalHold: totalHold, 
                             totalDeleted: totalDeleted, 
-                            totalStock: totalR0,
+                            totalStock: totalStock,
                             modelCount: modelCount
                           })
                         })
@@ -1178,7 +1179,7 @@ const downloadStatus = async(req,res) =>{
             if(delhold[i].issued == null){
               results[i].revision = "ON GOING R" + results[i].revision
             }else{
-              results[i].revision = "ISSUED"
+              results[i].revision = "ISSUED R" + results[i].revision
             }
             if(delhold[i].deleted == 1){
               results[i].revision = "DELETED"
@@ -1230,7 +1231,7 @@ const downloadStatus = async(req,res) =>{
           if(delhold[i].issued == null){             
             results[i].revision = "ON GOING R" + results[i].revision
           }else{
-            results[i].revision = "ISSUED"
+            results[i].revision = "ISSUED R" + results[i].revision
           }
           if(delhold[i].deleted == 1){
             results[i].revision = "DELETED"
@@ -2354,17 +2355,25 @@ const equipEstimated = (req, res) =>{
   })
 }
 
-const equipSteps = (req, res) =>{
-  sql.query('SELECT percentage FROM pequis', (err, results)=>{
-    const steps = results
-    sql.query('SELECT name FROM pequis', (err, results)=>{
-      const names = results
+const equipEstimatedExcel = (req, res) =>{
+  sql.query("SELECT eequis.id, areas.name as area, tequis.name as type, eequis.qty as quantity FROM eequis LEFT JOIN areas ON eequis.areas_id = areas.id LEFT JOIN tequis ON eequis.tequis_id = tequis.id", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
       res.json({
-        steps: steps,
-        names: names
+        rows: results
+      }).status(200)
+    }    
+  })
+}
+
+const equipSteps = (req, res) =>{
+  sql.query('SELECT id, name, percentage FROM pequis', (err, results)=>{
+      res.json({
+        rows: results
       }).status(200)
     })
-  })
 }
 
 const equipWeight = (req,res) =>{
@@ -2401,7 +2410,7 @@ const equipWeight = (req,res) =>{
 }
 
 const equipTypes = (req, res) =>{
-  sql.query('SELECT code, name, weight FROM tequis', (err, results)=>{
+  sql.query('SELECT id, code, name, weight FROM tequis', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2531,15 +2540,10 @@ const uploadEquisEstimatedReport = (req,res) =>{
 
 const instSteps = (req, res) =>{
 
-  sql.query('SELECT percentage FROM pinsts', (err, results)=>{
-    const steps = results
-    sql.query('SELECT name FROM pinsts', (err, results)=>{
-      const names = results
-      res.json({
-        steps: steps,
-        names: names
-      }).status(200)
-    })
+  sql.query('SELECT id, name, percentage FROM pinsts', (err, results)=>{
+    res.json({
+      rows: results
+    }).status(200)
   })
 
 }
@@ -2595,6 +2599,19 @@ const instEstimated = (req, res) =>{
   })
 }
 
+const instsEstimatedExcel = (req, res) =>{
+  sql.query("SELECT einsts.id, areas.name as area, tinsts.name as type, einsts.qty as quantity FROM einsts LEFT JOIN areas ON einsts.areas_id = areas.id LEFT JOIN tinsts ON einsts.tinsts_id = tinsts.id", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }    
+  })
+}
+
 const instWeight = (req,res) =>{
 
   sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
@@ -2645,7 +2662,7 @@ const instModelled = (req, res) =>{
 }
 
 const instTypes = (req, res) =>{
-  sql.query('SELECT code, name, weight FROM tinsts', (err, results)=>{
+  sql.query('SELECT id, code, name, weight FROM tinsts', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2657,15 +2674,10 @@ const instTypes = (req, res) =>{
 }
 
 const civSteps = (req,res) =>{
-  sql.query('SELECT percentage FROM pcivils', (err, results)=>{
-    const steps = results
-    sql.query('SELECT name FROM pcivils', (err, results)=>{
-      const names = results
-      res.json({
-        steps: steps,
-        names: names
-      }).status(200)
-    })
+  sql.query('SELECT id, name, percentage FROM pcivils', (err, results)=>{
+    res.json({
+      rows: results
+    }).status(200)
   })
 }
 
@@ -2719,6 +2731,19 @@ const civEstimated = (req,res) =>{
   })
 }
 
+const civilsEstimatedExcel = (req, res) =>{
+  sql.query("SELECT ecivils.id, areas.name as area, tcivils.name as type, ecivils.qty as quantity FROM ecivils LEFT JOIN areas ON ecivils.areas_id = areas.id LEFT JOIN tcivils ON ecivils.tcivils_id = tcivils.id", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.json({
+        rows: results
+      }).status(200)
+    }    
+  })
+}
+
 const civModelled = (req, res) =>{
   sql.query('SELECT areas.`name` as area, dcivils.tag as tag, tcivils.`name` as type, tcivils.weight as weight, pcivils.`name` as status, pcivils.percentage as progress FROM dcivils JOIN areas ON dcivils.areas_id = areas.id JOIN tcivils ON dcivils.tcivils_id = tcivils.id JOIN pcivils ON dcivils.pcivils_id = pcivils.id', (err, results) =>{
     if(!results[0]){
@@ -2732,7 +2757,7 @@ const civModelled = (req, res) =>{
 }
 
 const civTypes = (req, res) =>{
-  sql.query('SELECT code, name, weight FROM tcivils', (err, results)=>{
+  sql.query('SELECT id, code, name, weight FROM tcivils', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2833,16 +2858,24 @@ const elecEstimated = (req,res) =>{
   })
 }
 
-const elecSteps = (req,res) =>{
-  sql.query('SELECT percentage FROM pelecs', (err, results)=>{
-    const steps = results
-    sql.query('SELECT name FROM pelecs', (err, results)=>{
-      const names = results
+const elecsEstimatedExcel = (req, res) =>{
+  sql.query("SELECT eelecs.id, areas.name as area, telecs.name as type, eelecs.qty as quantity FROM eelecs LEFT JOIN areas ON eelecs.areas_id = areas.id LEFT JOIN telecs ON eelecs.telecs_id = telecs.id", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
       res.json({
-        steps: steps,
-        names: names
+        rows: results
       }).status(200)
-    })
+    }    
+  })
+}
+
+const elecSteps = (req,res) =>{
+  sql.query('SELECT id, name, percentage FROM pelecs', (err, results)=>{
+    res.json({
+      rows: results
+    }).status(200)
   })
 }
 
@@ -2866,7 +2899,7 @@ const elecModelled = (req, res) =>{
 }
 
 const elecTypes = (req, res) =>{
-  sql.query('SELECT code, name, weight FROM telecs', (err, results)=>{
+  sql.query('SELECT id, code, name, weight FROM telecs', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -3222,7 +3255,7 @@ const uploadPipesEstimatedReport = (req, res) =>{
 }
 
 const pipingEstimated = (req, res) =>{
-  sql.query('SELECT areas.name as area, tpipes.name as type, epipes.qty as quantity FROM epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
+  sql.query('SELECT epipes.id, areas.name as area, tpipes.name as type, epipes.qty as quantity FROM epipes JOIN areas ON epipes.areas_id = areas.id JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results) =>{
     res.json({
       rows: results
     }).status(200)
@@ -3331,342 +3364,467 @@ const navis = (req, res) =>{
 
 const submitEquipTypes = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE tequis", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Code"] != null && rows[i]["Name"] != null && rows[i]["Weight"] != null){
-          sql.query("INSERT INTO tequis(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
-            if(err){
+  
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Code"] || rows[i]["Code"] == ""){
+      sql.query("DELETE FROM tequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM tequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO tequis(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE tequis SET code = ?, name = ?, weight= ? WHERE id = ?", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
-
+  }
 }
 
 const submitEquipSteps = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE pequis", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Name"] != null && rows[i]["Percentage"] != null){
-          sql.query("INSERT INTO pequis(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
-            if(err){
+
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Name"] || rows[i]["Name"] == ""){
+      sql.query("DELETE FROM pequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM pequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO pequis(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE pequis SET name = ?, percentage = ? WHERE id = ?", [rows[i]["Name"], rows[i]["Percentage"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitEquipEstimated = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE eequis", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
-          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
-            const areaid = results[0].id
-              sql.query("SELECT id FROM tequis WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
-                if(!results[0]){
-                  res.json({error: i}).status(401)
-                  return;
-                }else{
-                  const typeid = results[0].id
-                  sql.query("INSERT INTO eequis(areas_id, tequis_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
-                    if(err){
-                      console.log(err)
-                      res.send({error:1}).status(401)
-                    }
-                  })
-                }
-              })
-            })
-        }  
-      }
-      res.status(200)
-    }
-  })
 
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Area"] || rows[i]["Area"] == "" || !rows[i]["Type"] || rows[i]["Type"] == ""){
+      sql.query("DELETE FROM eequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results)=>{
+        const area_id = results[0].id
+        sql.query("SELECT id FROM tequis WHERE name = ?", [rows[i]["Type"]], (err, results)=>{
+          const type_id = results[0].id
+          sql.query("SELECT * FROM eequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+            if(!results[0]){
+              sql.query("INSERT INTO eequis(units_id, areas_id, tequis_id, qty) VALUES(?,?,?,?)", [0, area_id, type_id, rows[i]["Quantity"]], (err, results)=>{
+                if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }else{
+                sql.query("UPDATE eequis SET areas_id = ?, tequis_id = ?, qty = ? WHERE id = ?", [area_id, type_id, rows[i]["Quantity"], rows[i]["id"]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }
+        }) 
+        })
+      })
+      
+    }
+  }
 }
 
 const submitInstTypes = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE tinsts", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Code"] != null && rows[i]["Name"] != null && rows[i]["Weight"] != null){
-          sql.query("INSERT INTO tinsts(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Code"] || rows[i]["Code"] == ""){
+      sql.query("DELETE FROM tinsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM tinsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO tinsts(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE tinsts SET code = ?, name = ?, weight= ? WHERE id = ?", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitInstSteps = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE pinsts", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Name"] != null && rows[i]["Percentage"] != null){
-          sql.query("INSERT INTO pinsts(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Name"] || rows[i]["Name"] == ""){
+      sql.query("DELETE FROM pinsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM pinsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO pinsts(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE pinsts SET name = ?, percentage = ? WHERE id = ?", [rows[i]["Name"], rows[i]["Percentage"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitInstEstimated = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE einsts", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
+  
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Area"] || rows[i]["Area"] == "" || !rows[i]["Type"] || rows[i]["Type"] == ""){
+      sql.query("DELETE FROM einsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
     }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
-          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
-            const areaid = results[0].id
-              sql.query("SELECT id FROM tinsts WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
-                if(!results[0]){
-                  res.json({error: i}).status(401)
-                  return;
-                }else{
-                  const typeid = results[0].id
-                  sql.query("INSERT INTO einsts(areas_id, tinsts_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
-                    if(err){
-                      console.log(err)
-                      res.send({error:1}).status(401)
+      sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results)=>{
+        const area_id = results[0].id
+        sql.query("SELECT id FROM tinsts WHERE name = ?", [rows[i]["Type"]], (err, results)=>{
+          const type_id = results[0].id
+          sql.query("SELECT * FROM einsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+            if(!results[0]){
+              sql.query("INSERT INTO einsts(units_id, areas_id, tinsts_id, qty) VALUES(?,?,?,?)", [0,area_id, type_id, rows[i]["Quantity"]], (err, results)=>{
+                if(err){
+                        console.log(err)
+                        res.status(401)
                     }
-                  })
-                }
-              })
-            })
-        }  
-      }
-      res.status(200)
+                })
+            }else{
+                sql.query("UPDATE einsts SET areas_id = ?, tinsts_id = ?, qty = ? WHERE id = ?", [area_id, type_id, rows[i]["Quantity"], rows[i]["id"]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }
+        }) 
+        })
+      })
+      
     }
-  })
-
+  }
 }
 
 const submitCivilTypes = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE tcivils", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Code"] != null && rows[i]["Name"] != null && rows[i]["Weight"] != null){
-          sql.query("INSERT INTO tcivils(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Code"] || rows[i]["Code"] == ""){
+      sql.query("DELETE FROM tcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM tcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO tcivils(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE tcivils SET code = ?, name = ?, weight= ? WHERE id = ?", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitCivilSteps = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE pcivils", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Name"] != null && rows[i]["Percentage"] != null){
-          sql.query("INSERT INTO pcivils(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Name"] || rows[i]["Name"] == ""){
+      sql.query("DELETE FROM pcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM pcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO pcivils(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE pcivils SET name = ?, percentage = ? WHERE id = ?", [rows[i]["Name"], rows[i]["Percentage"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitCivilEstimated = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE ecivils", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
+  
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Area"] || rows[i]["Area"] == "" || !rows[i]["Type"] || rows[i]["Type"] == ""){
+      sql.query("DELETE FROM ecivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
     }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
-          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
-            const areaid = results[0].id
-              sql.query("SELECT id FROM tcivils WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
-                if(!results[0]){
-                  res.json({error: i}).status(401)
-                  return;
-                }else{
-                  const typeid = results[0].id
-                  sql.query("INSERT INTO ecivils(areas_id, tcivils_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
-                    if(err){
-                      console.log(err)
-                      res.send({error:1}).status(401)
+      sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results)=>{
+        const area_id = results[0].id
+        sql.query("SELECT id FROM tcivils WHERE name = ?", [rows[i]["Type"]], (err, results)=>{
+          const type_id = results[0].id
+          sql.query("SELECT * FROM ecivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+            if(!results[0]){
+              sql.query("INSERT INTO ecivils(units_id, areas_id, tcivils_id, qty) VALUES(?,?,?,?)", [0, area_id, type_id, rows[i]["Quantity"]], (err, results)=>{
+                if(err){
+                        console.log(err)
+                        res.status(401)
                     }
-                  })
-                }
-              })
-            })
-        }  
-      }
-      res.status(200)
+                })
+            }else{
+                sql.query("UPDATE ecivils SET areas_id = ?, tcivils_id = ?, qty = ? WHERE id = ?", [area_id, type_id, rows[i]["Quantity"], rows[i]["id"]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }
+        }) 
+        })
+      })
+      
     }
-  })
+  }
 
 }
 
 const submitElecTypes = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE telecs", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Code"] != null && rows[i]["Name"] != null && rows[i]["Weight"] != null){
-          sql.query("INSERT INTO telecs(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Code"] || rows[i]["Code"] == ""){
+      sql.query("DELETE FROM telecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM telecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO telecs(code, name, weight) VALUES(?,?,?)", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE telecs SET code = ?, name = ?, weight= ? WHERE id = ?", [rows[i]["Code"], rows[i]["Name"], rows[i]["Weight"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitElecSteps = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE pelecs", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
-    }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Name"] != null && rows[i]["Percentage"] != null){
-          sql.query("INSERT INTO pelecs(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
-            if(err){
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Name"] || rows[i]["Name"] == ""){
+      sql.query("DELETE FROM pelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
               console.log(err)
-              res.send({error:1}).status(401)
-            }
-          })
-        }  
-      }
-      res.status(200)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT * FROM pelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(!results[0]){
+            sql.query("INSERT INTO pelecs(name, percentage) VALUES(?,?)", [rows[i]["Name"], rows[i]["Percentage"]], (err, results)=>{
+              if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }else{
+              sql.query("UPDATE pelecs SET name = ?, percentage = ? WHERE id = ?", [rows[i]["Name"], rows[i]["Percentage"], rows[i]["id"]], (err, results) =>{
+                  if(err){
+                      console.log(err)
+                      res.status(401)
+                  }
+              })
+          }
+      }) 
     }
-  })
+  }
 
 }
 
 const submitElecEstimated = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE eelecs", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Area"] || rows[i]["Area"] == "" || !rows[i]["Type"] || rows[i]["Type"] == ""){
+      sql.query("DELETE FROM eelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
     }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
-          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
-            const areaid = results[0].id
-              sql.query("SELECT id FROM telecs WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
-                if(!results[0]){
-                  res.json({error: i}).status(401)
-                  return;
-                }else{
-                  const typeid = results[0].id
-                  sql.query("INSERT INTO eelecs(areas_id, telecs_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
-                    if(err){
-                      console.log(err)
-                      res.send({error:1}).status(401)
+      sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results)=>{
+        const area_id = results[0].id
+        sql.query("SELECT id FROM telecs WHERE name = ?", [rows[i]["Type"]], (err, results)=>{
+          const type_id = results[0].id
+          sql.query("SELECT * FROM eelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+            if(!results[0]){
+              sql.query("INSERT INTO eelecs(units_id, areas_id, telecs_id, qty) VALUES(?,?,?,?)", [0, area_id, type_id, rows[i]["Quantity"]], (err, results)=>{
+                if(err){
+                        console.log(err)
+                        res.status(401)
                     }
-                  })
-                }
-              })
-            })
-        }  
-      }
-      res.status(200)
+                })
+            }else{
+                sql.query("UPDATE eelecs SET areas_id = ?, telecs_id = ?, qty = ? WHERE id = ?", [area_id, type_id, rows[i]["Quantity"], rows[i]["id"]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }
+        }) 
+        })
+      })
+      
     }
-  })
+  }
 
 }
 
 const submitPipingEstimated = (req, res) =>{
   const rows = req.body.rows
-  sql.query("TRUNCATE epipes", (err,results) =>{
-    if(err){
-      res.send({error:1}).status(401)
+  for(let i = 1; i < rows.length; i++){
+    if(!rows[i]["Area"] || rows[i]["Area"] == "" || !rows[i]["Type"] || rows[i]["Type"] == ""){
+      sql.query("DELETE FROM epipes WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
     }else{
-      for(let i = 1; i < rows.length; i++){
-        if(rows[i]["Area"] != null && rows[i]["Type"] != null && rows[i]["Quantity"] != null){
-          sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results) =>{
-            const areaid = results[0].id
-              sql.query("SELECT id FROM tpipes WHERE name = ?", [rows[i]["Type"]], (err, results) =>{
-                if(!results[0]){
-                  res.json({error: i}).status(401)
-                  return;
-                }else{
-                  const typeid = results[0].id
-                  sql.query("INSERT INTO epipes(areas_id, tpipes_id, qty) VALUES(?,?,?)", [areaid, typeid, rows[i]["Quantity"]], (err, results)=>{
-                    if(err){
-                      console.log(err)
-                      res.send({error:1}).status(401)
+      sql.query("SELECT id FROM areas WHERE name = ?", [rows[i]["Area"]], (err, results)=>{
+        const area_id = results[0].id
+        sql.query("SELECT id FROM tpipes WHERE name = ?", [rows[i]["Type"]], (err, results)=>{
+          const type_id = results[0].id
+          sql.query("SELECT * FROM epipes WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+            if(!results[0]){
+              sql.query("INSERT INTO epipes(units_id, areas_id, tpipes_id, qty) VALUES(?,?,?,?)", [0, area_id, type_id, rows[i]["Quantity"]], (err, results)=>{
+                if(err){
+                        console.log(err)
+                        res.status(401)
                     }
-                  })
-                }
-              })
-            })
-        }  
-      }
-      res.status(200)
+                })
+            }else{
+                sql.query("UPDATE epipes SET areas_id = ?, tpipes_id = ?, qty = ? WHERE id = ?", [area_id, type_id, rows[i]["Quantity"], rows[i]["id"]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.status(401)
+                    }
+                })
+            }
+        }) 
+        })
+      })
+      
     }
-  })
+  }
 
 }
 
@@ -4208,6 +4366,10 @@ module.exports = {
   submitElecSteps,
   submitElecEstimated,
   submitPipingEstimated,
+  equipEstimatedExcel,
+  instsEstimatedExcel,
+  elecsEstimatedExcel,
+  civilsEstimatedExcel,
   getBom,
   updateBom,
   getNotModelled,

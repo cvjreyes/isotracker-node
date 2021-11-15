@@ -57,111 +57,166 @@ const gcurve = (req,res) =>{
 
 const submitEquipProgress = (req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE gequis", (err,results) =>{
-        if(err){
-        res.send({error:1}).status(401)
+    for(let i = 1; i < rows.length; i++){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+          sql.query("DELETE FROM gequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(err){
+                  console.log(err)
+                  res.status(401)
+              }
+          })
         }else{
-        for(let i = 1; i < rows.length; i++){
-            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
-            sql.query("INSERT INTO gequis(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
-                if(err){
-                console.log(err)
-                res.send({error:1}).status(401)
-                }
-            })
-            }  
+          sql.query("SELECT * FROM gequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(!results[0]){
+                sql.query("INSERT INTO gequis(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                  if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }else{
+                  sql.query("UPDATE gequis SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }
+          }) 
         }
-        res.status(200)
-        }
-    })
+      }
     
 }
 
 const submitInstProgress = (req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE ginsts", (err,results) =>{
-        if(err){
-        res.send({error:1}).status(401)
+    for(let i = 1; i < rows.length; i++){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+          sql.query("DELETE FROM ginsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(err){
+                  console.log(err)
+                  res.status(401)
+              }
+          })
         }else{
-        for(let i = 1; i < rows.length; i++){
-            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
-            sql.query("INSERT INTO ginsts(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
-                if(err){
-                console.log(err)
-                res.send({error:1}).status(401)
-                }
-            })
-            }  
+          sql.query("SELECT * FROM ginsts WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(!results[0]){
+                sql.query("INSERT INTO ginsts(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                  if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }else{
+                  sql.query("UPDATE ginsts SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }
+          }) 
         }
-        res.status(200)
-        }
-    })
+      }
     
 }
 
 const submitCivilProgress = (req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE gcivils", (err,results) =>{
-        if(err){
-        res.send({error:1}).status(401)
+    for(let i = 1; i < rows.length; i++){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+          sql.query("DELETE FROM gcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(err){
+                  console.log(err)
+                  res.status(401)
+              }
+          })
         }else{
-        for(let i = 1; i < rows.length; i++){
-            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
-            sql.query("INSERT INTO gcivils(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
-                if(err){
-                console.log(err)
-                res.send({error:1}).status(401)
-                }
-            })
-            }  
+          sql.query("SELECT * FROM gcivils WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(!results[0]){
+                sql.query("INSERT INTO gcivils(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                  if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }else{
+                  sql.query("UPDATE gcivils SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }
+          }) 
         }
-        res.status(200)
-        }
-    })
+      }
     
 }
 
 const submitElecProgress = (req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE gelecs", (err,results) =>{
-        if(err){
-        res.send({error:1}).status(401)
+    for(let i = 1; i < rows.length; i++){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+          sql.query("DELETE FROM gelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(err){
+                  console.log(err)
+                  res.status(401)
+              }
+          })
         }else{
-        for(let i = 1; i < rows.length; i++){
-            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
-            sql.query("INSERT INTO gelecs(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
-                if(err){
-                console.log(err)
-                res.send({error:1}).status(401)
-                }
-            })
-            }  
+          sql.query("SELECT * FROM gelecs WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(!results[0]){
+                sql.query("INSERT INTO gelecs(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                  if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }else{
+                  sql.query("UPDATE gelecs SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }
+          }) 
         }
-        res.status(200)
-        }
-    })
+      }
     
 }
 
 const submitPipingProgress = (req, res) =>{
     const rows = req.body.rows
-    sql.query("TRUNCATE gpipes", (err,results) =>{
-        if(err){
-        res.send({error:1}).status(401)
+    for(let i = 1; i < rows.length; i++){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+          sql.query("DELETE FROM gpipes WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(err){
+                  console.log(err)
+                  res.status(401)
+              }
+          })
         }else{
-        for(let i = 1; i < rows.length; i++){
-            if(rows[i]["Week"] != null && rows[i]["Estimated"] != null){
-            sql.query("INSERT INTO gpipes(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
-                if(err){
-                console.log(err)
-                res.send({error:1}).status(401)
-                }
-            })
-            }  
+          sql.query("SELECT * FROM gpipes WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+              if(!results[0]){
+                sql.query("INSERT INTO gpipes(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
+                  if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }else{
+                  sql.query("UPDATE gpipes SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
+                      if(err){
+                          console.log(err)
+                          res.status(401)
+                      }
+                  })
+              }
+          }) 
         }
-        res.status(200)
-        }
-    })
+      }
     
 }
 
