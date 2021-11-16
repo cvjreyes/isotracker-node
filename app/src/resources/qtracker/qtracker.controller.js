@@ -960,6 +960,129 @@ const updateObservations = async(req, res) =>{
     }
 }
 
+const statusData = (req, res) =>{
+    let pending = 0
+    let progress = 0
+    let accepted = 0
+    let rejected = 0
+    sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_working_component GROUP BY `status`", (err, results) =>{
+        if(!results){
+           
+        }else if(!results[0]){
+           
+        }else{
+            for(let i = 0; i < results.length; i++){
+                if(results[i].status == 0){
+                    pending += results[i].qty
+                }else if(results[i].status == 1){
+                    progress += results[i].qty
+                }else if(results[i].status == 2){
+                    accepted += results[i].qty
+                }else if(results[i].status == 3){
+                    rejected += results[i].qty
+                }
+            }
+        }
+        sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_view_in_navis GROUP BY `status`", (err, results) =>{
+            if(!results){
+               
+            }else if(!results[0]){
+               
+            }else{
+                for(let i = 0; i < results.length; i++){
+                    if(results[i].status == 0){
+                        pending += results[i].qty
+                    }else if(results[i].status == 1){
+                        progress += results[i].qty
+                    }else if(results[i].status == 2){
+                        accepted += results[i].qty
+                    }else if(results[i].status == 3){
+                        rejected += results[i].qty
+                    }
+                }
+            }
+            sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_isometric GROUP BY `status`", (err, results) =>{
+                if(!results){
+                   
+                }else if(!results[0]){
+                   
+                }else{
+                    for(let i = 0; i < results.length; i++){
+                        if(results[i].status == 0){
+                            pending += results[i].qty
+                        }else if(results[i].status == 1){
+                            progress += results[i].qty
+                        }else if(results[i].status == 2){
+                            accepted += results[i].qty
+                        }else if(results[i].status == 3){
+                            rejected += results[i].qty
+                        }
+                    }
+                }
+                sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_bfile GROUP BY `status`", (err, results) =>{
+                    if(!results){
+                       
+                    }else if(!results[0]){
+                       
+                    }else{
+                        for(let i = 0; i < results.length; i++){
+                            if(results[i].status == 0){
+                                pending += results[i].qty
+                            }else if(results[i].status == 1){
+                                progress += results[i].qty
+                            }else if(results[i].status == 2){
+                                accepted += results[i].qty
+                            }else if(results[i].status == 3){
+                                rejected += results[i].qty
+                            }
+                        }
+                    }
+                    sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_ifc_dgn_step GROUP BY `status`", (err, results) =>{
+                        if(!results){
+                           
+                        }else if(!results[0]){
+                           
+                        }else{
+                            for(let i = 0; i < results.length; i++){
+                                if(results[i].status == 0){
+                                    pending += results[i].qty
+                                }else if(results[i].status == 1){
+                                    progress += results[i].qty
+                                }else if(results[i].status == 2){
+                                    accepted += results[i].qty
+                                }else if(results[i].status == 3){
+                                    rejected += results[i].qty
+                                }
+                            }
+                        }
+                        sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_request_report GROUP BY `status`", (err, results) =>{
+                            if(!results){
+                               
+                            }else if(!results[0]){
+                               
+                            }else{
+                                for(let i = 0; i < results.length; i++){
+                                    if(results[i].status == 0){
+                                        pending += results[i].qty
+                                    }else if(results[i].status == 1){
+                                        progress += results[i].qty
+                                    }else if(results[i].status == 2){
+                                        accepted += results[i].qty
+                                    }else if(results[i].status == 3){
+                                        rejected += results[i].qty
+                                    }
+                                }
+                            }
+
+                            res.send({pending: pending, progress: progress, accepted: accepted, rejected: rejected}).status(200)
+                        })
+                    })
+                })
+            })
+        })
+    })
+}
+
 module.exports = {
     requestNWC,
     requestNVN,
@@ -977,5 +1100,6 @@ module.exports = {
     getNRIDS,
     getRP,
     updateStatus,
-    updateObservations
+    updateObservations,
+    statusData
   };
