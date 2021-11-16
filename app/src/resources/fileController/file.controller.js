@@ -606,7 +606,7 @@ const updateStatus = async(req,res) =>{
                           issuerStock = issuerR0 + issuerR1 + issuerR2 + issuerHold
                           toIssueStock = toIssueR0 + toIssueR1 + toIssueR2 + toIssueHold
                           issuedStock = issuedR0 + issuedR1 + issuedR2
-                          totalStock = designStock + stressStock + supportsStock + materialsStock + issuerStock + toIssueStock + issuedStock
+                          totalStock = totalR0 + totalHold
     
     
                           res.status(200).json({
@@ -2065,7 +2065,7 @@ const newRev = (req, res) =>{
   }
 
   
-cron.schedule('0 */10 0 * * *', () => {
+cron.schedule('0 */15 0 * * *', () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     downloadStatus3DPeriod()
   }
