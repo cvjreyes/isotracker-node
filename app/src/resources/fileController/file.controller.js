@@ -2243,6 +2243,7 @@ async function refreshProgress(){
       console.log("Empty misoctrls")
     }else{
       const lines = results
+      let type = ""
       if(process.env.NODE_IFC == "0"){
         type = "value_ifd"
       }else{
@@ -4279,6 +4280,104 @@ const exportTimeTrack = async(req, res) =>{
   })
 }
 
+const revision = async(req, res) =>{
+  sql.query("SELECT revision, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM misoctrls WHERE filename = ?", [req.params.fileName], (err, results)=>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      results[0].issuer_date.setDate(results[0].issuer_date.getDate() + 1)
+      res.send({rows: results[0]}).status(200)
+    }
+  })
+}
+
+const submitRevision = async(req, res) =>{
+  
+  const fileName = req.body.fileName
+  const date = req.body.issuer_date
+  const designation = req.body.issuer_designation
+  const draw = req.body.issuer_draw
+  const check = req.body.issuer_check
+  const appr = req.body.issuer_appr
+
+  sql.query("UPDATE misoctrls SET issuer_date = ?, issuer_designation = ?, issuer_draw = ?, issuer_check = ?, issuer_appr = ? WHERE filename = ?", [date, designation, draw, check, appr, fileName], (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: 1}).status(200)
+    }
+  })
+}
+
+cron.schedule('* */5 * * * *', () => {
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
+    downloadIssuedTo3D()
+  }
+})
+
+function downloadIssuedTo3D(){
+  sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["LDE/Isocontrol"], (err, results) =>{
+    if(!results[0]){
+
+    }else{
+      let log = []
+      log.push("DESIGN")
+      log.push("ONERROR CONTINUE\n")
+      for(let i = 0; i < results.length;i++){
+        let r = results[i].revision
+        if(results[i].issued){
+          r = results[i].revision - 1
+        }
+        let d = new Date(results[i].issuer_date)
+        let month = (d.getMonth()+1).toString()
+        let day = (d.getDate()).toString()
+
+        if(month.length == 1){
+          month = "0" + month
+        }
+
+        if(day.length == 1){
+          day = "0" + day
+        }
+
+        d = day + "/" + month + "/" + d.getFullYear()
+        d = d.substring(0,6) + d.substring(8,10)
+
+        if(r == 0){
+          log.push("/" + results[i].tag)
+          log.push("NEW TEXT /" + results[i].tag)
+
+        }else{
+          log.push("/" + results[i].tag + "/" + (r-1))
+          log.push("NEW TEXT /" + results[i].tag +"/" + r)
+          
+        }
+
+        log.push(":TP-REV-IND '" + r + "'")
+        log.push(":TP-REV-DATE '" + d + "'")
+        log.push(":TP-REV-DESIGNATION '" + results[i].issuer_designation + "'")
+        log.push(":TP-REV-DRAW '" + results[i].issuer_draw + "'")
+        log.push(":TP-REV-CHECK '" + results[i].issuer_check + "'")
+        log.push(":TP-REV-APPR '" + results[i].issuer_appr + "'\n")
+        
+      }
+
+      log.push("FINISH")
+      logToText = ""
+      for(let i = 0; i < log.length; i++){
+        logToText += log[i]+"\n"
+      }
+      fs.writeFile("IssuerFromIsoTrackerTo3d.mac", logToText, function (err) {
+        if (err) return console.log(err);
+        fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
+          if (err) throw err;
+        });
+      });
+      }
+    })
+    console.log("Generated issuer report")
+}
 
 module.exports = {
   upload,
@@ -4390,5 +4489,7 @@ module.exports = {
   downloadBOM,
   getPids,
   timeTrack,
-  exportTimeTrack
+  exportTimeTrack,
+  revision,
+  submitRevision
 };
