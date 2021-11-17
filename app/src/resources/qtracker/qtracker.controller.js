@@ -33,31 +33,33 @@ const requestNWC = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        const html_message = "<p><b>INCIDENCE</b> NOT WORKING COMPONENT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>SPREF</b> " + spref + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
+                            const html_message = "<p><b>INCIDENCE</b> NOT WORKING COMPONENT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>SPREF</b> " + spref + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
-                          transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
-                        }, (err, info) => {
-                            console.log(info.envelope);
-                            console.log(info.messageId);
-                        });
+                            transporter.sendMail({
+                                from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                to: 'alex.dominguez-ortega@external.technipenergies.com',
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
+                        }
                           
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
@@ -126,31 +128,32 @@ const requestNVN = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            const html_message = "<p><b>INCIDENCE</b> NOT VIEW IN NAVIS</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
-                        const html_message = "<p><b>INCIDENCE</b> NOT VIEW IN NAVIS</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
-
-                        transporter.sendMail({
-                          from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                          to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                          text: ref_code,
-                          
-                          html: html_message
-                      }, (err, info) => {
-                          console.log(info.envelope);
-                          console.log(info.messageId);
-                      });
+                            transporter.sendMail({
+                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                            to: 'alex.dominguez-ortega@external.technipenergies.com',
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                            text: ref_code,
+                            
+                            html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
+                        }
                           
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
@@ -219,32 +222,32 @@ const requestNRI = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN ISOMETRIC</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
-                        const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN ISOMETRIC</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
-
-                        transporter.sendMail({
-                          from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                          to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                          text: ref_code,
-                          
-                          html: html_message
-                      }, (err, info) => {
-                          console.log(info.envelope);
-                          console.log(info.messageId);
-                      });
-                          
+                            transporter.sendMail({
+                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                            to: 'alex.dominguez-ortega@external.technipenergies.com',
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                            text: ref_code,
+                            
+                            html: html_message
+                                }, (err, info) => {
+                                    console.log(info.envelope);
+                                    console.log(info.messageId);
+                                });
+                        }
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
                             sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = ?", [admin_id], (err, results)=>{
@@ -312,31 +315,32 @@ const requestNRB = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN BFILE</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
-                        const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN BFILE</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
-
-                        transporter.sendMail({
-                          from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                          to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                          text: ref_code,
-                          
-                          html: html_message
-                      }, (err, info) => {
-                          console.log(info.envelope);
-                          console.log(info.messageId);
-                      });
+                            transporter.sendMail({
+                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                            to: 'alex.dominguez-ortega@external.technipenergies.com',
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                            text: ref_code,
+                            
+                            html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
+                        }
                           
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
@@ -403,32 +407,32 @@ const requestNRIDS = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN IFC/DGN/STEP</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p>"
 
-                        const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN IFC/DGN/STEP</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p>"
-
-                        transporter.sendMail({
-                          from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                          to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                          text: ref_code,
-                          
-                          html: html_message
-                      }, (err, info) => {
-                          console.log(info.envelope);
-                          console.log(info.messageId);
-                      });
-                          
+                            transporter.sendMail({
+                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                            to: 'alex.dominguez-ortega@external.technipenergies.com',
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                            text: ref_code,
+                            
+                            html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
+                        }
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
                             sql.query("SELECT DISTINCT model_id FROM model_has_roles WHERE role_id = ?", [admin_id], (err, results)=>{
@@ -496,31 +500,32 @@ const requestRR = async(req, res) =>{
                         res.status(401)
                     }else{
                         
+                        if(process.env.NODE_MAILING == "1"){
+                            // create reusable transporter object using the default SMTP transport
+                            var transporter = nodemailer.createTransport({
+                                host: "es001vs0064",
+                                port: 25,
+                                secure: false,
+                                auth: {
+                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                    pass: "Technipenergies21"
+                                }
+                            });
 
-                        // create reusable transporter object using the default SMTP transport
-                        var transporter = nodemailer.createTransport({
-                            host: "es001vs0064",
-                            port: 25,
-                            secure: false,
-                            auth: {
-                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                pass: "Technipenergies21"
-                            }
-                        });
+                            const html_message = "<p><b>INCIDENCE</b> REQUEST REPORT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>ITEMS TO REPORT</b> " + items + "</p>" + "</p> <p><b>SCOPE</b> " + scope + "</p>" + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
-                        const html_message = "<p><b>INCIDENCE</b> REQUEST REPORT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>ITEMS TO REPORT</b> " + items + "</p>" + "</p> <p><b>SCOPE</b> " + scope + "</p>" + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
-
-                        transporter.sendMail({
-                          from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                          to: 'alex.dominguez-ortega@external.technipenergies.com',
-                          subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                          text: ref_code,
-                          
-                          html: html_message
-                      }, (err, info) => {
-                          console.log(info.envelope);
-                          console.log(info.messageId);
-                      });
+                            transporter.sendMail({
+                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                            to: 'alex.dominguez-ortega@external.technipenergies.com',
+                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                            text: ref_code,
+                            
+                            html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
+                        }
                           
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
