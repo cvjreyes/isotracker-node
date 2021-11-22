@@ -699,33 +699,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
 
@@ -770,33 +772,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
                             }
@@ -840,33 +844,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
                             }
@@ -910,33 +916,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
                             }
@@ -981,33 +989,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
                             }
@@ -1051,33 +1061,35 @@ const updateStatus = async(req, res) =>{
                                         console.log(err)
                                         res.status(401)
                                     }else{
-                                        var transporter = nodemailer.createTransport({
-                                            host: "es001vs0064",
-                                            port: 25,
-                                            secure: false,
-                                            auth: {
-                                                user: "alex.dominguez-ortega@external.technipenergies.com",
-                                                pass: "Technipenergies21"
-                                            }
-                                        });
+                                        if(process.env.NODE_MAILING == "1"){
+                                            var transporter = nodemailer.createTransport({
+                                                host: "es001vs0064",
+                                                port: 25,
+                                                secure: false,
+                                                auth: {
+                                                    user: "alex.dominguez-ortega@external.technipenergies.com",
+                                                    pass: "Technipenergies21"
+                                                }
+                                            });
 
-                                        if(reciever_email = "super@user.com"){
-                                            reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            if(reciever_email = "super@user.com"){
+                                                reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
+                                            }
+                
+                                            const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
+                
+                                            transporter.sendMail({
+                                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                            to: reciever_email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
+                                            text: incidence_number,
+                                            
+                                            html: html_message
+                                            }, (err, info) => {
+                                                console.log(info.envelope);
+                                                console.log(info.messageId);
+                                            });
                                         }
-            
-                                        const html_message = "<p>" + username + " has " + new_status + " your incidence with code " + incidence_number + ".</p>"
-            
-                                        transporter.sendMail({
-                                        from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                                        to: reciever_email,
-                                        subject: process.env.NODE_PROJECT_NAME + ' ' + incidence_number + " has been " + new_status,
-                                        text: incidence_number,
-                                        
-                                        html: html_message
-                                        }, (err, info) => {
-                                            console.log(info.envelope);
-                                            console.log(info.messageId);
-                                        });
                                     }
                                 })
                             }
