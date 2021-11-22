@@ -1176,7 +1176,7 @@ const statusData = (req, res) =>{
     let progress = 0
     let accepted = 0
     let rejected = 0
-    sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_working_component GROUP BY `status`", (err, results) =>{
+    sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_not_working_component GROUP BY `status`", (err, results) =>{
         if(!results){
            
         }else if(!results[0]){
@@ -1194,7 +1194,7 @@ const statusData = (req, res) =>{
                 }
             }
         }
-        sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_view_in_navis GROUP BY `status`", (err, results) =>{
+        sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_not_view_in_navis GROUP BY `status`", (err, results) =>{
             if(!results){
                
             }else if(!results[0]){
@@ -1212,7 +1212,7 @@ const statusData = (req, res) =>{
                     }
                 }
             }
-            sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_isometric GROUP BY `status`", (err, results) =>{
+            sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_not_reporting_isometric GROUP BY `status`", (err, results) =>{
                 if(!results){
                    
                 }else if(!results[0]){
@@ -1230,7 +1230,7 @@ const statusData = (req, res) =>{
                         }
                     }
                 }
-                sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_bfile GROUP BY `status`", (err, results) =>{
+                sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_not_reporting_bfile GROUP BY `status`", (err, results) =>{
                     if(!results){
                        
                     }else if(!results[0]){
@@ -1248,7 +1248,7 @@ const statusData = (req, res) =>{
                             }
                         }
                     }
-                    sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_not_reporting_ifc_dgn_step GROUP BY `status`", (err, results) =>{
+                    sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_not_reporting_ifc_dgn_step GROUP BY `status`", (err, results) =>{
                         if(!results){
                            
                         }else if(!results[0]){
@@ -1266,7 +1266,7 @@ const statusData = (req, res) =>{
                                 }
                             }
                         }
-                        sql.query("SELECT `status`, COUNT(*) as qty FROM iquoxe_db.qtracker_request_report GROUP BY `status`", (err, results) =>{
+                        sql.query("SELECT `status`, COUNT(*) as qty FROM qtracker_request_report GROUP BY `status`", (err, results) =>{
                             if(!results){
                                
                             }else if(!results[0]){
