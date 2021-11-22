@@ -1,0 +1,505 @@
+The build folder is ready to be deployed.
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+PS Y:\isotracker\isotracker-react-toTest> npm run build
+
+> isotracker-v2@0.1.0 build Y:\isotracker\isotracker-react-toTest
+> react-scripts build
+
+Creating an optimized production build...
+Browserslist: caniuse-lite is outdated. Please run:
+npx browserslist@latest --update-db
+
+Why you should do it regularly:
+https://github.com/browserslist/browserslist#browsers-data-updating
+Compiled with warnings.
+
+src\App.js
+  Line 2:8:  'IsoCtrl' is defined but never used  no-unused-vars
+
+src\components\datatable\datatable.js
+  Line 637:458:  Unexpected mix of '&&' and '||'  no-mixed-operators
+  Line 637:610:  Unexpected mix of '&&' and '||'  no-mixed-operators
+
+src\components\isoControlFullDataTable\isoControlFullDataTable.js
+  Line 56:37:  'json.rows[i].unit' is assigned to itself  no-self-assign
+
+src\components\menuList\menuList.js
+  Line 52:15:   Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching
+                                   react-hooks/exhaustive-deps
+  Line 126:7:   React Hook useEffect has missing dependencies: 'civilsProgress', 'civilsWeight', 'elecsProgress', 'elecsWeight', 'equisProgress', 'equisWeight', 'instsProgress', 'instsWeight', 'pipesProgress', 'pipesWeight', 'totalProgress', and 'totalWeight'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setTotalWeight' needs the current value of 'pipesWeight'
+                                     react-hooks/exhaustive-deps
+  Line 130:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching
+                                   react-hooks/exhaustive-deps
+  Line 218:7:   React Hook useEffect has missing dependencies: 'civilsProgress', 'civilsProgressWidth', 'civilsWeight', 'elecsProgress', 'elecsProgressWidth', 'elecsWeight', 'equisProgress', 'equisProgressWidth', 'equisWeight', 'instsProgress', 'instsProgressWidth', 'instsWeight', 'pipesProgress', 'pipesProgressWidth', and 'pipesWeight'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setProgressButtons' needs the current value of 'pipesWeight'  react-hooks/exhaustive-deps
+
+src\components\navBar\navBar.js
+  Line 137:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 201:7:   React Hook useEffect has missing dependencies: 'handleClickCivil', 'handleClickElectrical', 'handleClickEquipments', 'handleClickHome', 'handleClickInstrument', 'handleClickIsotracker', and 'handleClickPiping'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+  Line 203:16:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 249:7:   React Hook useEffect has missing dependencies: 'deleteNotification', 'markAsRead', and 'markAsUnread'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+  Line 300:10:  React Hook useEffect has missing dependencies: 'deleteNotification', 'markAsRead', and 'markAsUnread'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+
+src\components\onHoldTable\onHoldTable.js
+  Line 60:29:   'holds' is already defined           no-redeclare
+  Line 61:29:   'descriptions' is already defined    no-redeclare
+  Line 63:29:   'row' is already defined             no-redeclare
+  Line 129:23:  'pButton' is defined but never used  no-unused-vars
+  Line 129:32:  'iButton' is defined but never used  no-unused-vars
+
+src\components\stateTable\stateTable.js
+  Line 76:15:   Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 228:7:   React Hook useEffect has missing dependencies: 'progress', 'progressIso', 'props.currentRole', and 'totalStock'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setTotalStockTD' needs the current value of 'totalStock'
+                                                                                           react-hooks/exhaustive-deps
+  Line 230:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+
+src\components\updateBOMPopUp\updateBOMPopUp.js
+  Line 4:8:   'readXlsxFile' is defined but never used  no-unused-vars
+  Line 5:10:  'readString' is defined but never used    no-unused-vars
+
+src\components\uploadBomIsocontrolPopUp\uploadBomIsocontrolPopUp.js
+  Line 4:8:   'readXlsxFile' is defined but never used  no-unused-vars
+  Line 5:10:  'readString' is defined but never used    no-unused-vars
+  Line 6:8:   'UploadIcon' is defined but never used    no-unused-vars
+
+src\pages\civil\civil.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 66:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 105:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 161:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\electrical\electrical.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\equipments\equipments.js
+  Line 8:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\home\home.js
+  Line 52:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 87:8:  React Hook useEffect has a missing dependency: 'secureStorage'. Either include it or remove the dependency array                  react-hooks/exhaustive-deps
+
+src\pages\instrumentation\instrumentation.js
+  Line 8:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\isoCtrlF\isoCtrlF.js
+  Line 9:8:       'SelectPag' is defined but never used
+                                                                                                                              no-unused-vars
+  Line 116:8:     React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array
+                                                                                                                              react-hooks/exhaustive-deps
+  Line 217:7:     React Hook useEffect has missing dependencies: 'currentUser', 'secureStorage', and 'updateData'. Either include them or remove the dependency array. You can also do a functional update 'setUpdateData(u => ...)' if you only need 'updateData' in the 'setUpdateData' call  react-hooks/exhaustive-deps
+  Line 1734:129:  Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1735:38:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1736:67:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1737:64:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+
+src\pages\isoCtrl\isoCtrl.js
+  Line 158:7:     React Hook useEffect has missing dependencies: 'currentUser', 'secureStorage', and 'updateData'. Either include them or remove the dependency array. You can also do a functional update 'setUpdateData(u => ...)' if you only need 'updateData' in the 'setUpdateData' call  react-hooks/exhaustive-deps
+  Line 1621:129:  Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1622:38:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1623:67:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1624:64:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+
+src\pages\navis\navis.js
+  Line 41:7:  React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+src\pages\piping\piping.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 159:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\progressCurve\progressCurve.js
+  Line 46:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 64:7:   React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 112:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\sptracker\sptracker.js
+  Line 9:8:     'SelectPag' is defined but never used
+
+                                                                                           no-unused-vars
+  Line 92:8:    React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 137:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 156:7:   React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 158:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  1.19 MB (-2 B)     build\static\js\2.69f1574c.chunk.js
+  124.41 KB (-28 B)  build\static\js\main.70793ea2.chunk.js
+  94.3 KB            build\static\css\2.1376a185.chunk.css
+  5.9 KB             build\static\css\main.9243e76a.chunk.css
+  1.59 KB            build\static\js\3.8f2dbd95.chunk.js
+  1.18 KB (-2 B)     build\static\js\runtime-main.e3fcbf7a.js
+
+The bundle size is significantly larger than recommended.
+Consider reducing it with code splitting: https://goo.gl/9VhYWB
+You can also analyze the project dependencies: https://goo.gl/LeUzfb
+
+The project was built assuming it is hosted at /sandbox/.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+PS Y:\isotracker\isotracker-react-toTest> npm run build
+
+> isotracker-v2@0.1.0 build Y:\isotracker\isotracker-react-toTest
+> react-scripts build
+
+Creating an optimized production build...
+Browserslist: caniuse-lite is outdated. Please run:
+npx browserslist@latest --update-db
+
+Why you should do it regularly:
+https://github.com/browserslist/browserslist#browsers-data-updating
+Compiled with warnings.
+
+src\App.js
+  Line 2:8:  'IsoCtrl' is defined but never used  no-unused-vars
+
+src\components\datatable\datatable.js
+  Line 637:458:  Unexpected mix of '&&' and '||'  no-mixed-operators
+  Line 637:610:  Unexpected mix of '&&' and '||'  no-mixed-operators
+
+src\components\isoControlFullDataTable\isoControlFullDataTable.js
+  Line 56:37:  'json.rows[i].unit' is assigned to itself  no-self-assign
+
+src\components\menuList\menuList.js
+  Line 52:15:   Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching
+                                   react-hooks/exhaustive-deps
+  Line 126:7:   React Hook useEffect has missing dependencies: 'civilsProgress', 'civilsWeight', 'elecsProgress', 'elecsWeight', 'equisProgress', 'equisWeight', 'instsProgress', 'instsWeight', 'pipesProgress', 'pipesWeight', 'totalProgress', and 'totalWeight'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setTotalWeight' needs the current value of 'pipesWeight'
+                                     react-hooks/exhaustive-deps
+  Line 130:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching
+                                   react-hooks/exhaustive-deps
+  Line 218:7:   React Hook useEffect has missing dependencies: 'civilsProgress', 'civilsProgressWidth', 'civilsWeight', 'elecsProgress', 'elecsProgressWidth', 'elecsWeight', 'equisProgress', 'equisProgressWidth', 'equisWeight', 'instsProgress', 'instsProgressWidth', 'instsWeight', 'pipesProgress', 'pipesProgressWidth', and 'pipesWeight'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setProgressButtons' needs the current value of 'pipesWeight'  react-hooks/exhaustive-deps
+
+src\components\navBar\navBar.js
+  Line 137:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 201:7:   React Hook useEffect has missing dependencies: 'handleClickCivil', 'handleClickElectrical', 'handleClickEquipments', 'handleClickHome', 'handleClickInstrument', 'handleClickIsotracker', and 'handleClickPiping'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+  Line 203:16:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 249:7:   React Hook useEffect has missing dependencies: 'deleteNotification', 'markAsRead', and 'markAsUnread'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+  Line 300:10:  React Hook useEffect has missing dependencies: 'deleteNotification', 'markAsRead', and 'markAsUnread'. Either include them or remove the dependency array
+                                                                                           react-hooks/exhaustive-deps
+
+src\components\onHoldTable\onHoldTable.js
+  Line 60:29:   'holds' is already defined           no-redeclare
+  Line 61:29:   'descriptions' is already defined    no-redeclare
+  Line 63:29:   'row' is already defined             no-redeclare
+  Line 129:23:  'pButton' is defined but never used  no-unused-vars
+  Line 129:32:  'iButton' is defined but never used  no-unused-vars
+
+src\components\stateTable\stateTable.js
+  Line 76:15:   Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+  Line 228:7:   React Hook useEffect has missing dependencies: 'progress', 'progressIso', 'props.currentRole', and 'totalStock'. Either include them or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setTotalStockTD' needs the current value of 'totalStock'
+                                                                                           react-hooks/exhaustive-deps
+  Line 230:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+
+src\components\updateBOMPopUp\updateBOMPopUp.js
+  Line 4:8:   'readXlsxFile' is defined but never used  no-unused-vars
+  Line 5:10:  'readString' is defined but never used    no-unused-vars
+
+src\components\uploadBomIsocontrolPopUp\uploadBomIsocontrolPopUp.js
+  Line 4:8:   'readXlsxFile' is defined but never used  no-unused-vars
+  Line 5:10:  'readString' is defined but never used    no-unused-vars
+  Line 6:8:   'UploadIcon' is defined but never used    no-unused-vars
+
+src\pages\civil\civil.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 66:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 105:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 161:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\electrical\electrical.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\equipments\equipments.js
+  Line 8:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\home\home.js
+  Line 52:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 87:8:  React Hook useEffect has a missing dependency: 'secureStorage'. Either include it or remove the dependency array                  react-hooks/exhaustive-deps
+
+src\pages\instrumentation\instrumentation.js
+  Line 8:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 110:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\isoCtrlF\isoCtrlF.js
+  Line 9:8:       'SelectPag' is defined but never used
+                                                                                                                              no-unused-vars
+  Line 116:8:     React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array
+                                                                                                                              react-hooks/exhaustive-deps
+  Line 217:7:     React Hook useEffect has missing dependencies: 'currentUser', 'secureStorage', and 'updateData'. Either include them or remove the dependency array. You can also do a functional update 'setUpdateData(u => ...)' if you only need 'updateData' in the 'setUpdateData' call  react-hooks/exhaustive-deps
+  Line 1734:129:  Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1735:38:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1736:67:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1737:64:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+
+src\pages\isoCtrl\isoCtrl.js
+  Line 158:7:     React Hook useEffect has missing dependencies: 'currentUser', 'secureStorage', and 'updateData'. Either include them or remove the dependency array. You can also do a functional update 'setUpdateData(u => ...)' if you only need 'updateData' in the 'setUpdateData' call  react-hooks/exhaustive-deps
+  Line 1621:129:  Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1622:38:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1623:67:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+  Line 1624:64:   Unexpected mix of '||' and '&&'
+                                                                                                                              no-mixed-operators
+
+src\pages\navis\navis.js
+  Line 41:7:  React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+src\pages\piping\piping.js
+  Line 6:8:    'SelectPag' is defined but never used                                                                                                 no-unused-vars
+  Line 65:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 104:7:  React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 159:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\progressCurve\progressCurve.js
+  Line 46:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  Line 64:7:   React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+  Line 112:8:  React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array      react-hooks/exhaustive-deps
+
+src\pages\sptracker\sptracker.js
+  Line 9:8:     'SelectPag' is defined but never used
+
+                                                                                           no-unused-vars
+  Line 92:8:    React Hook useEffect has missing dependencies: 'history' and 'secureStorage'. Either include them or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 137:7:   React Hook useEffect has missing dependencies: 'currentUser' and 'secureStorage'. Either include them or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 156:7:   React Hook useEffect has a missing dependency: 'currentUser'. Either include it or remove the dependency array
+
+                                                                                           react-hooks/exhaustive-deps
+  Line 158:15:  Effect callbacks are synchronous to prevent race conditions. Put the async function inside:
+
+useEffect(() => {
+  async function fetchData() {
+    // You can await here
+    const response = await MyAPI.getData(someId);
+    // ...
+  }
+  fetchData();
+}, [someId]); // Or [] if effect doesn't need props or state
+
+Learn more about data fetching with Hooks: https://reactjs.org/link/hooks-data-fetching  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  1.19 MB (+76 B)       build\static\js\2.90db461e.chunk.js
+  94.3 KB               build\static\css\2.1376a185.chunk.css
+  92.99 KB (-31.41 KB)  build\static\js\main.d8ceb904.chunk.js
+  5.9 KB                build\static\css\main.9243e76a.chunk.css
+  1.59 KB               build\static\js\3.8f2dbd95.chunk.js
+  1.18 KB (-1 B)        build\static\js\runtime-main.cdd8e539.js
+
+The bundle size is significantly larger than recommended.
+Consider reducing it with code splitting: https://goo.gl/9VhYWB
+You can also analyze the project dependencies: https://goo.gl/LeUzfb
+
+The project was built assuming it is hosted at /cocapi/.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+PS Y:\isotracker\isotracker-react-toTest>
