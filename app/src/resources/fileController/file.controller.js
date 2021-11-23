@@ -2243,6 +2243,7 @@ async function refreshProgress(){
       console.log("Empty misoctrls")
     }else{
       const lines = results
+      let type = null
       if(process.env.NODE_IFC == "0"){
         type = "value_ifd"
       }else{
