@@ -16,43 +16,52 @@ const singleClaim = async (req, res) => {
       }
     });
 
-
-    sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
-      if (!results[0]){
-        res.status(401).send("The file does not exist");
-      }else if (results[0].claimed == 1 && role !== "DesignLead" && role !== "SupportsLead" && role !== "StressLead" && results.verifydesign === 1){   
-        res.status(401).send("This isometric has already been claimed");
+    sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+      if(!results[0] && process.env.NODE_PROGRESS == "1"){
+        sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
+          res.status(200).send({blocked:"1"})
+          
+        })
       }else{
-        sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
-          if(!results[0]){
-              res.status(401).send("No files found");
+        sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+          if (!results[0]){
+            res.status(401).send("The file does not exist");
+          }else if (results[0].claimed == 1 && role !== "DesignLead" && role !== "SupportsLead" && role !== "StressLead" && results.verifydesign === 1){   
+            res.status(401).send("This isometric has already been claimed");
           }else{
-              let last = results[0]
-              for (let i = 1; i < results.length; i++){
-                  if(results[i].updated_at > last.updated_at){
-                      last = results[i]
-                  }
-              }
-              sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-              [fileName, last.revision, last.spo, last.sit, 1, last.to, "Claimed" , last.comments, username, role, 0], (err, results) => {
-              if (err) {
-                  console.log("error: ", err);
+            sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+              if(!results[0]){
+                  res.status(401).send("No files found");
               }else{
-                  console.log("created claim in hisoctrls");
-                  sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
-                      if (err) {
-                          console.log("error: ", err);
-                      }else{
-                          console.log("claimed iso " + fileName);
-                          res.status(200).send("claimed")
+                  let last = results[0]
+                  for (let i = 1; i < results.length; i++){
+                      if(results[i].updated_at > last.updated_at){
+                          last = results[i]
+                      }
+                  }
+                  sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                  [fileName, last.revision, last.spo, last.sit, 1, last.to, "Claimed" , last.comments, username, role, 0], (err, results) => {
+                  if (err) {
+                      console.log("error: ", err);
+                  }else{
+                      console.log("created claim in hisoctrls");
+                      sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
+                          if (err) {
+                              console.log("error: ", err);
+                          }else{
+                              console.log("claimed iso " + fileName);
+                              res.status(200).send("claimed")
+                          }
+                      })
                       }
                   })
-                  }
-              })
+              }
+          })
           }
-      })
+        });
       }
-    });
+    
+  })
 }
 
 const singleClaimProc = async(req, res) =>{
