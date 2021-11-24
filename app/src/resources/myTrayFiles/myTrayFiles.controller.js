@@ -47,20 +47,20 @@ exports.getFilesByTray = async(req, res) => {
               sql.query('SELECT * FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE spouser = ? AND spoclaimed = 1 GROUP BY misoctrls.isoid', [username], async (err, results) => { 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }else if(role == "Instrument"){
               sql.query('SELECT * FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE situser = ? AND sitclaimed = 1 GROUP BY misoctrls.isoid', [username], async (err, results) => { 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }else{
               sql.query('SELECT * FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1 GROUP BY misoctrls.isoid', [folder, username, role], async (err, results) => { 
                 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }
           }else{
@@ -68,20 +68,20 @@ exports.getFilesByTray = async(req, res) => {
               sql.query('SELECT * FROM misoctrls WHERE spouser = ? AND spoclaimed = 1', [username], async (err, results) => { 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }else if(role == "Instrument"){
               sql.query('SELECT * FROM misoctrls WHERE situser = ? AND sitclaimed = 1', [username], async (err, results) => { 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }else{
               sql.query('SELECT * FROM misoctrls WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1', [folder, username, role], async (err, results) => { 
                 
                 res.json({
                   rows: results
-                })
+                }).status(200)
               })
             }
           }     
