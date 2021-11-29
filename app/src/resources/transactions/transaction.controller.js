@@ -196,7 +196,7 @@ const transaction = async (req, res) => {
                         let created_at = results[0].created_at
                         if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + req.body.fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && req.body.to == "LDE/Isocontrol"){
                           res.status(401).send({error: "error"})
-                        }else if(!revisionCompleted && process.env.NODE_PROGRESS == "1" && req.body.to == "LDE/Isocontrol"){
+                        }else if(!revisionCompleted && process.env.NODE_PROGRESS == "1" && process.env.NODE_ISSUER == "1" && req.body.to == "LDE/Isocontrol"){
                           res.status(401).send({error: "rev"})
                         }else{
                             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
