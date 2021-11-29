@@ -4333,7 +4333,12 @@ function downloadIssuedTo3D(){
   let exists = false
   sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["Issuer"], (err, results) =>{
     if(!results[0]){
-      
+      fs.writeFile("IssuerFromIsoTrackerTo3d.mac", "", function (err) {
+        if (err) return console.log(err);
+        fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
+          if (err) throw err;
+        });
+      });
     }else{
       let log = []
       log.push("DESIGN")
@@ -4394,8 +4399,15 @@ function downloadIssuedTo3D(){
             if (err) throw err;
           });
         });
+
+      }else{
+        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", [], function (err) {
+          if (err) return console.log(err);
+          fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
+            if (err) throw err;
+          });
+        });
       }
-      
       }
     })
     console.log("Generated issuer report")
