@@ -4357,7 +4357,7 @@ function downloadIssuedTo3D(){
 
         if(r == 0){
           log.push("/" + results[i].tag)
-          log.push("NEW TEXT /" + results[i].tag)
+          log.push("NEW TEXT /" + results[i].tag + "/" + r)
 
         }else{
           log.push("/" + results[i].tag + "/" + (r-1))
