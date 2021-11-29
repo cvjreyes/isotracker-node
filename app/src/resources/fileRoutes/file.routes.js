@@ -123,6 +123,9 @@ let routes = (app) => {
   router.get("/timeTrack", controller.timeTrack)
   router.get("/exportTimeTrack", controller.exportTimeTrack)
 
+  router.get("/revision/:fileName", controller.revision)
+  router.post("/submitRevision", controller.submitRevision)
+
   app.use(router);
 };
 
