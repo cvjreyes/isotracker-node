@@ -4330,50 +4330,54 @@ cron.schedule('* * * * *', () => {
 })
 
 function downloadIssuedTo3D(){
-  
-  sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["LDE/Isocontrol"], (err, results) =>{
+  let exists = false
+  sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["Issuer"], (err, results) =>{
     if(!results[0]){
-
+      
     }else{
       let log = []
       log.push("DESIGN")
       log.push("ONERROR CONTINUE\n")
       for(let i = 0; i < results.length;i++){
-        let r = results[i].revision
-        if(results[i].issued){
-          r = results[i].revision - 1
-        }
-        let d = new Date(results[i].issuer_date)
-        let month = (d.getMonth()+1).toString()
-        let day = (d.getDate()).toString()
-
-        if(month.length == 1){
-          month = "0" + month
-        }
-
-        if(day.length == 1){
-          day = "0" + day
-        }
-
-        d = day + "/" + month + "/" + d.getFullYear()
-        d = d.substring(0,6) + d.substring(8,10)
-
-        if(r == 0){
-          log.push("/" + results[i].tag)
-          log.push("NEW TEXT /" + results[i].tag + "/" + r)
-
-        }else{
-          log.push("/" + results[i].tag + "/" + (r-1))
-          log.push("NEW TEXT /" + results[i].tag +"/" + r)
+        if(results[i].issuer_date && results[i].issuer_designation && results[i].issuer_draw && results[i].issuer_check && results[i].issuer_appr){
+          exists = true
+          let r = results[i].revision
+          if(results[i].issued){
+            r = results[i].revision - 1
+          }
+          let d = new Date(results[i].issuer_date)
+          let month = (d.getMonth()+1).toString()
+          let day = (d.getDate()).toString()
+  
+          if(month.length == 1){
+            month = "0" + month
+          }
+  
+          if(day.length == 1){
+            day = "0" + day
+          }
+  
+          d = day + "/" + month + "/" + d.getFullYear()
+          d = d.substring(0,6) + d.substring(8,10)
+  
+          if(r == 0){
+            log.push("/" + results[i].tag)
+            log.push("NEW TEXT /" + results[i].tag + "/" + r)
+  
+          }else{
+            log.push("/" + results[i].tag + "/" + (r-1))
+            log.push("NEW TEXT /" + results[i].tag +"/" + r)
+            
+          }
+  
+          log.push(":TP-REV-IND '" + r + "'")
+          log.push(":TP-REV-DATE '" + d + "'")
+          log.push(":TP-REV-DESIGNATION '" + results[i].issuer_designation + "'")
+          log.push(":TP-REV-DRAW '" + results[i].issuer_draw + "'")
+          log.push(":TP-REV-CHECK '" + results[i].issuer_check + "'")
+          log.push(":TP-REV-APPR '" + results[i].issuer_appr + "'\n")
           
         }
-
-        log.push(":TP-REV-IND '" + r + "'")
-        log.push(":TP-REV-DATE '" + d + "'")
-        log.push(":TP-REV-DESIGNATION '" + results[i].issuer_designation + "'")
-        log.push(":TP-REV-DRAW '" + results[i].issuer_draw + "'")
-        log.push(":TP-REV-CHECK '" + results[i].issuer_check + "'")
-        log.push(":TP-REV-APPR '" + results[i].issuer_appr + "'\n")
         
       }
 
@@ -4382,12 +4386,16 @@ function downloadIssuedTo3D(){
       for(let i = 0; i < log.length; i++){
         logToText += log[i]+"\n"
       }
-      fs.writeFile("IssuerFromIsoTrackerTo3d.mac", logToText, function (err) {
-        if (err) return console.log(err);
-        fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
-          if (err) throw err;
+
+      if(exists){
+        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", logToText, function (err) {
+          if (err) return console.log(err);
+          fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
+            if (err) throw err;
+          });
         });
-      });
+      }
+      
       }
     })
     console.log("Generated issuer report")
