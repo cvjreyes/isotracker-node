@@ -958,6 +958,7 @@ const returnLeadStress = async(req, res) =>{
                                           res.status(401).send("cant update")
                                           console.log("error: ", err);
                                       }else{
+                                          
                                           console.log("iso moved" );
                                           res.status(200).send({"moved": 1})
                                       }

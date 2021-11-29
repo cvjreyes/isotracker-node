@@ -31,12 +31,6 @@ const upload = async (req, res) => {
         cl = true
       }
     }
-    if (extension == 'pdf' && !cl){
-      
-      fs.copyFile('./app/storage/isoctrl/design/' + req.file.originalname, './app/storage/isoctrl/design/attach/' + req.file.originalname.split('.').slice(0, -1).join('.') + '-CL.pdf', (err) => {
-        if (err) throw err;
-      });
-    }
   } catch (err) {
     console.log(err)
     res.status(500).send({
@@ -4285,7 +4279,9 @@ const revision = async(req, res) =>{
     if(!results[0]){
       res.status(401)
     }else{
-      results[0].issuer_date.setDate(results[0].issuer_date.getDate() + 1)
+      if(results[0].issuer_date){
+        results[0].issuer_date.setDate(results[0].issuer_date.getDate() + 1)
+      }
       res.send({rows: results[0]}).status(200)
     }
   })
@@ -4305,18 +4301,33 @@ const submitRevision = async(req, res) =>{
       console.log(err)
       res.status(401)
     }else{
+      if(process.env.NODE_ISSUER == "1"){
+        fs.stat('./app/storage/isoctrl/issuer/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf', function (err, stats) {
+
+          if (err) {
+              console.error("Clean does not exist");
+          }else{
+            fs.unlink('./app/storage/isoctrl/issuer/attach/' + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf',function(err){
+              if(err){
+                console.log(err)
+              } 
+            }); 
+          }
+        });
+      }
       res.send({success: 1}).status(200)
     }
   })
 }
 
-cron.schedule('* */5 * * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
+cron.schedule('* * * * *', () => {
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1" && process.env.NODE_ISSUER == "1"){
     downloadIssuedTo3D()
   }
 })
 
 function downloadIssuedTo3D(){
+  
   sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["LDE/Isocontrol"], (err, results) =>{
     if(!results[0]){
 
