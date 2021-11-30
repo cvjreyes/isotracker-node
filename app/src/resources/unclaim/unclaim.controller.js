@@ -27,8 +27,8 @@ const singleUnclaim = async (req, res) => {
                                     last = results[i]
                                 }
                             }
-                            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                            [fileName, 0, 0, last.spo, last.sit, "Unclaimed", last.from, last.comments, username, req.body.role, last.created_at], (err, results) => {
+                            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                            [fileName, last.revision, last.spo, last.sit, 0, last.from, last.to, "Unclaimed", username, req.body.role], (err, results) => {
                             if (err) {
                                 console.log("error: ", err);
                             }else{
@@ -75,8 +75,8 @@ const forceUnclaim = async(req,res) =>{
                             last = results[i]
                         }
                     }
-                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, 0, 0, last.spo, last.sit, "Forced unclaim", last.from, last.comments, username, req.body.role, last.created_at], (err, results) => {
+                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                    [fileName, 0, last.spo, last.sit, 0, last.from, last.to, "Forced unclaim", username, req.body.role], (err, results) => {
                     if (err) {
                         console.log("error: ", err);
                     }else{

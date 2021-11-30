@@ -4403,7 +4403,7 @@ function downloadIssuedTo3D(){
         });
 
       }else{
-        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", [], function (err) {
+        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", "", function (err) {
           if (err) return console.log(err);
           fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
             if (err) throw err;
