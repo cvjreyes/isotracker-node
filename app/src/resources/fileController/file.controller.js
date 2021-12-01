@@ -1187,7 +1187,7 @@ const downloadStatus = async(req,res) =>{
               
             }else if (delhold[i].onhold == 1){
               results[i].revision = "ON HOLD"
-              results[i].to =  delhold[i].from
+              results[i].to =  delhold[i].to
             }
             
             if(results[i].to == "LDE/Isocontrol"){
