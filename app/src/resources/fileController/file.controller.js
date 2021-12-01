@@ -1165,7 +1165,7 @@ const downloadHistory = async(req,res) =>{
 }
 
 const downloadStatus = async(req,res) =>{
-  sql.query("SELECT isoid, deleted, onhold, issued, `from`, role, verifydesign FROM misoctrls ORDER BY isoid ASC", (err, results)=>{
+  sql.query("SELECT isoid, deleted, onhold, issued, `from`, `to`, role, verifydesign FROM misoctrls ORDER BY isoid ASC", (err, results)=>{
     const delhold = results
     if(process.env.NODE_PROGRESS === "1"){
       sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results) =>{
