@@ -103,7 +103,7 @@ const update = async (req, res) => {
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   if(process.env.NODE_PROGRESS === "1"){
-    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? GROUP BY misoctrls.isoid', [tab], (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND onhold = 0 GROUP BY misoctrls.isoid', [tab], (err, results) =>{
       
       res.json({
         rows: results
@@ -472,7 +472,7 @@ const getMaster = async(req, res) =>{
 
 const updateStatus = async(req,res) =>{
   let designR0 = 0, designR1 = 0, designR2 = 0, designHold = 0, designDeleted = 0, designStock = 0, stressR0 = 0, stressR1 = 0, stressR2 = 0, stressHold = 0, stressDeleted = 0, stressStock = 0, supportsR0 = 0, supportsR1 = 0, supportsR2 = 0, supportsHold = 0, supportsDeleted = 0, supportsStock = 0, materialsR0 = 0, materialsR1 = 0, materialsR2 = 0, materialsHold = 0, materialsDeleted = 0, materialsStock = 0, issuerR0 = 0, issuerR1 = 0, issuerR2 = 0, issuerHold = 0, issuerDeleted = 0, issuerStock = 0, toIssueR0 = 0, toIssueR1 = 0, toIssueR2 = 0, toIssueHold = 0, toIssueDeleted = 0, toIssueStock = 0, issuedR0 = 0, issuedR1 = 0, issuedR2 = 0, issuedDeleted = 0, issuedStock = 0, totalR0 = 0, totalR1 = 0, totalR2 = 0, totalHold = 0, totalDeleted = 0, totalStock = 0, modelCount = 0
-  sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE revision = 0 OR revision = 1", (err, results) =>{
+  sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE (revision = 0 OR revision = 1) AND onhold = 0", (err, results) =>{
     if(!results[0]){
       results = []
     }
@@ -496,7 +496,7 @@ const updateStatus = async(req,res) =>{
 
 
       totalR0 = designR0 + stressR0 + supportsR0 + materialsR0 + issuerR0 + toIssueR0 + issuedR0
-      sql.query("SELECT `to`,issued, revision FROM misoctrls WHERE revision = 1 OR revision = 2", (err, results) =>{
+      sql.query("SELECT `to`,issued, revision FROM misoctrls WHERE (revision = 1 OR revision = 2) AND onhold = 0", (err, results) =>{
         if(!results[0]){
           results = []
         }
@@ -521,7 +521,7 @@ const updateStatus = async(req,res) =>{
           totalR1 = designR1 + stressR1 + supportsR1 + materialsR1 + issuerR1 + toIssueR1 + issuedR1
     
         
-          sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE revision = 2 OR revision = 3", (err, results) =>{
+          sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE (revision = 2 OR revision = 3) AND onhold = 0", (err, results) =>{
             if(!results[0]){
               results = []
             }
@@ -544,22 +544,22 @@ const updateStatus = async(req,res) =>{
               }
         
               totalR2 = designR2 + stressR2 + supportsR2 + materialsR2 + issuerR2 + toIssueR2 + issuedR2
-              sql.query("SELECT `from` FROM misoctrls WHERE `to` = ?", ["On hold"], (err, results) =>{
+              sql.query("SELECT `to` FROM misoctrls WHERE onhold = 1", (err, results) =>{
                 if(!results[0]){
                   results = []
                 }
                   for(let i = 0; i < results.length; i++){
-                    if(results[i].from == "Design"){
+                    if(results[i].to == "Design"){
                       designHold += 1
-                    }else if(results[i].from == "Stress" || results[i].from == "stress"){
+                    }else if(results[i].to == "Stress" || results[i].from == "stress"){
                       stressHold += 1
-                    }else if(results[i].from == "Supports"){
+                    }else if(results[i].to == "Supports"){
                       supportsHold += 1
-                    }else if(results[i].from == "Materials"){
+                    }else if(results[i].to == "Materials"){
                       materialsHold += 1
-                    }else if(results[i].from == "Issuer"){
+                    }else if(results[i].to == "Issuer"){
                       issuerHold += 1
-                    }else if(results[i].from == "LDE/Isocontrol"){
+                    }else if(results[i].to == "LDE/Isocontrol"){
                       toIssueHold += 1
                     }
                   }
@@ -807,6 +807,11 @@ const statusFiles = (req,res) =>{
             if(results[i].verifydesign == 1 || results[i].role == "SupportsLead"){
               results[i].to = "Supports lead"
             }
+          }
+
+          if(results[i].onhold == 1){
+            results[i].from = results[i].to
+            results[i].to = "On hold"
           }
         }
 
@@ -4055,13 +4060,14 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
     if(err){
       res.status(401)
     }else{
       for(let i = 0; i < results.length; i++){
         if(!results[i].isoid || results[0].isoid == ""){
           results[i].isoid = results[i].tag
+          results[i].from = results[i].to
         }
       }
       res.send({rows: results}).status(200)
@@ -4082,7 +4088,7 @@ async function updateHolds(){
     if(err){
       console.log(err)
     }else{
-      sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"], (err, results) =>{
+      sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1",(err, results) =>{
         if(err){
           console.log(err)
           res.status(401)
@@ -4094,7 +4100,7 @@ async function updateHolds(){
                   console.log(err)
                 }else{
                   if(data[i].hold1){
-                    sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                    sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ?", [data[i].tag], (err, results)=>{                  
                       if(err){
                         console.log(err)
                       }
