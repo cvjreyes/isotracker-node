@@ -4373,13 +4373,15 @@ function downloadIssuedTo3D(){
   
           if(r == 0){
             log.push("/" + results[i].tag)
+            log.push("UNLOCK ALL")
             log.push("NEW TEXT /" + results[i].tag + "/" + r)
-            log.push(results[i].tag +"/" + r)
+            log.push("/"+ results[i].tag +"/" + r)
   
           }else{
             log.push("/" + results[i].tag + "/" + (r-1))
+            log.push("UNLOCK ALL")
             log.push("NEW TEXT /" + results[i].tag +"/" + r)
-            log.push(results[i].tag +"/" + r)
+            log.push("/" + results[i].tag +"/" + r)
             
           }
   
@@ -4393,7 +4395,8 @@ function downloadIssuedTo3D(){
         }
         
       }
-
+      log.push("SAVEWORK")
+      log.push("UNCLAIM ALL")
       log.push("FINISH")
       logToText = ""
       for(let i = 0; i < log.length; i++){
