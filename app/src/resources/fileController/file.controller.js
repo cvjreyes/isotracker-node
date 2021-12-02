@@ -2125,7 +2125,10 @@ cron.schedule('0 */1 * * * *', async () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
     if(process.env.NODE_ISSUER == "1"){
-      await downloadIssuedTo3D()
+      const timeoutObj = setTimeout(() => {
+        downloadIssuedTo3D()
+      }, 10000)
+      
     }
   }
 })
