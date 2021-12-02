@@ -2121,11 +2121,13 @@ function downloadStatus3DPeriod(){
   })
   console.log("Generated 3d report")
 }
-cron.schedule('0 */1 * * * *', () => {
+cron.schedule('0 */1 * * * *', async () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
-    uploadReportPeriod()
+    await uploadReportPeriod()
+    if(process.env.NODE_ISSUER == "1"){
+      await downloadIssuedTo3D()
+    }
   }
-  
 })
 
 async function uploadReportPeriod(){
@@ -4329,24 +4331,26 @@ const submitRevision = async(req, res) =>{
   })
 }
 
-cron.schedule('* * * * *', () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1" && process.env.NODE_ISSUER == "1"){
-    downloadIssuedTo3D()
-  }
-})
-
 function downloadIssuedTo3D(){
   let exists = false
   sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["Issuer"], (err, results) =>{
     if(!results[0]){
-      fs.writeFile("IssuerFromIsoTrackerTo3d.mac", "", function (err) {
+      let emptylog = []
+      emptylog.push("DESIGN\n")
+      emptylog.push("ONERROR CONTINUE\n")
+      emptylog.push("FINISH")
+      emptyLogToText = ""
+        for(let i = 0; i < emptylog.length; i++){
+          emptyLogToText += emptylog[i]+"\n"
+        }
+      fs.writeFile("IssuerFromIsoTrackerTo3d.mac", emptyLogToText, function (err) {
         if (err) return console.log(err);
         fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
           if (err) throw err;
         });
       });
     }else{
-      let log = []
+          let log = []
       log.push("DESIGN")
       log.push("ONERROR CONTINUE\n")
       for(let i = 0; i < results.length;i++){
@@ -4412,15 +4416,23 @@ function downloadIssuedTo3D(){
         });
 
       }else{
-        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", "", function (err) {
+        let emptylog = []
+        emptylog.push("DESIGN\n")
+        emptylog.push("ONERROR CONTINUE\n")
+        emptylog.push("FINISH")
+        emptyLogToText = ""
+        for(let i = 0; i < emptylog.length; i++){
+          emptyLogToText += emptylog[i]+"\n"
+        }
+        fs.writeFile("IssuerFromIsoTrackerTo3d.mac", emptyLogToText, function (err) {
           if (err) return console.log(err);
           fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
             if (err) throw err;
           });
         });
       }
-      }
-    })
+        }
+      })
     console.log("Generated issuer report")
 }
 
