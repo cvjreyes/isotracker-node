@@ -4046,6 +4046,7 @@ const getIsocontrolFull = async(req, res)=>{
     if(err){
       res.status(401)
     }else{
+      
       res.send({rows: results}).status(200)
     }
   })
@@ -4379,12 +4380,18 @@ function downloadIssuedTo3D(){
             log.push("/" + results[i].tag)
             log.push("UNLOCK ALL")
             log.push("NEW TEXT /" + results[i].tag + "/" + r)
+            log.push("HANDLE ANY")
+            log.push("DELETE TEXT")
+            log.push("ENDHANDLE")
             log.push("/"+ results[i].tag +"/" + r)
   
           }else{
             log.push("/" + results[i].tag + "/" + (r-1))
             log.push("UNLOCK ALL")
             log.push("NEW TEXT /" + results[i].tag +"/" + r)
+            log.push("HANDLE ANY")
+            log.push("DELETE TEXT")
+            log.push("ENDHANDLE")
             log.push("/" + results[i].tag +"/" + r)
             
           }
