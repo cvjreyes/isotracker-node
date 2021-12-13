@@ -4100,12 +4100,12 @@ async function updateHolds(){
           res.status(401)
         }else{
           for(let i = 0; i < data.length; i++){    
-            if(data[i].tag && data[i].hold1 && data[i].hold != ""){
+            if(data[i].tag && data[i].has_holds == 1 && data[i].hold != ""){
               sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
                 if(err){
                   console.log(err)
                 }else{
-                  if(data[i].hold1){
+                  if(data[i].has_holds == 1){
                     sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ?", [data[i].tag], (err, results)=>{                  
                       if(err){
                         console.log(err)
@@ -4209,7 +4209,7 @@ const exportFull = async(req, res) =>{
             rows[i].calc_notes = ""
         }
 
-        if(rows[i].hold1 && rows[i].hold != ""){
+        if(rows[i].has_holds == 1){
           rows[i].hold1 = "Yes"
         }else{
           rows[i].hold1 = "No"
