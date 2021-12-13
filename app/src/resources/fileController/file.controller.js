@@ -1414,6 +1414,8 @@ const downloadStatus3D = async(req, res) =>{
       }
       
     }
+    log.push("SAVEWORK")
+    log.push("UNCLAIM ALL")
     log.push("FINISH")
     res.json({
       log : log
