@@ -2107,6 +2107,8 @@ function downloadStatus3DPeriod(){
         log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
       }
     }
+    log.push("SAVEWORK")
+    log.push("UNCLAIM ALL")
     log.push("\n")
     log.push("FINISH")
     logToText = ""
@@ -2123,6 +2125,7 @@ function downloadStatus3DPeriod(){
   })
   console.log("Generated 3d report")
 }
+
 cron.schedule('0 */1 * * * *', async () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
