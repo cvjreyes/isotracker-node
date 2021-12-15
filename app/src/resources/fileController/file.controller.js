@@ -2066,7 +2066,7 @@ const newRev = (req, res) =>{
   }
 
   
-cron.schedule('0 */15 0 * * *', () => {
+cron.schedule('0 */10 * * * *', () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     downloadStatus3DPeriod()
   }
@@ -2109,7 +2109,6 @@ function downloadStatus3DPeriod(){
     }
     log.push("SAVEWORK")
     log.push("UNCLAIM ALL")
-    log.push("\n")
     log.push("FINISH")
     logToText = ""
     for(let i = 0; i < log.length; i++){
@@ -4095,35 +4094,39 @@ async function updateHolds(){
     data = jsonObj
   })
 
-  sql.query("TRUNCATE holds", (err, results) =>{
-    if(err){
-      console.log(err)
-    }else{
-      sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
-      for(let i = 0; i < data.length; i++){    
-		let has_holds = data[i].hold1 + data[i].hold2 + data[i].hold3 + data[i].hold4 + data[i].hold5 + data[i].hold6 + data[i].hold7 + data[i].hold8 + data[i].hold9 + data[i].hold10
-        if(data[i].tag && has_holds && has_holds != ""){
-          sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
-            if(err){
-              console.log(err)
-            }else{
-              if(has_holds){
-                sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
-                  if(err){
-                    console.log(err)
-                  }
-                })
+  const timeoutObj = setTimeout(() => {
+    sql.query("TRUNCATE holds", (err, results) =>{
+      if(err){
+        console.log(err)
+      }else{
+        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
+        for(let i = 0; i < data.length; i++){    
+      let has_holds = data[i].hold1 + data[i].hold2 + data[i].hold3 + data[i].hold4 + data[i].hold5 + data[i].hold6 + data[i].hold7 + data[i].hold8 + data[i].hold9 + data[i].hold10
+          if(data[i].tag && has_holds && has_holds != ""){
+            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
+              if(err){
+                console.log(err)
+              }else{
+                if(has_holds){
+                  sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                }
               }
-            }
-          })
+            })
+            
+            
+          }      
           
-          
-        }      
-        
+        }
+        console.log("Holds updated")
       }
-      console.log("Holds updated")
-    }
-  })
+    })
+  }, 10000)
+
+  
 
 }
 
