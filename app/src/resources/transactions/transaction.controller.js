@@ -953,7 +953,7 @@ const returnLeadStress = async(req, res) =>{
                                     if(newprogress > progress){
                                       progress = newprogress
                                     }
-                                    sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, fileName], (err, results) =>{
+                                    sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, returned = 1 WHERE filename = ?", [0, dest_user, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, fileName], (err, results) =>{
                                       if (err) {
                                           res.status(401).send("cant update")
                                           console.log("error: ", err);
@@ -971,7 +971,7 @@ const returnLeadStress = async(req, res) =>{
                           }
                         })
                       }else{
-                        sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
+                        sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, returned = 1 WHERE filename = ?", [0, dest_user, dest_role, 0, 0, from_text, destiny, comments, fileName], (err, results) =>{
                             if (err) {
                                 console.log("error: ", err);
                             }else{
