@@ -2244,7 +2244,7 @@ async function uploadReportPeriod(){
 
 async function refreshProgress(){
 
-  sql.query('SELECT filename, isoid, `to`, before_tpipes_id FROM misoctrls', (err, results) =>{
+  sql.query('SELECT filename, isoid, `to`, before_tpipes_id, issued FROM misoctrls', (err, results) =>{
     if(!results[0]){
       console.log("Empty misoctrls")
     }else{
@@ -2264,7 +2264,11 @@ async function refreshProgress(){
             const q = "SELECT "+type+" FROM ppipes WHERE level = ? AND tpipes_id = ?"
             let level = lines[i].to
             if(level == "LDE/Isocontrol"){
+              if(lines[i].issued == 1){
+                level = "Transmittal"
+              }else{
                 level = "Issuer"
+              }
             }
             sql.query(q, [level, tl], (err, results)=>{
               if(!results[0]){
