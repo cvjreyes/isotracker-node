@@ -41,15 +41,15 @@ const requestNWC = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"    
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> NOT WORKING COMPONENT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>SPREF</b> " + spref + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
                             transporter.sendMail({
-                                from: 'alex.dominguez-ortega@external.technipenergies.com"',
+                                from: '3DTracker@technipenergies.com',
                                 to: 'alex.dominguez-ortega@external.technipenergies.com',
                                 subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                                 text: ref_code,
