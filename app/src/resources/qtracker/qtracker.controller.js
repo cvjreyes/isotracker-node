@@ -48,9 +48,28 @@ const requestNWC = async(req, res) =>{
 
                             const html_message = "<p><b>INCIDENCE</b> NOT WORKING COMPONENT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>SPREF</b> " + spref + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
                                 from: '3DTracker@technipenergies.com',
-                                to: 'alex.dominguez-ortega@external.technipenergies.com',
+                                to: email,
                                 subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
                                 text: ref_code,
                                 
@@ -59,6 +78,7 @@ const requestNWC = async(req, res) =>{
                                 console.log(info.envelope);
                                 console.log(info.messageId);
                             });
+                            
                         }
                           
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
@@ -135,20 +155,39 @@ const requestNVN = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"  
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> NOT VIEW IN NAVIS</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
+                                from: '3DTracker@technipenergies.com',
+                                to: email,
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
                             }, (err, info) => {
                                 console.log(info.envelope);
                                 console.log(info.messageId);
@@ -229,24 +268,43 @@ const requestNRI = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"  
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN ISOMETRIC</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
-                                }, (err, info) => {
-                                    console.log(info.envelope);
-                                    console.log(info.messageId);
-                                });
+                                from: '3DTracker@technipenergies.com',
+                                to: email,
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
+                            }, (err, info) => {
+                                console.log(info.envelope);
+                                console.log(info.messageId);
+                            });
                         }
                           sql.query("SELECT id FROM roles WHERE `code` = ?)", ["E3D"], (err, results)=>{
                             const admin_id = 14
@@ -322,20 +380,39 @@ const requestNRB = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"  
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN BFILE</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>PIPE</b> " + pipe + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
+                                from: '3DTracker@technipenergies.com',
+                                to: email,
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
                             }, (err, info) => {
                                 console.log(info.envelope);
                                 console.log(info.messageId);
@@ -414,20 +491,39 @@ const requestNRIDS = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"  
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> NOT REPORTING IN IFC/DGN/STEP</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>NAME</b> " + name + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
+                                from: '3DTracker@technipenergies.com',
+                                to: email,
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
                             }, (err, info) => {
                                 console.log(info.envelope);
                                 console.log(info.messageId);
@@ -507,20 +603,39 @@ const requestRR = async(req, res) =>{
                                 port: 25,
                                 secure: false,
                                 auth: {
-                                    user: "alex.dominguez-ortega@external.technipenergies.com",
-                                    pass: "Technipenergies21"
+                                    user: "3DTracker@technipenergies.com",
+                                    pass: "1Q2w3e4r..24"  
                                 }
                             });
 
                             const html_message = "<p><b>INCIDENCE</b> REQUEST REPORT</p> <p><b>REFERENCE</b> " + ref_code + " </p> <p><b>USER</b> " + email + "</p> <p><b>ITEMS TO REPORT</b> " + items + "</p>" + "</p> <p><b>SCOPE</b> " + scope + "</p>" + "</p> <p><b>DESCRIPTION</b> " + description + "</p>"
 
+                            sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 14 GROUP BY email", (err, results) =>{
+                                if(!results[0]){
+
+                                }else{
+                                    for(let i = 0; i < results.length; i++){
+                                        transporter.sendMail({
+                                            from: '3DTracker@technipenergies.com',
+                                            to: results[i].email,
+                                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                            text: ref_code,
+                                            
+                                            html: html_message
+                                        }, (err, info) => {
+                                            console.log(info.envelope);
+                                            console.log(info.messageId);
+                                        });
+                                    }
+                                }
+                            })
                             transporter.sendMail({
-                            from: 'alex.dominguez-ortega@external.technipenergies.com"',
-                            to: 'alex.dominguez-ortega@external.technipenergies.com',
-                            subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
-                            text: ref_code,
-                            
-                            html: html_message
+                                from: '3DTracker@technipenergies.com',
+                                to: email,
+                                subject: process.env.NODE_PROJECT_NAME + ' ' + ref_code,
+                                text: ref_code,
+                                
+                                html: html_message
                             }, (err, info) => {
                                 console.log(info.envelope);
                                 console.log(info.messageId);
