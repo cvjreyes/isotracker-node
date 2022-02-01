@@ -1769,7 +1769,7 @@ const request = (req,res) =>{
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-      sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if(!results[0]){
             res.status(401).send("No files found");
         }else{
@@ -1784,8 +1784,9 @@ const request = (req,res) =>{
               if (err) {
                 console.log("error: ", err);
               }else{
-                console.log("issued in hisoctrls");
+                
                 sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+                  console.log(results)
                   if(results[0].requested !== null){
                     res.status(401).send("Isometric already requested")
                   }else{
@@ -4126,7 +4127,7 @@ async function updateHolds(){
         console.log("Holds updated")
       }
     })
-  }, 10000)
+  }, 15000)
 
   
 
