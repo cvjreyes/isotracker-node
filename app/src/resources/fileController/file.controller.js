@@ -4111,7 +4111,7 @@ async function updateHolds(){
                 console.log(err)
               }else{
                 if(has_holds){
-                  sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to`, misoctrls.`to` = ? WHERE dpipes_view.tag = ?", ["On hold", data[i].tag], (err, results)=>{                  
+                  sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to` WHERE dpipes_view.tag = ?", [data[i].tag], (err, results)=>{                  
                     if(err){
                       console.log(err)
                     }
@@ -4124,10 +4124,19 @@ async function updateHolds(){
           }      
           
         }
-        console.log("Holds updated")
+        const timeoutObj = setTimeout(() => {
+          sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.`to` = ? WHERE misoctrls.onhold = 1", ["On hold"], (err, results)=>{                  
+            if(err){
+              console.log(err)
+            }
+            console.log("Holds updated")
+          })
+        }, 5000)
+       
+
       }
     })
-  }, 15000)
+  }, 10000)
 
   
 
