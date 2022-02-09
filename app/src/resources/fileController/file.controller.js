@@ -4463,6 +4463,38 @@ function downloadIssuedTo3D(){
     console.log("Generated issuer report")
 }
 
+const pipingWeight = async(req, res) =>{
+  sql.query('SELECT qty, weight FROM epipes RIGHT JOIN tpipes ON epipes.tpipes_id = tpipes.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
+    }
+    sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
+      const progress = results[0]["SUM(progress)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
+          const tp1 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
+            const tp2 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
+              const tp3 = results[0]["COUNT(tpipes_id)"]
+              sql.query("SELECT weight FROM tpipes", (err, results) =>{
+                const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                res.json({
+                  weight: eweight,
+                  progress: (progress/maxProgress * 100).toFixed(2)
+                }).status(200)
+              })
+            })
+          
+        })
+      })
+    })
+      
+      
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4575,5 +4607,6 @@ module.exports = {
   timeTrack,
   exportTimeTrack,
   revision,
-  submitRevision
+  submitRevision,
+  pipingWeight
 };

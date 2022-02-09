@@ -126,6 +126,8 @@ let routes = (app) => {
   router.get("/revision/:fileName", controller.revision)
   router.post("/submitRevision", controller.submitRevision)
 
+  router.get("/pipingWeight", controller.pipingWeight)
+
   app.use(router);
 };
 
