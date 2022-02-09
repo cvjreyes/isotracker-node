@@ -2392,35 +2392,34 @@ const equipSteps = (req, res) =>{
 
 const equipWeight = (req,res) =>{
 
-  sql.query('SELECT elements, pequis.percentage FROM dequis LEFT JOIN pequis ON dequis.pequis_id = pequis.id', (err, results)=>{
-    let total_progress = 0
-    for(let i = 0; i < results.length; i++){
-      if(results[i].elements == 0){
-        total_progress += 50
-      }else if(results[i].percentage != 100 && results[i].elements == 1){
-        total_progress += 65
-      }else{
-        total_progress += 100
-      }
+  sql.query('SELECT qty, weight FROM eequis RIGHT JOIN tequis ON eequis.tequis_id = tequis.id', (err, results)=>{
+    const elines = results
+    let eweight = 0
+    for(let i = 0; i < elines.length; i++){
+      eweight += elines[i].qty * elines[i].weight
     }
-
-    total_progress = total_progress/results.length
-
-    sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
-      const elines = results
-      let eweight = 0
-      for(let i = 0; i < elines.length; i++){
-        eweight += elines[i].qty * elines[i].weight
+    sql.query('SELECT pequis.percentage FROM dequis LEFT JOIN pequis ON dequis.pequis_id = pequis.id', (err, results)=>{
+      let total_progress = 0
+      for(let i = 0; i < results.length; i++){
+        if(results[i].percentage == 100){
+          total_progress += 100
+       }else{
+          total_progress += 70
+        }
       }
 
+      total_progress = total_progress/results.length
+      
       res.json({
         weight: eweight,
         progress: total_progress.toFixed(2)
       }).status(200)
 
     })
-
+      
   })
+
+  
 }
 
 const equipTypes = (req, res) =>{
