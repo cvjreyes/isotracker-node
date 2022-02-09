@@ -16,7 +16,7 @@ const csptracker = (req, res) =>{
 
 const readye3d = (req, res) =>{
     let currentDate = new Date()
-    sql.query("UPDATE csptracker SET ready_e3d = 1, ready_e3d_date = ?, updated = 0 WHERE tag = ?", [currentDate, req.body.tag], (err, results) =>{
+    sql.query("UPDATE csptracker SET ready_e3d = 1, ready_e3d_date = ? WHERE tag = ?", [currentDate, req.body.tag], (err, results) =>{
         if(err){
             res.status(401)
             console.log(err)
@@ -502,17 +502,18 @@ const submitCSP = async(req, res) =>{
                                                                         description_drawings_id = results[0].description_drawings_id
                                                                     }
                                                                     if(rows[i].id){
+                                                                        
                                                                         sql.query("SELECT updated_at FROM csptracker WHERE id = ?", rows[i].id, (err, results)=>{
                                                                             const updated_at = results[0].updated_at
-                                                                            console.log(rows[i].pid)
                                                                             sql.query("UPDATE csptracker SET tag = ?, quantity = ?, description = ?, description_plans_id = ?, description_iso = ?, ident = ?, p1_diameters_id = ?, p2_diameters_id = ?, p3_diameters_id = ?, ratings_id = ?, specs_id = ?, type = ?, end_preparations_id = ?, description_drawings_id = ?, face_to_face = ?, bolt_types_id = ?, ready_e3d = ?, comments = ?, pid = ?, line_id = ?, requisition = ?, equipnozz = ?, utility_station = ? WHERE id = ?", [rows[i].tag, rows[i].quantity, rows[i].description, rows[i].description_plan_code, rows[i].description_iso, rows[i].ident, rows[i].p1diameter_nps, rows[i].p2diameter_nps, rows[i].p3diameter_nps, rows[i].rating, rows[i].spec, rows[i].type, rows[i].end_preparation, description_drawings_id,rows[i].face_to_face, rows[i].bolt_type, rows[i].ready_e3d, rows[i].comments, rows[i].pid, rows[i].line_id, rows[i].requisition, rows[i].equipnozz, rows[i].utility_station, rows[i].id], (err, results)=>{
                                                                                 if(err){
                                                                                     console.log(err)
                                                                                     res.status(401)
                                                                                 }else{
                                                                                     sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                        if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
-                                                                                            sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                        console.log(results[0].updated_at, updated_at && rows[i].ready_e3d == 1)
+                                                                                        if(results[0].updated_at - updated_at != 0){
+                                                                                            sql.query("UPDATE csptracker SET updated = 1, ready_e3d = 0 WHERE id = ?", [rows[i].id], (err, results)=>{
                                                                                                 if(err){
                                                                                                     console.log(err)
                                                                                                     res.status(401)
@@ -663,7 +664,7 @@ const submitCSP = async(req, res) =>{
                                                                                 }else{
                                                                                     sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
                                                                                         if(results[0].updated_at - updated_at != 0 && rows[i].ready_e3d == 1){
-                                                                                            sql.query("UPDATE csptracker SET updated = 1 WHERE id = ?", [rows[i].id], (err, results)=>{
+                                                                                            sql.query("UPDATE csptracker SET updated = 1, ready_e3d = 0 WHERE id = ?", [rows[i].id], (err, results)=>{
                                                                                                 if(err){
                                                                                                     console.log(err)
                                                                                                     res.status(401)
@@ -1208,6 +1209,61 @@ const submitPids = async(req, res) =>{
     res.status(200)
 }
 
+const deleteSP = (req, res) =>{
+    sql.query("UPDATE csptracker SET updated = 2 WHERE tag = ?", [req.body.tag], (err, results) =>{
+        if(err){
+            res.status(401)
+            console.log(err)
+        }else{
+            res.send({success: 1}).status(200)
+        }
+    })
+}
+
+const excludeSP = (req, res) =>{
+    sql.query("UPDATE csptracker SET ready_e3d = 2 WHERE tag = ?", [req.body.tag], (err, results) =>{
+        if(err){
+            res.status(401)
+            console.log(err)
+        }else{
+            res.send({success: 1}).status(200)
+        }
+    })
+}
+
+const spStatusData = (req, res) =>{
+    let materials = 0
+    let hold = 0
+    let ok_rev0 = 0
+    let ok_revn = 0
+    let excluded = 0
+    let deleted = 0
+    sql.query("SELECT ready_load, ready_e3d, updated FROM csptracker", (err, results) =>{
+        if(!results){
+           
+        }else if(!results[0]){
+           
+        }else{
+            for(let i = 0; i < results.length; i++){
+                if(results[i].ready_load == 0 && (results[i].ready_e3d == 0 || !results[i].ready_e3d) && results[i].updated == 0){
+                    materials += 1
+                }else if(results[i].ready_load == 1 && results[i].ready_e3d == 0){
+                    hold += 1
+                }else if(results[i].ready_load == 1 && results[i].ready_e3d == 1 && results[i].updated == 0){
+                    ok_rev0 += 1
+                }else if(results[i].ready_load == 1 && results[i].ready_e3d == 1 && results[i].updated == 1){
+                    ok_revn += 1
+                }else if(results[i].ready_e3d == 2){
+                    excluded += 1
+                }else if(results[i].updated == 2){
+                    deleted += 1
+                }
+            }
+            res.send({materials: materials, hold: hold, ok_rev0: ok_rev0, ok_revn: ok_revn, excluded: excluded, deleted: deleted}).status(200)
+        }
+    })
+}
+
 module.exports = {
     csptracker,
     readye3d,
@@ -1240,5 +1296,8 @@ module.exports = {
     submitSpecs,
     submitEndPreparations,
     submitBoltTypes,
-    submitPids
+    submitPids,
+    deleteSP,
+    excludeSP,
+    spStatusData
   };

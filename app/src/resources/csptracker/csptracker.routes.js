@@ -37,6 +37,9 @@ let routes = (app) => {
   router.post("/submit/csptracker/endPreparations", controller.submitEndPreparations)
   router.post("/submit/csptracker/boltTypes", controller.submitBoltTypes)
   router.post("/submit/csptracker/pids", controller.submitPids)
+  router.post("/deleteSP", controller.deleteSP);
+  router.post("/excludeSP", controller.excludeSP);
+  router.get("/spStatusData", controller.spStatusData)
   app.use(router);
 };
 
