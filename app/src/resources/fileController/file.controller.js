@@ -874,7 +874,7 @@ const historyFiles = (req,res) =>{
 }
 
 const modelled = (req,res) =>{
-  sql.query('SELECT tag, dpipes_view.isoid, code, blocked FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results)=>{
+  sql.query('SELECT tag, dpipes_view.isoid, code, blocked FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid group by dpipes_view.isoid', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2443,7 +2443,7 @@ const equipModelled = (req, res) =>{
       for(let i = 0; i < results.length; i++){
 
         if(results[i].elements == 0){
-          results[i].progress = 50
+          results[i].progress = 10
         }else if(results[i].percentage != 100){
           results[i].progress = 65
         }else{
