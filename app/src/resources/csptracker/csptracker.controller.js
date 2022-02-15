@@ -1247,7 +1247,7 @@ const spStatusData = (req, res) =>{
             for(let i = 0; i < results.length; i++){
                 if(results[i].ready_load == 0 && (results[i].ready_e3d == 0 || !results[i].ready_e3d) && results[i].updated == 0){
                     materials += 1
-                }else if(results[i].ready_load == 1 && results[i].ready_e3d == 0){
+                }else if(results[i].ready_load == 1 && (results[i].ready_e3d == 0 || !results[i].ready_e3d)){
                     hold += 1
                 }else if(results[i].ready_load == 1 && results[i].ready_e3d == 1 && results[i].updated == 0){
                     ok_rev0 += 1
