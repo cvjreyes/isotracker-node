@@ -1556,11 +1556,19 @@ const currentProgress = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-              res.json({
-                weight: maxProgress,
-                progress: (progress/maxProgress * 100).toFixed(2),
-                realprogress: (realprogress/maxProgress * 100).toFixed(2)
-              }).status(200)
+              sql.query("SELECt count(tag) as counter, weight/20 as w FROM dpipes_view LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.id IS NULL GROUP BY weight", (err, results) =>{
+                if(err){
+                  console.log(err)
+                }else{
+                  const minWeights = results[0].counter * results[0].w + results[1].counter * results[1].w + results[2].counter * results[2].w
+                  res.json({
+                    weight: maxProgress,
+                    progress: ((progress + minWeights)/maxProgress * 100).toFixed(2),
+                    realprogress: ((realprogress + minWeights)/maxProgress * 100).toFixed(2)
+                  }).status(200)
+                }
+              })
+              
             })
           })
         })
@@ -1583,6 +1591,7 @@ const currentProgressISO = async(req,res) =>{
             sql.query("SELECT weight FROM tpipes", (err, results) =>{
               const weights = results
               const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              
               res.json({
                 progressISO: (progress/maxProgress * 100).toFixed(2),
                 realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
