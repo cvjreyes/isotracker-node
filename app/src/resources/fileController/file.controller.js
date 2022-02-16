@@ -1166,60 +1166,66 @@ const downloadHistory = async(req,res) =>{
 
 const downloadStatus = async(req,res) =>{
   sql.query("SELECT isoid, deleted, onhold, issued, `from`, `to`, role, verifydesign FROM misoctrls ORDER BY isoid ASC", (err, results)=>{
-    const delhold = results
-    if(process.env.NODE_PROGRESS === "1"){
-      sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results) =>{
-        if(!results[0]){
-          res.status(401).send("El historial esta vacio")
-        }else{
-          pattern = "MM/dd/yyyy hh:mm:ss";
-          for(let i = 0; i < results.length; i++){
-    
-            if(delhold[i].issued == null){
-              results[i].revision = "ON GOING R" + results[i].revision
-            }else{
-              let r = results[i].revision - 1
-              results[i].revision = "ISSUED R" + r
-            }
-            if(delhold[i].deleted == 1){
-              results[i].revision = "DELETED"
-              results[i].to =  delhold[i].from
+    let delhold = results
+    if(process.env.NODE_PROGRESS == "1"){
+      sql.query("SELECT misoctrls.isoid, deleted, onhold, issued, `from`, `to`, role,  misoctrls.created_at, misoctrls.updated_at, code, revision, verifydesign FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results)=>{
+        delhold = results
+        sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results) =>{
+          if(!results[0]){
+            res.status(401).send("El historial esta vacio")
+          }else{
+            pattern = "MM/dd/yyyy hh:mm:ss";
+            for(let i = 0; i < results.length; i++){
+			  if(results[i].isoid == "P620HASA0500516SS01_01"){
+				  console.log(results[i], delhold[i])
+			  }
+              if(delhold[i].issued == null){
+                results[i].revision = "ON GOING R" + results[i].revision
+              }else{
+                let r = (results[i].revision - 1)
+                results[i].revision = "ISSUED R" + r
+              }
+              if(delhold[i].deleted == 1){
+                results[i].revision = "DELETED"
+                results[i].to =  delhold[i].from
+                
+              }else if (delhold[i].onhold == 1){
+                results[i].revision = "ON HOLD"
+                results[i].to =  delhold[i].to
+              }
               
-            }else if (delhold[i].onhold == 1){
-              results[i].revision = "ON HOLD"
-              results[i].to =  delhold[i].to
-            }
-            
-            if(results[i].to == "LDE/Isocontrol"){
-              results[i].to = "LOS/Isocontrol"
-            }
-
-            if(results[i].to == "Design"){
-              if(delhold[i].verifydesign == 1 || delhold[i].role == "DesignLead"){
-                results[i].to = "DESIGN LEAD"
+              if(results[i].to == "LDE/Isocontrol"){
+                results[i].to = "LOS/Isocontrol"
               }
-            }
-
-            if(results[i].to == "Stress"){
-              if(delhold[i].verifydesign == 1 || delhold[i].role == "StressLead"){
-                results[i].to = "STRESS LEAD"
+  
+              if(results[i].to == "Design"){
+                if(delhold[i].verifydesign == 1 || delhold[i].role == "DesignLead"){
+                  results[i].to = "DESIGN LEAD"
+                }
               }
-            }
-
-            if(results[i].to == "Supports"){
-              if(delhold[i].verifydesign == 1 || delhold[i].role == "SupportsLead"){
-                results[i].to = "SUPPORTS LEAD"
+  
+              if(results[i].to == "Stress"){
+                if(delhold[i].verifydesign == 1 || delhold[i].role == "StressLead"){
+                  results[i].to = "STRESS LEAD"
+                }
               }
+  
+              if(results[i].to == "Supports"){
+                if(delhold[i].verifydesign == 1 || delhold[i].role == "SupportsLead"){
+                  results[i].to = "SUPPORTS LEAD"
+                }
+              }
+  
+              results[i].to = results[i].to.toUpperCase()
+  
+              results[i].created_at = format(pattern, results[i].created_at)
+              results[i].updated_at = format(pattern, results[i].updated_at)
             }
-
-            results[i].to = results[i].to.toUpperCase()
-
-            results[i].created_at = format(pattern, results[i].created_at)
-            results[i].updated_at = format(pattern, results[i].updated_at)
+            res.json(JSON.stringify(results)).status(200)
           }
-          res.json(JSON.stringify(results)).status(200)
-        }
+        })
       })
+      
    }else{             
     sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, revision, `to` FROM misoctrls ORDER BY misoctrls.isoid ASC", (err, results) =>{
       if(!results[0]){
