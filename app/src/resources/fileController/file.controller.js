@@ -103,7 +103,7 @@ const update = async (req, res) => {
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   if(process.env.NODE_PROGRESS === "1"){
-    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND (onhold = 0 OR onhold IS NULL)', [tab], (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND (onhold != 1)', [tab], (err, results) =>{
       
       res.json({
         rows: results
@@ -4078,7 +4078,7 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -4501,6 +4501,44 @@ const pipingWeight = async(req, res) =>{
   })
 }
 
+const excludeHold = (req, res) =>{
+  fileName = req.params.fileName
+  sql.query("UPDATE misoctrls SET onhold = 2, `to` = `from` WHERE filename = ?", [fileName], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      sql.query("UPDATE misoctrls SET `from` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          res.status(200)
+        }
+      })
+    }
+  })
+}
+
+const sendHold = (req, res) =>{
+  const fileName = req.body.fileName
+  sql.query("UPDATE misoctrls SET onhold = 1, `from` = `to` WHERE filename = ?", [fileName], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      sql.query("UPDATE misoctrls SET `to` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          res.status(200)
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4614,5 +4652,7 @@ module.exports = {
   exportTimeTrack,
   revision,
   submitRevision,
-  pipingWeight
+  pipingWeight,
+  excludeHold,
+  sendHold
 };
