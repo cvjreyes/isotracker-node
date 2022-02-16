@@ -1543,10 +1543,16 @@ const checkPipe = async(req,res) =>{
 }
 
 const currentProgress = async(req,res) =>{
+  let progress = 0
+  let realprogress = 0
   sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
-    const progress = results[0]["SUM(progress)"]
+    if(results[0]["SUM(progress)"]){
+      progress = results[0]["SUM(progress)"]
+    }
     sql.query("SELECT SUM(realprogress) FROM misoctrls WHERE requested is null OR requested = 1", (req, results) =>{
-      const realprogress = results[0]["SUM(realprogress)"]
+      if(results[0]["SUM(realprogress)"]){
+        realprogress = results[0]["SUM(realprogress)"]
+      }
       sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
         const tp1 = results[0]["COUNT(tpipes_id)"]
         sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
