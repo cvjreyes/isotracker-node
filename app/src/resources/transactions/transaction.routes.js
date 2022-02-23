@@ -6,5 +6,6 @@ module.exports = app => {
     app.post("/api/returnLead", transaction.returnLead);
     app.post("/api/returnLeadStress", transaction.returnLeadStress);
     app.post("/returnIso", transaction.returnIso);
+    app.post("/returnToLOS", transaction.returnToLOS);
 
   };
