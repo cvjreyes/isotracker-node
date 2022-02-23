@@ -2416,7 +2416,7 @@ const equipWeight = (req,res) =>{
         if(results[i].percentage == 100){
           total_progress += 100
        }else{
-          total_progress += 70
+          total_progress += 65
         }
       }
 
@@ -3327,7 +3327,7 @@ const downloadEquipmentModelled = (req, res) =>{
       for(let i = 0; i < results.length;i++){
 
         if(results[i].elements == 0){
-          results[i].progress = 50
+          results[i].progress = 10
         }else if(results[i].percentage != 100){
           results[i].progress = 65
         }else{
@@ -4409,6 +4409,7 @@ function downloadIssuedTo3D(){
           d = d.substring(0,6) + d.substring(8,10)
   
           if(r == 0){
+            log.push("ONERROR GOLABEL " + results[i].tag)
             log.push("/" + results[i].tag)
             log.push("UNLOCK ALL")
             log.push("NEW TEXT /" + results[i].tag + "/" + r)
@@ -4434,7 +4435,7 @@ function downloadIssuedTo3D(){
           log.push(":TP-REV-DRAW '" + results[i].issuer_draw + "'")
           log.push(":TP-REV-CHECK '" + results[i].issuer_check + "'")
           log.push(":TP-REV-APPR '" + results[i].issuer_appr + "'\n")
-          
+          log.push("LABEL " + results[i].tag)
         }
         
       }
