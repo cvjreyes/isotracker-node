@@ -127,6 +127,8 @@ let routes = (app) => {
   router.post("/submitRevision", controller.submitRevision)
 
   router.get("/pipingWeight", controller.pipingWeight)
+  router.get("/excludeHold/:fileName", controller.excludeHold);
+  router.post("/sendHold", controller.sendHold);
 
   app.use(router);
 };
