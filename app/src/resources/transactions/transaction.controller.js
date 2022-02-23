@@ -1538,10 +1538,81 @@ const transactionNotifications = (req, res) =>{
   })
 }
 
+const returnToLOS = async(req, res) =>{
+  const fileName = req.body.fileName
+  const email = req.body.email
+  const role = req.body.role
+  sql.query("SELECT name FROM users WHERE email = ?", email, (err, results)=>{
+    const username = results[0].name
+    sql.query('SELECT transmittal, issued_date, isoid, revision, spo, sit, spoclaimed, comments FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+      if(!results[0]){
+        res.status(401)
+      }else{
+        const last = results[0]
+        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+        [fileName, last.revision - 1, last.spo, last.sit, 0, null, null, last.deleted, last.onhold, "Issued", "LDE/IsoControl", "Returned to LOS", role, username], (err, results) => {
+          if (err) {
+            console.log("error: ", err);
+          }else{
+            sql.query("UPDATE misoctrls SET filename = ?, revision = ?, issued = 0, requested = 0, transmittal = ?, issued_date = ?, `from` = ? WHERE filename = ?", [last.isoid + ".pdf", last.revision - 1, null, null, "Issued", fileName], (err, results) =>{
+              if(err){
+                console.log(err)
+              }else{
+                const newFileName = last.isoid + '.pdf'
+          
+                let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
+          
+                origin_path = './app/storage/isoctrl/lde/' + fileName
+                destiny_path = './app/storage/isoctrl/lde/' + newFileName
+                origin_attach_path = './app/storage/isoctrl/lde/transmittals/' + last.transmittal + '/' + last.issued_date +'/'
+                destiny_attach_path = './app/storage/isoctrl/lde/attach/'
+                origin_cl_path = './app/storage/isoctrl/lde/transmittals/' + last.transmittal + '/' + last.issued_date + '/' + fileName
+                destiny_cl_path = './app/storage/isoctrl/lde/attach/' + newFileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
+                
+                console.log(destiny_cl_path)
+          
+                fs.rename(origin_path, destiny_path, function (err) {
+                  if (err) throw err
+                })
+          
+                    fs.readdir(origin_attach_path, (err, files) => {
+                      files.forEach(file => {                          
+                        let attachName = file.split('.').slice(0, -1)
+                        const i = file.lastIndexOf('.');
+                        const extension = file.substring(i+1);
+                        if(String(fileName.split('.').slice(0, -1)).trim() == String(attachName).trim() && extension != "pdf"){
+                          fs.rename(origin_attach_path+file, destiny_attach_path+last.isoid+'.'+extension, function (err) {
+                              console.log("moved attach to LOS")
+                              if (err) throw err
+              
+                          })
+                        }
+                      });
+                    });
+              
+                    if(fs.existsSync(origin_cl_path)){
+                        fs.rename(origin_cl_path, destiny_cl_path, function (err) {
+                            if (err) throw err
+                            console.log('Moved CL to LOS')
+                        })
+                    }
+                      res.send({success: true}).status(200)
+                    }
+            })
+          }
+        })
+      }
+    })
+  })
+  
+  
+}
+
 module.exports = {
   transaction,
   returnLead,
   returnLeadStress,
   returnIso,
-  transactionNotifications
+  transactionNotifications,
+  returnToLOS
 };
