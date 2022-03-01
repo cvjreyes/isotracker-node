@@ -2178,9 +2178,10 @@ async function uploadReportPeriod(){
       for(let i = 0; i < csv.length; i++){
         if(csv[i].area != '' && csv[i].area != null && !csv[i].tag.includes("/") && !csv[i].tag.includes("=") && !csv[i].diameter != null){
           sql.query("SELECT id FROM areas WHERE name = ?", [csv[i].area], (err, results) =>{
-            if(!results[0]){
+            let areaid = null
+            if(results[0]){
+              areaid = results[0].id
             }
-            const areaid = results[0].id
             if(process.env.NODE_MMDN == 1){
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
@@ -3940,7 +3941,7 @@ cron.schedule("0 */5 * * * *", () => {
   }
 })
 
-cron.schedule("0 */30 * * * *", () => {
+cron.schedule("0 */1 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
@@ -3969,7 +3970,7 @@ async function updateIsocontrolModelled(){
       console.log(err)
     }
   })
-  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT unit, area, line, train, spec_code, diameter, pid, stress_level, calc_notes, insulation, fluid, seq, total_weight FROM isocontrolfull_view)", (err, results)=>{
+  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
     if(err){
       console.log(err)
     }else{
@@ -3990,10 +3991,9 @@ async function updateLines(){
   .fromFile(process.env.NODE_LINES_ROUTE)
   .then((jsonObj)=>{
     const csv = jsonObj
-    
     for(let i = 0; i < csv.length; i++){    
-      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq + csv[i].spec).includes("unset")){
-        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code) VALUES(?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec], (err, results)=>{
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq + csv[i].spec + csv[i].pid + csv[i].strlvl + csv[i].cnote + csv[i].insulation).includes("unset")){
+        sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code, pid, stress_level, calc_notes, insulation) VALUES(?,?,?,?,?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec, csv[i].pid, csv[i].strlvl, csv[i].cnote, csv[i].insulation], (err, results)=>{
           if(err){
             console.log(err)
           }
