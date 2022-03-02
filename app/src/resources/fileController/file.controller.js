@@ -2137,6 +2137,7 @@ function downloadStatus3DPeriod(){
 }
 
 cron.schedule('0 */1 * * * *', async () => {
+  /*
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
     if(process.env.NODE_ISSUER == "1"){
@@ -2146,6 +2147,7 @@ cron.schedule('0 */1 * * * *', async () => {
       
     }
   }
+  */
 })
 
 async function uploadReportPeriod(){
@@ -3914,12 +3916,12 @@ const getNotModelled = async(req, res) =>{
 
 const isocontrolWeights = async(req, res) =>{
   let modelledWeight, notModelledWeight
-  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_modelled", (err, results)=>{
+  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_all_view WHERE area IS NOT null", (err, results)=>{
     if(err){
       res.status(401)
     }else{
       modelledWeight = results[0].modelledWeight
-      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_not_modelled", (err, results)=>{
+      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_all_view WHERE area IS null", (err, results)=>{
         if(err){
           res.status(401)
         }else{
@@ -4063,11 +4065,10 @@ const exportNotModelled = async(req, res) =>{
 }
 
 const getIsocontrolFull = async(req, res)=>{
-  sql.query("SELECT DISTINCT isocontrol_all_view.*, misoctrls.`to`, misoctrls.progress, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN isocontrol_holds_view ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid,isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.isoid", (err, results)=>{
+  sql.query("SELECT DISTINCT isocontrol_all_view.*, isocontrol_holds_view.* FROM isocontrol_all_view LEFT JOIN isocontrol_holds_view ON isocontrol_all_view.tag COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.tag ", (err, results)=>{
     if(err){
       res.status(401)
     }else{
-      
       res.send({rows: results}).status(200)
     }
   })
