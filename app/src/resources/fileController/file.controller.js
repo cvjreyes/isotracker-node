@@ -111,7 +111,7 @@ const getListFiles = (req, res) => {
     
   })
   }else{
-    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ?', [tab], (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ? AND onhold != 1', [tab], (err, results) =>{
       
       res.json({
         rows: results
@@ -544,22 +544,22 @@ const updateStatus = async(req,res) =>{
               }
         
               totalR2 = designR2 + stressR2 + supportsR2 + materialsR2 + issuerR2 + toIssueR2 + issuedR2
-              sql.query("SELECT `from` FROM misoctrls WHERE onhold = 1", (err, results) =>{
+              sql.query("SELECT `to` FROM misoctrls WHERE onhold = 1", (err, results) =>{
                 if(!results[0]){
                   results = []
                 }
                   for(let i = 0; i < results.length; i++){
-                    if(results[i].from == "Design"){
+                    if(results[i].to == "Design"){
                       designHold += 1
-                    }else if(results[i].from == "Stress" || results[i].from == "stress"){
+                    }else if(results[i].to == "Stress" || results[i].to == "stress"){
                       stressHold += 1
-                    }else if(results[i].from == "Supports"){
+                    }else if(results[i].to == "Supports"){
                       supportsHold += 1
-                    }else if(results[i].from == "Materials"){
+                    }else if(results[i].to == "Materials"){
                       materialsHold += 1
-                    }else if(results[i].from == "Issuer"){
+                    }else if(results[i].to == "Issuer"){
                       issuerHold += 1
-                    }else if(results[i].from == "LDE/Isocontrol"){
+                    }else if(results[i].to == "LDE/Isocontrol"){
                       toIssueHold += 1
                     }
                   }
@@ -862,7 +862,7 @@ const statusFiles = (req,res) =>{
 }
 
 const historyFiles = (req,res) =>{
-  sql.query('SELECT * FROM hisoctrls', (err, results) =>{
+  sql.query('SELECT * FROM hisoctrls LIMIT 1000', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -2137,7 +2137,7 @@ function downloadStatus3DPeriod(){
 }
 
 cron.schedule('0 */1 * * * *', async () => {
-  /*
+  
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
     if(process.env.NODE_ISSUER == "1"){
@@ -2147,7 +2147,7 @@ cron.schedule('0 */1 * * * *', async () => {
       
     }
   }
-  */
+  
 })
 
 async function uploadReportPeriod(){
@@ -2187,7 +2187,6 @@ async function uploadReportPeriod(){
             if(process.env.NODE_MMDN == 1){
               sql.query("SELECT id FROM diameters WHERE nps = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("invalid diameter")
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -2216,7 +2215,7 @@ async function uploadReportPeriod(){
             }else{
               sql.query("SELECT id FROM diameters WHERE dn = ?", [csv[i].diameter], (err, results) =>{
                 if(!results[0]){
-                  console.log("invalid diameter: ", csv[i].diameter)
+
                 }else{
                   const diameterid = results[0].id
                   let calc_notes = 0
@@ -3943,7 +3942,7 @@ cron.schedule("0 */5 * * * *", () => {
   }
 })
 
-cron.schedule("0 */1 * * * *", () => {
+cron.schedule("0 */30 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
     updateIsocontrolNotModelled()
     updateIsocontrolModelled()
@@ -4085,14 +4084,13 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`from`, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id", (err, results)=>{
+  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.onhold = 1", (err, results)=>{
     if(err){
       res.status(401)
     }else{
       for(let i = 0; i < results.length; i++){
         if(!results[i].isoid || results[0].isoid == ""){
           results[i].isoid = results[i].tag
-          results[i].from = results[i].to
         }
       }
       res.send({rows: results}).status(200)
@@ -4114,41 +4112,41 @@ async function updateHolds(){
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, `to` = misoctrls.`from`, `from` = ? WHERE misoctrls.onhold = 1", ["On hold"])
-        for(let i = 0; i < data.length; i++){    
-      let has_holds = data[i].hold1 + data[i].hold2 + data[i].hold3 + data[i].hold4 + data[i].hold5 + data[i].hold6 + data[i].hold7 + data[i].hold8 + data[i].hold9 + data[i].hold10
-          if(data[i].tag && has_holds && has_holds != ""){
-            sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
-              if(err){
-                console.log(err)
-              }else{
-                if(has_holds){
-                  sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1, misoctrls.`from` = misoctrls.`to` WHERE dpipes_view.tag = ? AND onhold != 2", [data[i].tag], (err, results)=>{                  
-                    if(err){
-                      console.log(err)
+        sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1", ["On hold"], (err, results)=>{
+          if(err){
+            console.log(err)
+            res.status(401)
+          }else{
+            for(let i = 0; i < data.length; i++){    
+              let has_holds = data[i].hold1 + data[i].hold2 + data[i].hold3 + data[i].hold4 + data[i].hold5 + data[i].hold6 + data[i].hold7 + data[i].hold8 + data[i].hold9 + data[i].hold10
+              if(data[i].tag && has_holds && has_holds != ""){
+                sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
+                  if(err){
+                    console.log(err)
+                  }else{
+                    if(has_holds){
+                      sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ? AND onhold != 2", [data[i].tag], (err, results)=>{                  
+                        if(err){
+                          console.log(err)
+                        }
+                      })
                     }
-                  })
-                }
-              }
-            })
-            
-            
-          }      
-          
-        }
-        const timeoutObj = setTimeout(() => {
-          sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.`to` = ? WHERE misoctrls.onhold = 1", ["On hold"], (err, results)=>{                  
-            if(err){
-              console.log(err)
+                  }
+                })
+                
+                
+              }      
+              
             }
-            console.log("Holds updated")
-          })
-        }, 5000)
+          }
+          console.log("Holds updated")
+        })
+        
        
 
       }
     })
-  }, 10000)
+  }, 5000)
 
   
 
