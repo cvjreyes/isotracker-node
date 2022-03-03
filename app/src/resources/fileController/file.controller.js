@@ -111,13 +111,24 @@ const getListFiles = (req, res) => {
     
   })
   }else{
-    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ? AND onhold != 1', [tab], (err, results) =>{
+    if(tab === "On hold"){
+      sql.query('SELECT * FROM misoctrls WHERE onhold = 1', [tab], (err, results) =>{
       
-      res.json({
-        rows: results
+        res.json({
+          rows: results
+        })
+      
       })
-    
-  })
+      
+    }else{
+      sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ?', [tab], (err, results) =>{
+      
+        res.json({
+          rows: results
+        })
+      
+      })
+    }
   }
   
   /*
