@@ -1463,7 +1463,7 @@ const uploadReport = async(req,res) =>{
       if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
         sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
           let areaid = null
-          if(results[0].id){
+          if(results[0]){
             areaid = results[0].id
           }
           if(process.env.NODE_MMDN == 1){
