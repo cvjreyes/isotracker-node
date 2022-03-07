@@ -4002,7 +4002,7 @@ async function updateLines(){
   .then((jsonObj)=>{
     const csv = jsonObj
     for(let i = 0; i < csv.length; i++){    
-      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq + csv[i].spec + csv[i].pid + csv[i].strlvl + csv[i].cnote + csv[i].insulation).includes("unset")){
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq).includes("unset")){
         sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code, pid, stress_level, calc_notes, insulation) VALUES(?,?,?,?,?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec, csv[i].pid, csv[i].strlvl, csv[i].cnote, csv[i].insulation], (err, results)=>{
           if(err){
             console.log(err)
