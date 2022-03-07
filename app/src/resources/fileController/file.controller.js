@@ -4193,7 +4193,7 @@ const lastUser = async(req, res) =>{
 }
 
 const exportFull = async(req, res) =>{
-  sql.query("SELECT spec_ldl as line_id, unit, area, line, train, fluid, seq, unit as iso_id, spec_code, diameter, pid, stress_level, isocontrol_all_view.calc_notes, insulation, total_weight, diameter as modelled, misoctrls.`to`, misoctrls.progress, holds.hold1, LDL, BOM FROM isocontrol_all_view LEFT JOIN misoctrls ON CONCAT(isocontrol_all_view.area, isocontrol_all_view.unit, isocontrol_all_view.fluid, isocontrol_all_view.seq, isocontrol_all_view.spec_code,'_', isocontrol_all_view.train) COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN holds ON dpipes_view.tag COLLATE utf8mb4_unicode_ci = holds.tag", (err, results) =>{
+  sql.query("SELECT unit as line_id, unit, area, unit as line, train, fluid, seq, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight, diameter as modelled, tray, progress, isocontrol_holds_view.hold1, BOM, LDL, bom_unit, bom_area, bom_train, bom_spec_code FROM isocontrol_all_view LEFT JOIN isocontrol_holds_view ON isocontrol_all_view.tag COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.tag", (err, results) =>{
     if(err){
       console.log(err)
       res.status(401)
@@ -4201,27 +4201,15 @@ const exportFull = async(req, res) =>{
       let rows = results
       for(let i = 0; i < rows.length; i++){
 
-        if(rows[i].line_id === null){
-            rows[i].modelled = "Not modelled"
+        if(rows[i].LDL === "In LDL"){
+          rows[i].line = rows[i].fluid + rows[i].seq
+          rows[i].line_id = rows[i].unit + rows[i].fluid + rows[i].seq
         }else{
-            rows[i].modelled = "Modelled"
-        }
-
-        rows[i].line_id = rows[i].unit + rows[i].line
-        rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
-
-        if(rows[i].LDL === "In LDL" && rows[i].BOM === "Not in BOM"){
-            rows[i].line_id = rows[i].LDL_unit + rows[i].fluid + rows[i].seq
-            rows[i].iso_id = " "
-
-            rows[i].unit = rows[i].LDL_unit
-            rows[i].line = rows[i].fluid + rows[i].seq
-            rows[i].spec_code = rows[i].spec_code_ldl
-        }else{
-            rows[i].line_id = rows[i].unit + rows[i].line
-            rows[i].iso_id = rows[i].unit + rows[i].area + rows[i].line + rows[i].train
-
-            rows[i].unit = rows[i].unit
+          rows[i].unit = rows[i].bom_unit
+          rows[i].area = rows[i].bom_area
+          rows[i].spec_code = rows[i].bom_spec_code
+          rows[i].train = rows[i].bom_train
+          rows[i].line_id = rows[i].unit + rows[i].line
         }
 
         if(rows[i].diameter === null){
@@ -4251,6 +4239,11 @@ const exportFull = async(req, res) =>{
         }else{
           rows[i].hold1 = "No"
         }
+
+        delete rows[i]["bom_unit"]
+        delete rows[i]["bom_area"]
+        delete rows[i]["bom_train"]
+        delete rows[i]["bom_spec_code"]
 
     }
       res.json(JSON.stringify(rows)).status(200)
