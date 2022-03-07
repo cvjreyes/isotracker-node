@@ -873,7 +873,7 @@ const statusFiles = (req,res) =>{
 }
 
 const historyFiles = (req,res) =>{
-  sql.query('SELECT * FROM hisoctrls LIMIT 1000', (err, results) =>{
+  sql.query('SELECT * FROM hisoctrls LIMIT 1000 ORDER BY created_at DESC', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -3958,40 +3958,35 @@ cron.schedule("0 */5 * * * *", () => {
 
 cron.schedule("0 */30 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
-    updateIsocontrolNotModelled()
-    updateIsocontrolModelled()
-    updateLines()
+	updateLines()
+	const timeoutObj = setTimeout(() => {
+        updateIsocontrolModelled()
+		updateIsocontrolNotModelled()
+      }, 5000)
   }
 })
 
 async function updateIsocontrolNotModelled(){
-    sql.query("DROP TABLE isocontrol_not_modelled", (err, results) =>{
-      if(err){
-        console.log(err)
-      }
-    })
-    sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM isocontrol_not_modelled_def_view)", (err, results)=>{
-      if(err){
-        console.log(err)
-      }else{
-        console.log("isocontrol not modelled updated")
-      }
-    })       
-}
-
-async function updateIsocontrolModelled(){
-  sql.query("DROP TABLE isocontrol_modelled", (err, results) =>{
-    if(err){
-      console.log(err)
-    }
-  })
-  sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
+  sql.query("DROP TABLE IF EXISTS isocontrol_not_modelled") 
+  sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM isocontrol_not_modelled_def_view)", (err, results)=>{
     if(err){
       console.log(err)
     }else{
-      console.log("isocontrol modelled updated")
+      console.log("isocontrol not modelled updated")
     }
   })       
+}
+
+async function updateIsocontrolModelled(){
+    sql.query("DROP TABLE IF EXISTS isocontrol_modelled") 
+
+sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
+  if(err){
+    console.log(err)
+  }else{
+    console.log("isocontrol modelled updated")
+  }
+})       
 }
 
 async function updateLines(){
