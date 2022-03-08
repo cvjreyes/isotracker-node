@@ -1418,8 +1418,8 @@ const downloadStatus3D = async(req, res) =>{
       status = results[i].to
       if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
         status = "New"
-      }else if(status == "LDE/Isocontrol" && results[i].issued == 0){
-        status = "Isoctrl"
+      }else if(status == "LDE/Isocontrol" && results[i].issued != 0){
+        status = "Issuer"
       }else if(results[i].issued == 1){
         status = "Transmittal"
       }else if(status == "On hold"){
@@ -2122,8 +2122,8 @@ function downloadStatus3DPeriod(){
       status = results[i].to
       if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
         status = "New"
-      }else if(status == "LDE/Isocontrol" && results[i].issued == 0){
-        status = "Isoctrl"
+      }else if(status == "LDE/Isocontrol" && results[i].issued != 0){
+        status = "Issuer"
       }else if(results[i].issued == 1){
         status = "Transmittal"
       }
