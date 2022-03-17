@@ -130,6 +130,8 @@ let routes = (app) => {
   router.get("/excludeHold/:fileName", controller.excludeHold);
   router.post("/sendHold", controller.sendHold);
 
+  router.post("/getFilenamesByUser", controller.getFilenamesByUser)
+
   app.use(router);
 };
 

@@ -428,41 +428,41 @@ const uploadHis = async (req, res) => {
 }
 
 const updateHis = async (req, res) => {
-
   const fileName = req.body.file
   var username = "";
-
+    
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
-    }else{   
-      username  = results[0].name
+    }else{
+      username = results[0].name
       sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
         if(!results[0]){
-            res.status(401).send("No files found");
+          res.status(401).send("No files found");
         }else{
-            let last = results[0]
-            for (let i = 1; i < results.length; i++){
-                if(results[i].updated_at > last.updated_at){
-                    last = results[i]
-                }
+          let last = results[0]
+          for (let i = 1; i < results.length; i++){
+            if(results[i].updated_at > last.updated_at){
+              last = results[i]
             }
-    
-            sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-            [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => {
-              if (err) {
-                console.log("error: ", err);
-              }else{
-                console.log("created hisoctrls");
-              }
-            });
           }
-        })
+    
+          sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)",
+          [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => {
+            if (err) {
+              console.log("error: ", err);
+              res.send({success:1}).status(200)
+            }else{
+              res.send({success:1}).status(200)
+              console.log("created hisoctrls");
+            }
+          });
+        }
+      })
     }
   });
 
-  
-  }
+}
 
 const getMaster = async(req, res) =>{
   fileName = req.params.fileName
@@ -498,7 +498,7 @@ const updateStatus = async(req,res) =>{
           materialsR0 += 1
         }else if(results[i].to == "Issuer" && results[i].revision == 0){
           issuerR0 += 1
-        }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 0 && results[i].issued == null){
+        }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 0 && (results[i].issued == null || results[i].issued == 0)){
           toIssueR0 += 1
         }else if(results[i].to == "LDE/Isocontrol" && results[i].issued == 1 && results[i].revision == 1){
           issuedR0 += 1
@@ -522,7 +522,7 @@ const updateStatus = async(req,res) =>{
               materialsR1 += 1
             }else if(results[i].to == "Issuer" && results[i].revision == 1){
               issuerR1 += 1
-            }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 1 && results[i].issued == null){
+            }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 1 && (results[i].issued == null || results[i].issued == 0)){
               toIssueR1 += 1
             }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 2 && results[i].issued == 1){
               issuedR1 += 1
@@ -547,7 +547,7 @@ const updateStatus = async(req,res) =>{
                   materialsR2 += 1
                 }else if(results[i].to == "Issuer" && results[i].revision == 2){
                   issuerR2 += 1
-                }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 2 && results[i].issued == null){
+                }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 2 && (results[i].issued == null || results[i].issued == 0)){
                   toIssueR2 += 1
                 }else if(results[i].to == "LDE/Isocontrol" && results[i].revision == 3 && results[i].issued == 1){
                   issuedR2 += 1
@@ -873,7 +873,7 @@ const statusFiles = (req,res) =>{
 }
 
 const historyFiles = (req,res) =>{
-  sql.query('SELECT * FROM hisoctrls LIMIT 1000 ORDER BY created_at DESC', (err, results) =>{
+  sql.query('SELECT * FROM hisoctrls ORDER BY created_at DESC', (err, results) =>{
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -4121,7 +4121,7 @@ async function updateHolds(){
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1", ["On hold"], (err, results)=>{
+        sql.query("UPDATE misoctrls SET onhold = 0, user = ? WHERE misoctrls.onhold = 1", ["None", "On hold"], (err, results)=>{
           if(err){
             console.log(err)
             res.status(401)
@@ -4550,6 +4550,14 @@ const sendHold = (req, res) =>{
   res.status(200)
 }
 
+const getFilenamesByUser = (req, res) =>{
+  const email = req.body.currentUser
+  const role = req.body.currentRole
+  sql.query("SELECT misoctrls.isoid from misoctrls LEFT JOIN users ON misoctrls.user = users.name WHERE users.email = ? AND misoctrls.role = ?", [email, role], (err, results) =>{
+    res.json({files: results}).status(200)
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4665,5 +4673,6 @@ module.exports = {
   submitRevision,
   pipingWeight,
   excludeHold,
-  sendHold
+  sendHold,
+  getFilenamesByUser
 };
