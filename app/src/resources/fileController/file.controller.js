@@ -1839,7 +1839,8 @@ const newRev = (req, res) =>{
   const fileName = req.body.file
   const user = req.body.user
   const role = req.body.role
-
+  const comments = req.body.comments
+  console.log(comments)
   const newFileName = fileName.substring(0,fileName.length-6) + ".pdf"
 
   const origin_path = './app/storage/isoctrl/lde/' + fileName
@@ -1873,13 +1874,13 @@ const newRev = (req, res) =>{
                     const revision = results[0].revision
                     if(process.env.NODE_PROGRESS == "0"){
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                      [newFileName, revision+1, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                      [newFileName, revision+1, 0, 0, "Issued","Design", comments, username, "SpecialityLead"], (err, results) => {
                         if (err) {
                           console.log("error: ", err);
                         }else{
                           console.log("created hisoctrls");
                           sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                          [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", null], (err, results) => {
+                          [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead", null], (err, results) => {
                             if (err) {
                               console.log("error: ", err);
                             }else{
@@ -1922,13 +1923,13 @@ const newRev = (req, res) =>{
                                 newprogress = results[0].value_ifd
                               }
                                 sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                                [newFileName, revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead"], (err, results) => {
+                                [newFileName, revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead"], (err, results) => {
                                   if (err) {
                                     console.log("error: ", err);
                                   }else{
                                     console.log("created hisoctrls");
                                     sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                                    [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", "Revision", username, "SpecialityLead", newprogress, newprogress], (err, results) => {
+                                    [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead", newprogress, newprogress], (err, results) => {
                                       if (err) {
                                         console.log("error: ", err);
                                       }else{
