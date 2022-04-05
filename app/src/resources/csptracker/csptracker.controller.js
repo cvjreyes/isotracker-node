@@ -511,7 +511,6 @@ const submitCSP = async(req, res) =>{
                                                                                     res.status(401)
                                                                                 }else{
                                                                                     sql.query("SELECT updated_at FROM csptracker WHERE id = ?", [rows[i].id], (err, results)=>{
-                                                                                        console.log(results[0].updated_at, updated_at && rows[i].ready_e3d == 1)
                                                                                         if(results[0].updated_at - updated_at != 0){
                                                                                             sql.query("UPDATE csptracker SET updated = 1, ready_e3d = 0 WHERE id = ?", [rows[i].id], (err, results)=>{
                                                                                                 if(err){

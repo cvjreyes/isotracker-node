@@ -131,6 +131,10 @@ let routes = (app) => {
   router.post("/sendHold", controller.sendHold);
 
   router.post("/getFilenamesByUser", controller.getFilenamesByUser)
+  router.get("/api/diameters", controller.getDiameters)
+  router.get("/api/lineRefs", controller.getLineRefs)
+  router.get("/modelledEstimatedPipes", controller.modelledEstimatedPipes)
+
 
   app.use(router);
 };

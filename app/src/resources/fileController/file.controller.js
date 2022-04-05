@@ -10,6 +10,7 @@ const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
 const { verify } = require("crypto");
 const { type } = require("os");
+const { resourceLimits } = require("worker_threads");
 
 
 const upload = async (req, res) => {
@@ -1812,7 +1813,7 @@ const request = (req,res) =>{
               }else{
                 
                 sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
-                  console.log(results)
+                  
                   if(results[0].requested !== null){
                     res.status(401).send("Isometric already requested")
                   }else{
@@ -2220,7 +2221,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train, spec) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train, csv[i].spec], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -2249,7 +2250,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train, spec) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train, csv[i].spec], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -4559,6 +4560,40 @@ const getFilenamesByUser = (req, res) =>{
   })
 }
 
+const getDiameters = (req, res) =>{
+  if(process.env.NODE_MMDN == "0"){
+    sql.query("SELECT dn as diameter FROM diameters", (err, results) =>{
+      res.json({diameters: results}).status(200)
+    })
+  }else{
+    sql.query("SELECT nps as diameter FROM diameters", (err, results) =>{
+      res.json({diameters: results}).status(200)
+    })
+  } 
+}
+
+const getLineRefs = (req, res) =>{
+  sql.query("SELECT tag as line_ref FROM `lines`", (err, results) =>{
+    if(!results[0]){
+      console.log("no lines")
+      res.json({line_refs: null}).status(401)
+    }else{
+      res.json({line_refs: results}).status(200)
+    }
+  }) 
+}
+
+const modelledEstimatedPipes = (req, res) =>{
+    sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{
+      if(err){
+        console.log(err)
+        res.status(401)
+      }else{
+        res.json({rows: results}).status(200)
+      }
+    })
+}
+
 module.exports = {
   upload,
   update,
@@ -4675,5 +4710,8 @@ module.exports = {
   pipingWeight,
   excludeHold,
   sendHold,
-  getFilenamesByUser
+  getFilenamesByUser,
+  getDiameters,
+  getLineRefs,
+  modelledEstimatedPipes
 };
