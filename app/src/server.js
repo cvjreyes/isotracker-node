@@ -37,6 +37,7 @@ require("./resources/verify/verify.routes.js")(app);
 require("./resources/progress/progress.routes.js")(app);
 require("./resources/csptracker/csptracker.routes.js")(app);
 require("./resources/qtracker/qtracker.routes.js")(app);
+require("./resources/pipectrls/pipectrls.routes.js")(app);
 
 // set port, listen for requests
 app.listen(process.env.NODE_DB_PORT, () => {

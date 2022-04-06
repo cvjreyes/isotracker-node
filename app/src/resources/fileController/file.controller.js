@@ -2225,6 +2225,15 @@ async function uploadReportPeriod(){
                     if(err){
                       console.log(err)
                     }
+                    sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
+                      if(!results[0]){
+                        sql.query("INSERT INTO pipectrls(tag) VALUES(?)", [csv[i].tag], (err, results) =>{
+                          if(err){
+                            console.log(err)
+                          }
+                        })
+                      }
+                    })
                   })
                 }
               })
@@ -2254,6 +2263,15 @@ async function uploadReportPeriod(){
                     if(err){
                       console.log(err)
                     }
+                    sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
+                      if(!results[0]){
+                        sql.query("INSERT INTO pipectrls(tag) VALUES(?)", [csv[i].tag], (err, results) =>{
+                          if(err){
+                            console.log(err)
+                          }
+                        })
+                      }
+                    })
                   })
                 }
               })
@@ -4572,7 +4590,7 @@ const getDiameters = (req, res) =>{
   } 
 }
 
-const getLineRefs = (req, res) =>{
+const getLineRefs = async(req, res) =>{
   sql.query("SELECT tag as line_ref FROM `lines`", (err, results) =>{
     if(!results[0]){
       console.log("no lines")
@@ -4583,7 +4601,7 @@ const getLineRefs = (req, res) =>{
   }) 
 }
 
-const modelledEstimatedPipes = (req, res) =>{
+const modelledEstimatedPipes = async(req, res) =>{
     sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{
       if(err){
         console.log(err)
@@ -4592,6 +4610,61 @@ const modelledEstimatedPipes = (req, res) =>{
         res.json({rows: results}).status(200)
       }
     })
+}
+
+const getDataByRef = async(req, res) =>{
+  const ref = req.params.ref
+  sql.query("SELECT unit, fluid, seq, spec_code, insulation FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
+    if(!results[0]){
+      res.send({pipe: null}).status(401)
+    }else{
+      res.json({pipe: results}).status(200)
+    }
+  })
+}
+
+const submitModelledEstimatedPipes = async(req, res) =>{
+  const new_pipes = req.body.rows
+  console.log(new_pipes)
+  for(let i = 0; i < new_pipes.length; i++){
+    if(new_pipes[i]["Line reference"] == "deleted"){
+      sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }else{
+      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+        if(!results[0]){
+          console.log("Line tag incorrecto")
+        }else{
+          const line_ref_id = results[0].id
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], (err, results) =>{
+            if(!results[0]){
+              console.log("Area incorrecta")
+            }else{
+              const area_id = results[0].id
+              if(new_pipes[i].id){
+                sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].id], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }else{
+                sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+            }
+          })
+        }
+      })
+    }
+  }
+
+  res.send({success: true}).status(200)
 }
 
 module.exports = {
@@ -4713,5 +4786,7 @@ module.exports = {
   getFilenamesByUser,
   getDiameters,
   getLineRefs,
-  modelledEstimatedPipes
+  modelledEstimatedPipes,
+  getDataByRef,
+  submitModelledEstimatedPipes
 };

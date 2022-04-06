@@ -49,7 +49,6 @@ Area.getAll = result => {
       return;
     }
 
-    console.log("areas: ", res);
     result(null, res);
   });
 };

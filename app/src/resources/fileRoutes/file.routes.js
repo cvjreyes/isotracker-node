@@ -134,7 +134,8 @@ let routes = (app) => {
   router.get("/api/diameters", controller.getDiameters)
   router.get("/api/lineRefs", controller.getLineRefs)
   router.get("/modelledEstimatedPipes", controller.modelledEstimatedPipes)
-
+  router.get("/getDataByRef/:ref", controller.getDataByRef)
+  router.post("/submitModelledEstimatedPipes", controller.submitModelledEstimatedPipes)
 
   app.use(router);
 };
