@@ -22,6 +22,31 @@ const getPipesByStatus = async(req, res) =>{
     })
 }
 
+const claimPipes = async(req, res) =>{
+    const user = req.body.user
+    const pipes = req.body.pipes
+
+    sql.query("SELECT id FROM users WHERE email = ?", [user], (err, results) =>{
+        if(!results[0]){
+            console.log("User does not exist")
+            res.send({success: false}).status(401)
+        }else{
+            const user_id = results[0].id
+            for(let i = 0; i < pipes.length; i++){
+                sql.query("UPDATE pipectrls SET claimed = 1, user_id = ? WHERE id = ?", [user_id, pipes[i]], (err, results) =>{
+                    if(err){
+                        console.log(err)
+                        res.send({success: false}).status(401)
+                    }
+                })
+            }
+            res.send({success: true}).status(200)
+
+        }
+    })
+}
+
 module.exports = {
-    getPipesByStatus
+    getPipesByStatus,
+    claimPipes
 }
