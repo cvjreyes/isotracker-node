@@ -2227,7 +2227,15 @@ async function uploadReportPeriod(){
                     }
                     sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
                       if(!results[0]){
-                        sql.query("INSERT INTO pipectrls(tag) VALUES(?)", [csv[i].tag], (err, results) =>{
+                        let initial_state = 0
+                        if(tl == 1){
+                          initial_state = 10
+                        }else if(tl == 2){
+                          initial_state = 7
+                        }else{
+                          initial_state = 1
+                        }
+                        sql.query("INSERT INTO pipectrls(tag, status_id) VALUES(?,?)", [csv[i].tag, initial_state], (err, results) =>{
                           if(err){
                             console.log(err)
                           }
@@ -2265,7 +2273,15 @@ async function uploadReportPeriod(){
                     }
                     sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
                       if(!results[0]){
-                        sql.query("INSERT INTO pipectrls(tag) VALUES(?)", [csv[i].tag], (err, results) =>{
+                        let initial_state = 0
+                        if(tl == 1){
+                          initial_state = 10
+                        }else if(tl == 2){
+                          initial_state = 7
+                        }else{
+                          initial_state = 1
+                        }
+                        sql.query("INSERT INTO pipectrls(tag, status_id) VALUES(?,?)", [csv[i].tag, initial_state], (err, results) =>{
                           if(err){
                             console.log(err)
                           }
