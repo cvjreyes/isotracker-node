@@ -260,6 +260,28 @@ const restorePipes = async(req, res) =>{
     res.send({success: true}).status(200)    
 }
 
+const estimatedPipingWeight = async(req, res) =>{
+    sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
+        if(!results[0]){
+            res.send({weight: 0}).status(200)
+        }else{
+            let weight = 0
+            for(let i = 0; i < results.length; i++){
+                if(results[i].calc_notes != "NA"){
+                    weight += 20
+                  }else{
+                    if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
+                        weight += 6
+                    }else{
+                        weight += 10
+                    }
+                  }
+            }
+            res.send({weight: weight}).status(200)
+        }
+    })
+}
+
 module.exports = {
     getPipesByStatus,
     claimPipes,
@@ -274,5 +296,6 @@ module.exports = {
     returnPipes,
     getDeletedPipes,
     deletePipes,
-    restorePipes
+    restorePipes,
+    estimatedPipingWeight
 }

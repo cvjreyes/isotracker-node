@@ -15,4 +15,5 @@ module.exports = app => {
     app.get("/getDeletedPipes", pipectrls.getDeletedPipes)
     app.post("/deletePipes", pipectrls.deletePipes)
     app.post("/restorePipes", pipectrls.restorePipes)
+    app.get("/estimatedPipingWeight", pipectrls.estimatedPipingWeight)
   };
