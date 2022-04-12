@@ -41,6 +41,7 @@ let routes = (app) => {
   router.post("/newRev", controller.newRev);
   router.post("/rename", controller.rename);
   router.post("/unlock", controller.unlock);
+  router.post("/unlockAll", controller.unlockAll);
   router.get("/equipments/estimated", controller.equipEstimated)
   router.get("/equipments/modelled", controller.equipModelled)
   router.post("/uploadEquisModelledReport", controller.uploadEquisModelledReport)

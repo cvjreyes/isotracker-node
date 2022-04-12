@@ -885,7 +885,7 @@ const historyFiles = (req,res) =>{
 }
 
 const modelled = (req,res) =>{
-  sql.query('SELECT tag, dpipes_view.isoid, code, blocked FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid group by dpipes_view.isoid', (err, results)=>{
+  sql.query('SELECT tag, dpipes_view.isoid, code, blocked FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid group by dpipes_view.isoid, blocked', (err, results)=>{
     if(!results[0]){
       res.status(401)
     }else{
@@ -2089,6 +2089,17 @@ const newRev = (req, res) =>{
       }else{
         console.log("unlocked")
         res.status(200)
+      }
+    })
+  }
+
+  const unlockAll = (req, res) =>{
+    sql.query('UPDATE misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid SET blocked = 0', (err, results)=>{
+      if(err){
+        res.status(401)
+      }else{
+        console.log("unlocked all")
+        res.send({success: true}).status(200)
       }
     })
   }
@@ -4122,7 +4133,7 @@ async function updateHolds(){
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, user = ? WHERE misoctrls.onhold = 1", ["None", "On hold"], (err, results)=>{
+        sql.query("UPDATE misoctrls SET onhold = 0, user = ?, claimed = 1 WHERE misoctrls.onhold = 1", ["None", "On hold"], (err, results)=>{
           if(err){
             console.log(err)
             res.status(401)
@@ -4598,6 +4609,7 @@ module.exports = {
   newRev,
   rename,
   unlock,
+  unlockAll,
   equipEstimated,
   equipSteps,
   equipWeight,
