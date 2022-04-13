@@ -48,6 +48,21 @@ const claimPipes = async(req, res) =>{
     })
 }
 
+const unclaimPipes = async(req, res) =>{
+    const pipes = req.body.pipes
+
+    for(let i = 0; i < pipes.length; i++){
+        sql.query("UPDATE pipectrls SET claimed = 0, user_id = null WHERE id = ?", [pipes[i][0]], (err, results) =>{
+            if(err){
+                console.log(err)
+                res.send({success: false}).status(401)
+            }
+        })
+    }
+    res.send({success: true}).status(200)
+        
+}
+
 const pipingMyTray = async(req, res) =>{
     const email = req.params.email
 
@@ -261,30 +276,39 @@ const restorePipes = async(req, res) =>{
 }
 
 const estimatedPipingWeight = async(req, res) =>{
-    sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
-        if(!results[0]){
-            res.send({weight: 0}).status(200)
-        }else{
-            let weight = 0
+    let estimated_weight = 0, modelled_weight = 0, progress = 0
+    await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
+        if(results[0]){
             for(let i = 0; i < results.length; i++){
                 if(results[i].calc_notes != "NA"){
-                    weight += 20
+                    estimated_weight += 10
                   }else{
                     if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
-                        weight += 6
+                        estimated_weight += 3
                     }else{
-                        weight += 10
+                        estimated_weight += 5
                     }
                   }
             }
-            res.send({weight: weight}).status(200)
         }
+        sql.query("SELECT SUM(stage1_weight) as weight FROM dpipes LEFT JOIN tpipes ON dpipes.tpipes_id = tpipes.id", (err, results) =>{
+            if(results[0]){
+                modelled_weight = results[0].weight
+            }
+            sql.query("SELECT SUM(stage1) as weight FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+                if(results[0]){
+                    progress = (results[0].weight/modelled_weight*100).toFixed(2)
+                }
+                res.send({weight: estimated_weight, modelledWeight: modelled_weight, progress: progress}).status(200)
+            })
+        })
     })
 }
 
 module.exports = {
     getPipesByStatus,
     claimPipes,
+    unclaimPipes,
     pipingMyTray,
     nextStep,
     sendValves,

@@ -3,6 +3,7 @@ module.exports = app => {
 
     app.get("/getPipesByStatus/:status", pipectrls.getPipesByStatus);
     app.post("/claimPipes", pipectrls.claimPipes)
+    app.post("/unclaimPipes", pipectrls.unclaimPipes)
     app.get("/pipingMyTray/:email", pipectrls.pipingMyTray)
     app.post("/nextStep", pipectrls.nextStep)
     app.post("/sendValves", pipectrls.sendValves)

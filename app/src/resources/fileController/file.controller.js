@@ -45,7 +45,6 @@ const update = async (req, res) => {
     await uploadFile.updateFileMiddleware(req, res);
 
     if (req.file == undefined) {
-      console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
 
@@ -227,7 +226,7 @@ const download = (req, res) => {
         const date = results[0].issued_date
         res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
           if (err) {
-            console.log("error")
+            console.log("error download")
             res.status(500).send({
               message: "Could not download the file. " + err,
             });
@@ -1481,7 +1480,7 @@ const uploadReport = async(req,res) =>{
           if(process.env.NODE_MMDN == 1){
             sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                console.log("ivalid diameter")
+                console.log("ivalid diameter: " + req.body[i][diameter_index])
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
@@ -1510,7 +1509,7 @@ const uploadReport = async(req,res) =>{
           }else{
             sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                console.log("ivalid diameter")
+                console.log("ivalid diameter: " + req.body[i][diameter_index])
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
@@ -1841,7 +1840,6 @@ const newRev = (req, res) =>{
   const user = req.body.user
   const role = req.body.role
   const comments = req.body.comments
-  console.log(comments)
   const newFileName = fileName.substring(0,fileName.length-6) + ".pdf"
 
   const origin_path = './app/storage/isoctrl/lde/' + fileName
@@ -2022,7 +2020,6 @@ const newRev = (req, res) =>{
 
                      
                       if(fs.existsSync(origin_path)){
-                        console.log("existe",origin_path)
                           fs.rename(origin_path, destiny_path, function (err) {
                               if (err) throw err
 
@@ -2544,7 +2541,6 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                console.log(req.body[i][type_index])
                 res.json({invalid: i}).status(401)
                 return;
               }else{
@@ -4623,6 +4619,23 @@ const modelledEstimatedPipes = async(req, res) =>{
         console.log(err)
         res.status(401)
       }else{
+        for(let i = 0; i < results.length; i++){
+          if(!results[i].type){
+            if(process.env.NODE_MMDN == "0"){
+              if(results[i].diameter < 2.00){
+                results[i].type = "TL1"
+              }else{
+                results[i].type = "TL2"
+              }
+            }else{
+              if(results[i].diameter < 50){
+                results[i].type = "TL1"
+              }else{
+                results[i].type = "TL2"
+              }
+            }
+          }
+        }
         res.json({rows: results}).status(200)
       }
     })
@@ -4630,7 +4643,7 @@ const modelledEstimatedPipes = async(req, res) =>{
 
 const getDataByRef = async(req, res) =>{
   const ref = req.params.ref
-  sql.query("SELECT unit, fluid, seq, spec_code, insulation FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
+  sql.query("SELECT unit, fluid, seq, spec_code, insulation, calc_notes FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
     if(!results[0]){
       res.send({pipe: null}).status(401)
     }else{
@@ -4641,7 +4654,6 @@ const getDataByRef = async(req, res) =>{
 
 const submitModelledEstimatedPipes = async(req, res) =>{
   const new_pipes = req.body.rows
-  console.log(new_pipes)
   for(let i = 0; i < new_pipes.length; i++){
     if(new_pipes[i]["Line reference"] == "deleted"){
       sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
