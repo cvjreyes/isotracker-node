@@ -132,6 +132,7 @@ let routes = (app) => {
   router.post("/sendHold", controller.sendHold);
 
   router.post("/getFilenamesByUser", controller.getFilenamesByUser)
+  router.post("/createByPass", controller.createByPass)
 
   app.use(router);
 };

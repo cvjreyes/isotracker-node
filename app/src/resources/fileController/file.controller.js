@@ -1,16 +1,12 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
 const uploadBom = require("../fileMiddleware/bom.middleware");
 const fs = require("fs");
-const bodyParser = require('body-parser')
 const sql = require("../../db.js");
-const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
-const { verify } = require("crypto");
-const { type } = require("os");
-
+const nodemailer = require("nodemailer");
 
 const upload = async (req, res) => {
   try {
@@ -4570,6 +4566,73 @@ const getFilenamesByUser = (req, res) =>{
   })
 }
 
+const createByPass = (req, res) =>{
+  const email = req.body.username
+  const type = req.body.type
+  const notes = req.body.notes
+  const iso_id = req.body.id
+  sql.query('SELECT id FROM users WHERE email = ?', [email], (err, results) =>{
+    if (!results[0]){
+      res.status(401)
+    }else{   
+      const user_id = results[0].id
+      sql.query("SELECT id FROM bypass ORDER BY id DESC LIMIT 1", (err, results) =>{
+        let tag = "BP000001"
+        if(results[0]){
+          tag = "BP000001".substring(0, tag.length - (results[0].id + 1).toString().length) + (results[0].id + 1).toString()
+          console.log(tag)
+        }
+        sql.query("INSERT INTO bypass(misoctrls_id, tbypass_id, tag, note, user_id) VALUES(?,?,?,?,?)", [iso_id, type, tag, notes, user_id], (err, results)=>{
+          if(err){
+            console.log(err)
+            res.status(401)
+          }else{
+            var transporter = nodemailer.createTransport({
+              host: "es001vs0064",
+              port: 25,
+              secure: false,
+              auth: {
+                  user: "3DTracker@technipenergies.com",
+                  pass: "1Q2w3e4r..24"    
+              }
+            });
+
+            sql.query("SELECT name FROM tbypass WHERE id = ?", [type], (err, results) =>{
+              const t = results[0].name
+              const html_message = "<b>REFERENCE</b> " + tag + " </p><p><b>USER</b> " + email + "</p><p><b>TYPE</b> " + t + "</p><p><b>NOTES</b> " + notes + "</p>"
+              sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 15 GROUP BY email", (err, results) =>{
+                if(!results[0]){
+
+                }else{
+                  for(let i = 0; i < results.length; i++){
+                    if(results[i].email === "super@user.com"){
+                      results[i].email = "alex.dominguez-ortega@external.technipenergies.com"
+                    }
+                    transporter.sendMail({
+                      from: '3DTracker@technipenergies.com',
+                      to: results[i].email,
+                      subject: 'ByPass ' + tag,
+                      text: tag,
+                      
+                      html: html_message
+                    }, (err, info) => {
+                        console.log(info.envelope);
+                        console.log(info.messageId);
+                    });
+                  }
+                }
+              })
+              
+              res.send({success: true}).status(200)
+            })
+          }
+        })
+      })
+      
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4687,5 +4750,6 @@ module.exports = {
   pipingWeight,
   excludeHold,
   sendHold,
-  getFilenamesByUser
+  getFilenamesByUser,
+  createByPass
 };
