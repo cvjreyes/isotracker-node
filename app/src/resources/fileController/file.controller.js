@@ -4633,6 +4633,66 @@ const createByPass = (req, res) =>{
   })
 }
 
+const getByPassData = async(req, res) =>{
+  sql.query("SELECT bypass.id, misoctrls.isoid, tbypass.name as type, bypass.tag, bypass.note, users.name as user, users.email, bstatus.name as status, bypass.updated_at as date FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
+    if(!results[0]){
+      res.json({rows: []}).status(200)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const acceptByPass = async(req, res) =>{
+  const id = req.body.id
+  const type = req.body.type
+  sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [type, id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
+const rejectByPass = async(req, res) =>{
+  const id = req.body.id
+  sql.query("UPDATE bypass SET bstatus_id = 4 WHERE id = ?", [id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
+const naByPass = async(req, res) =>{
+  const id = req.body.id
+  sql.query("UPDATE bypass SET bstatus_id = 5 WHERE id = ?", [id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
+const editByPass = async(req, res) =>{
+  const type = req.body.type
+  const notes = req.body.notes
+  const iso_id = req.body.id
+
+  sql.query("UPDATE bypass SET tbypass_id = ?, note = ? WHERE id = ?", [type, notes, iso_id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4751,5 +4811,10 @@ module.exports = {
   excludeHold,
   sendHold,
   getFilenamesByUser,
-  createByPass
+  createByPass,
+  getByPassData,
+  acceptByPass,
+  rejectByPass,
+  naByPass,
+  editByPass
 };

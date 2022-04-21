@@ -133,6 +133,11 @@ let routes = (app) => {
 
   router.post("/getFilenamesByUser", controller.getFilenamesByUser)
   router.post("/createByPass", controller.createByPass)
+  router.get("/getByPassData", controller.getByPassData)
+  router.post("/acceptByPass", controller.acceptByPass)
+  router.post("/rejectByPass", controller.rejectByPass)
+  router.post("/naByPass", controller.naByPass)
+  router.post("/editByPass", controller.editByPass)
 
   app.use(router);
 };
