@@ -154,7 +154,7 @@ const transaction = async (req, res) => {
                                                       progress = newprogress
                                                       max_tray = destiny
                                                     }
-                                                    sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, max_tray = ? returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, max_tray, fileName], (err, results) =>{
+                                                    sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = ?, user = ?, role = ?, deleted = ?, onhold = ?, `from`= ?, `to`= ?, comments = ?, progress = ?, realprogress = ?, max_tray = ?, returned = 1 WHERE filename = ?", [0, username, dest_role, 0, 0, from_text, destiny, comments, progress, newprogress, max_tray, fileName], (err, results) =>{
                                                       if (err) {
                                                           res.status(401).send("cant update")
                                                           console.log("error: ", err);
