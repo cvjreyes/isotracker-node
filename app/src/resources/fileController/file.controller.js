@@ -1863,10 +1863,11 @@ const newRev = (req, res) =>{
                 res.status(401).send("Username or password incorrect");
               }else{   
                 username  = results[0].name
-                sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                sql.query("SELECT id, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
                   if(!results[0]){
                     res.status(401).send("File not found")
                   }else{
+                    const iso_id = results[0].id
                     const revision = results[0].revision
                     if(process.env.NODE_PROGRESS == "0"){
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
@@ -1885,7 +1886,34 @@ const newRev = (req, res) =>{
                                 if(err){
                                   res.status(401).send(err)
                                 }else{
-                                  res.status(200).send({revision: "newRev"})
+                                  sql.query("SELECT id, bstatus_id FROM bypass WHERE misoctrls_id = ?", [iso_id], (err, results) =>{
+                                    if(!results[0]){
+                                      res.status(200).send({revision: "newRev"})
+                                    }else{
+                                      for(let i = 0; i < results.length; i++){
+                                        let closed = 0
+                                        if(results[i].bstatus_id == 1){
+                                          closed = 10
+                                        }else if(results[i].bstatus_id == 2){
+                                          closed = 6
+                                        }else if(results[i].bstatus_id == 3){
+                                          closed = 7
+                                        }else if(results[i].bstatus_id == 4){
+                                          closed = 8
+                                        }else if(results[i].bstatus_id == 5){
+                                          closed = 9
+                                        }
+                                        sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
+                                          if(err){
+                                            console.log(err)
+                                            res.status(401)
+                                          }
+                                        })
+                                      }
+                                      res.status(200).send({revision: "newRev"})
+                                    }
+                                  })
+                                  
                                 }
                               })             
                             }
@@ -1934,7 +1962,31 @@ const newRev = (req, res) =>{
                                           if(err){
                                             res.status(401).send(err)
                                           }else{
-                                            res.status(200).send({revision: "newRev"})
+                                            sql.query("SELECT id, bstatus_id FROM bypass WHERE misoctrls_id = ?", [iso_id], (err, results) =>{
+                                              if(!results[0]){
+                                                res.status(200).send({revision: "newRev"})
+                                              }else{
+                                                for(let i = 0; i < results.length; i++){
+                                                  let closed = 0
+                                                  if(results[i].bstatus_id == 1){
+                                                    closed = 8
+                                                  }else if(results[i].bstatus_id == 2){
+                                                    closed = 6
+                                                  }else if(results[i].bstatus_id == 3){
+                                                    closed = 7
+                                                  }
+                                                  if(closed > 0){
+                                                    sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
+                                                      if(err){
+                                                        console.log(err)
+                                                        res.status(401)
+                                                      }
+                                                    })
+                                                  }
+                                                }
+                                                res.status(200).send({revision: "newRev"})
+                                              }
+                                            })
                                           }
                                         })             
                                       }
@@ -4693,6 +4745,31 @@ const editByPass = async(req, res) =>{
   })
 }
 
+const closeByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("SELECT bstatus_id FROM bypass WHERE id = ?", [iso_id], (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      let closed = 0
+      if(results[0].bstatus_id == 2){
+        closed = 6
+      }else{
+        closed = 7
+      }
+      sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, iso_id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          res.send({success: true}).status(200)
+        }
+      })
+    }
+  })
+ 
+}
+
 module.exports = {
   upload,
   update,
@@ -4816,5 +4893,6 @@ module.exports = {
   acceptByPass,
   rejectByPass,
   naByPass,
-  editByPass
+  editByPass,
+  closeByPass
 };

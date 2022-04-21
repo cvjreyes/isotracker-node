@@ -138,7 +138,7 @@ let routes = (app) => {
   router.post("/rejectByPass", controller.rejectByPass)
   router.post("/naByPass", controller.naByPass)
   router.post("/editByPass", controller.editByPass)
-
+  router.post("/closeByPass", controller.closeByPass)
   app.use(router);
 };
 
