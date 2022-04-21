@@ -139,6 +139,7 @@ let routes = (app) => {
   router.post("/naByPass", controller.naByPass)
   router.post("/editByPass", controller.editByPass)
   router.post("/closeByPass", controller.closeByPass)
+  router.post("/deleteByPass", controller.deleteByPass)
   app.use(router);
 };
 

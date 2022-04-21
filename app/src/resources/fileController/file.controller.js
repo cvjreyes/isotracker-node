@@ -1892,16 +1892,10 @@ const newRev = (req, res) =>{
                                     }else{
                                       for(let i = 0; i < results.length; i++){
                                         let closed = 0
-                                        if(results[i].bstatus_id == 1){
-                                          closed = 10
-                                        }else if(results[i].bstatus_id == 2){
+                                         if(results[i].bstatus_id == 2){
                                           closed = 6
                                         }else if(results[i].bstatus_id == 3){
                                           closed = 7
-                                        }else if(results[i].bstatus_id == 4){
-                                          closed = 8
-                                        }else if(results[i].bstatus_id == 5){
-                                          closed = 9
                                         }
                                         sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
                                           if(err){
@@ -4770,6 +4764,18 @@ const closeByPass = async(req, res) =>{
  
 }
 
+const deleteByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("DELETE FROM bypass WHERE id = ?", [iso_id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+ 
+}
+
 module.exports = {
   upload,
   update,
@@ -4894,5 +4900,6 @@ module.exports = {
   rejectByPass,
   naByPass,
   editByPass,
-  closeByPass
+  closeByPass,
+  deleteByPass
 };
