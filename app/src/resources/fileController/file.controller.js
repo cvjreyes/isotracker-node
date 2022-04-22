@@ -4689,16 +4689,50 @@ const getByPassData = async(req, res) =>{
   })
 }
 
-const acceptByPass = async(req, res) =>{
+const answerByPass = async(req, res) =>{
   const id = req.body.id
   const type = req.body.type
+  let answer = "CODE3"
+  if(type == 3){
+    answer = "IFC"
+  }
   sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [type, id], (err, results) =>{
     if(err){
       console.log(err)
       res.status(401)
     }else{
-      res.send({success: true}).status(200)
-    }
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+        const html_message = "<p>The ByPass " + tag + " has been approved. Answer: " + answer + ".</p>"
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been accepted. " + answer + ".",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
   })
 }
 
@@ -4708,8 +4742,39 @@ const rejectByPass = async(req, res) =>{
     if(err){
       res.status(401)
     }else{
-      res.send({success: true}).status(200)
-    }
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+
+        const html_message = "<p>The ByPass </p> " + tag + "<p>has been rejected.</p> "
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been rejected.",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
   })
 }
 
@@ -4719,8 +4784,39 @@ const naByPass = async(req, res) =>{
     if(err){
       res.status(401)
     }else{
-      res.send({success: true}).status(200)
-    }
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+
+        const html_message = "<p>The ByPass </p> " + tag + "<p>has been set to N/A.</p> "
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been set to N/A.",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
   })
 }
 
@@ -4774,6 +4870,18 @@ const deleteByPass = async(req, res) =>{
     }
   })
  
+}
+
+const acceptByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("UPDATE bypass SET bstatus_id = 8 WHERE id = ?", [iso_id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
 }
 
 module.exports = {
@@ -4901,5 +5009,6 @@ module.exports = {
   naByPass,
   editByPass,
   closeByPass,
-  deleteByPass
+  deleteByPass,
+  answerByPass
 };
