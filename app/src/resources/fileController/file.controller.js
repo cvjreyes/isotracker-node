@@ -1640,13 +1640,13 @@ const toIssue = async(req,res) =>{
         
       })
     }else{
-      sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+      sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
         if(!results[0]){
           res.status(401).send("File not found")
         }else{
           const revision = results[0].revision
           const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
-    
+          const isoid = results[0].isoid
           let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
     
           if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
@@ -1753,7 +1753,28 @@ const toIssue = async(req,res) =>{
                                               console.log("error: ", err);
                                             }else{
                                               console.log("issued in misoctrls");
-                                              res.status(200).send({issued: "issued"})
+                                              sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid = ?", [isoid], (err, results) =>{
+                                                if(!results[0]){
+                                                  res.status(200).send({revision: "newRev"})
+                                                }else{
+                                                  for(let i = 0; i < results.length; i++){
+                                                    let closed = 0
+                                                     if(results[i].bstatus_id == 2){
+                                                      closed = 6
+                                                    }else if(results[i].bstatus_id == 3){
+                                                      closed = 7
+                                                    }
+                                                    sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
+                                                      if(err){
+                                                        console.log(err)
+                                                        res.status(401)
+                                                      }
+                                                    })
+                                                  }
+                                                  res.status(200).send({issued: "issued"})
+                                                }
+                                              })
+                                              
                                             }
                                           })
                                         }
@@ -1886,28 +1907,7 @@ const newRev = (req, res) =>{
                                 if(err){
                                   res.status(401).send(err)
                                 }else{
-                                  sql.query("SELECT id, bstatus_id FROM bypass WHERE misoctrls_id = ?", [iso_id], (err, results) =>{
-                                    if(!results[0]){
-                                      res.status(200).send({revision: "newRev"})
-                                    }else{
-                                      for(let i = 0; i < results.length; i++){
-                                        let closed = 0
-                                         if(results[i].bstatus_id == 2){
-                                          closed = 6
-                                        }else if(results[i].bstatus_id == 3){
-                                          closed = 7
-                                        }
-                                        sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
-                                          if(err){
-                                            console.log(err)
-                                            res.status(401)
-                                          }
-                                        })
-                                      }
-                                      res.status(200).send({revision: "newRev"})
-                                    }
-                                  })
-                                  
+                                  res.status(200).send({revision: "newRev"})
                                 }
                               })             
                             }
@@ -1956,31 +1956,7 @@ const newRev = (req, res) =>{
                                           if(err){
                                             res.status(401).send(err)
                                           }else{
-                                            sql.query("SELECT id, bstatus_id FROM bypass WHERE misoctrls_id = ?", [iso_id], (err, results) =>{
-                                              if(!results[0]){
-                                                res.status(200).send({revision: "newRev"})
-                                              }else{
-                                                for(let i = 0; i < results.length; i++){
-                                                  let closed = 0
-                                                  if(results[i].bstatus_id == 1){
-                                                    closed = 8
-                                                  }else if(results[i].bstatus_id == 2){
-                                                    closed = 6
-                                                  }else if(results[i].bstatus_id == 3){
-                                                    closed = 7
-                                                  }
-                                                  if(closed > 0){
-                                                    sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
-                                                      if(err){
-                                                        console.log(err)
-                                                        res.status(401)
-                                                      }
-                                                    })
-                                                  }
-                                                }
-                                                res.status(200).send({revision: "newRev"})
-                                              }
-                                            })
+                                            res.status(200).send({revision: "newRev"})
                                           }
                                         })             
                                       }
