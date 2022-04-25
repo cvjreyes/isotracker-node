@@ -2134,10 +2134,12 @@ function downloadStatus3DPeriod(){
       status = results[i].to
       if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
         status = "New"
-      }else if(status == "LDE/Isocontrol" && results[i].issued != 0){
+      }else if(status == "LDE/Isocontrol" && (results[i].issued == 0 || !results[i].issued)){
         status = "Issuer"
       }else if(results[i].issued == 1){
         status = "Transmittal"
+      }else if(status == "On hold"){
+        status = results[i].from
       }
 
       if(status != "Recycle bin" && status != "On hold"){
