@@ -2164,7 +2164,7 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 
-cron.schedule('0 */1 * * * *', async () => {
+cron.schedule('0 */5 * * * *', async () => {
   
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
