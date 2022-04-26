@@ -4722,7 +4722,7 @@ const rejectByPass = async(req, res) =>{
         let email = results[0].email
         const tag = results[0].tag
 
-        const html_message = "<p>The ByPass </p> " + tag + "<p>has been rejected.</p> "
+        const html_message = "<p>The ByPass " + tag + " has been rejected.</p> "
 
         if(email === "super@user.com"){
           email = "alex.dominguez-ortega@external.technipenergies.com"
@@ -4764,7 +4764,7 @@ const naByPass = async(req, res) =>{
         let email = results[0].email
         const tag = results[0].tag
 
-        const html_message = "<p>The ByPass </p> " + tag + "<p>has been set to N/A.</p> "
+        const html_message = "<p>The ByPass " + tag + " has been set to N/A.</p> "
 
         if(email === "super@user.com"){
           email = "alex.dominguez-ortega@external.technipenergies.com"
