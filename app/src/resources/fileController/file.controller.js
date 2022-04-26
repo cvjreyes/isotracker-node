@@ -2096,6 +2096,7 @@ const newRev = (req, res) =>{
   const unlockAll = (req, res) =>{
     sql.query('UPDATE misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid SET blocked = 0', (err, results)=>{
       if(err){
+        console.log(err)
         res.status(401)
       }else{
         console.log("unlocked all")
