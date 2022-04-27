@@ -37,6 +37,13 @@ require("./resources/verify/verify.routes.js")(app);
 require("./resources/progress/progress.routes.js")(app);
 require("./resources/csptracker/csptracker.routes.js")(app);
 require("./resources/qtracker/qtracker.routes.js")(app);
+require("./resources/reports/reports.routes.js")(app);
+require("./resources/equipments/equipments.routes.js")(app);
+require("./resources/instrumentation/instrumentation.routes.js")(app);
+require("./resources/civils/civils.routes.js")(app);
+require("./resources/electrical/electrical.routes.js")(app);
+require("./resources/piping/piping.routes.js")(app);
+require("./resources/isocontrol/isocontrol.routes.js")(app);
 
 // set port, listen for requests
 app.listen(process.env.NODE_DB_PORT, () => {

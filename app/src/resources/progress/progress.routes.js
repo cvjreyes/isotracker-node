@@ -14,5 +14,7 @@ module.exports = app => {
     app.post("/submit/civils/progress", progress.submitCivilProgress)
     app.post("/submit/electrical/progress", progress.submitElecProgress)
     app.post("/submit/piping/progress", progress.submitPipingProgress)
-
+    app.get("/currentProgress", progress.currentProgress);
+    app.get("/getMaxProgress", progress.getMaxProgress);
+    app.get("/currentProgressISO", progress.currentProgressISO);
   };
