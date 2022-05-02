@@ -280,19 +280,10 @@ const downloadHistory = async(req,res) =>{
       log.push("SAVEWORK")
       log.push("UNCLAIM ALL")
       log.push("FINISH")
-      logToText = ""
-      for(let i = 0; i < log.length; i++){
-        logToText += log[i]+"\n"
-      }
-      fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) {
-        if (err) return console.log(err);
-        fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => {
-          if (err) throw err;
-        });
-      });
-  
+      res.json({
+        log : log
+      }).status(200)
     })
-    console.log("Generated 3d report")
   }
   
   const downloadModelled = async(req, res) =>{
