@@ -238,9 +238,10 @@ const downloadHistory = async(req,res) =>{
   }
   
   const downloadStatus3D = async(req, res) =>{
-    sql.query('SELECT tag, tpipes_id, `to`, `from`, claimed, issued FROM dpipes_view RIGHT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid', (err, results) =>{
-      
+    sql.query('SELECT tag, tpipes_id, `to`, `from`, claimed, issued FROM dpipes_view RIGHT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid ORDER BY misoctrls.id DESC', (err, results) =>{
+    
       let log = []
+      let lines = []
       let ifc_ifd = ""
       let status = ""
       if(process.env.NODE_IFC == 0){
@@ -249,34 +250,49 @@ const downloadHistory = async(req,res) =>{
         ifc_ifd = "IFC"
       }
       log.push("DESIGN")
+      log.push("\n")
       log.push("ONERROR CONTINUE")
+      
       for(let i = 0; i < results.length;i++){
-        log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
-        log.push("HANDLE ANY")
-        log.push("ENDHANDLE")
-        status = results[i].to
-        if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
-          status = "New"
-        }else if(status == "LDE/Isocontrol" && (results[i].issued == 0 || !results[i].issued)){
-          status = "Issuer"
-        }else if(results[i].issued == 1){
-          status = "Transmittal"
-        }else if(status == "On hold"){
-          status = results[i].from
-        }
+        if(lines.indexOf(results[i].tag) < 0){
+          log.push("/" + results[i].tag + " STM ASS /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd)
+          log.push("HANDLE ANY")
+          log.push("ENDHANDLE")
+          status = results[i].to
+          if(status == "Design" && results[i].from == "" && results[i].claimed == 0){
+            status = "New"
+          }else if(status == "LDE/Isocontrol" && (results[i].issued == 0 || !results[i].issued)){
+            status = "Issuer"
+          }else if(results[i].issued == 1){
+            status = "Transmittal"
+          }else if(status == "On hold"){
+            status = results[i].from
+          }
+    
+          if(status != "Recycle bin" && status != "On hold"){
+            log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+          }
   
-        if(status != "Recycle bin" && status != "On hold"){
-          log.push("/" + results[i].tag + " STM SET /TPI-EP-PROGRESS/PIPING/TOTAL-" + ifc_ifd + " /TL" + results[i].tpipes_id + "-" + status)
+          lines.push(results[i].tag)
         }
         
       }
       log.push("SAVEWORK")
       log.push("UNCLAIM ALL")
       log.push("FINISH")
-      res.json({
-        log : log
-      }).status(200)
+      logToText = ""
+      for(let i = 0; i < log.length; i++){
+        logToText += log[i]+"\n"
+      }
+      fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) {
+        if (err) return console.log(err);
+        fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => {
+          if (err) throw err;
+        });
+      });
+  
     })
+    console.log("Generated 3d report")
   }
   
   const downloadModelled = async(req, res) =>{
