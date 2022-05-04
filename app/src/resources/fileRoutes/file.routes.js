@@ -138,7 +138,11 @@ let routes = (app) => {
   router.get("/modelledEstimatedPipes", controller.modelledEstimatedPipes)
   router.get("/getDataByRef/:ref", controller.getDataByRef)
   router.post("/submitModelledEstimatedPipes", controller.submitModelledEstimatedPipes)
-
+  router.get("/modelledEstimatedHolds", controller.modelledEstimatedHolds)
+  router.get("/modelledEstimatedHolds", controller.modelledEstimatedHolds)
+  router.get("/getAllHolds/:tag", controller.getAllHolds) 
+  router.post("/submit/holdsIso", controller.submitHoldsIso)
+  router.get("/getIsocontrolHolds/:tag", controller.getIsocontrolHolds) 
   app.use(router);
 };
 

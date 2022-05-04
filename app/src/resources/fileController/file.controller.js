@@ -3999,13 +3999,13 @@ const isocontrolWeights = async(req, res) =>{
 
 
 cron.schedule("0 */5 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     updateHolds()
   }
 })
 
 cron.schedule("0 */30 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL == "1"){
 	updateLines()
 	const timeoutObj = setTimeout(() => {
         updateIsocontrolModelled()
@@ -4165,6 +4165,7 @@ async function updateHolds(){
   })
 
   const timeoutObj = setTimeout(() => {
+    
     sql.query("TRUNCATE holds", (err, results) =>{
       if(err){
         console.log(err)
@@ -4201,6 +4202,19 @@ async function updateHolds(){
         
        
 
+      }
+    })
+
+    sql.query("SELECT tag FROM holds_isocontrol", (err, results)=>{
+      if(results[0]){
+        for(let i = 0; i < results.length; i++){
+          sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ? AND onhold != 2", [results[i].tag], (err, results)=>{                  
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+        console.log("holds up")
       }
     })
   }, 5000)
@@ -4719,45 +4733,65 @@ const submitModelledEstimatedPipes = async(req, res) =>{
       })
     }
   }
-  console.log(owners)
+
   for(let i = 1; i < owners.length; i++){
     await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{
-      const user_id = results[0].id
-      await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
-        if(!results[0] && owners[i][1] != owners[i-1][1]){
-          if(owners[i][0] == "IFC"){
-            await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
-              if(err){
-                console.log(err)
-                res.status(401)
-              }
-            })
-          }else{
-            await sql.query("INSERT INTO owners(owner_iso_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
-              if(err){
-                console.log(err)
-                res.status(401)
-              }
-            })
-          }
+      if(!results){
+        if(owners[i][0] == "IFC"){
+          await sql.query("UPDATE owners SET owner_ifc_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
         }else{
-          if(owners[i][0] == "IFC"){
-            await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
-              if(err){
-                console.log(err)
-                res.status(401)
-              }
-            })
-          }else{
-            await sql.query("UPDATE owners SET owner_iso_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
-              if(err){
-                console.log(err)
-                res.status(401)
-              }
-            })
-          }
+          await sql.query("UPDATE owners SET owner_iso_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
         }
-      })
+      }else{
+        const user_id = results[0].id
+        await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
+          if(!results[0] && owners[i][1] != owners[i-1][1]){
+            if(owners[i][0] == "IFC"){
+              await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              await sql.query("INSERT INTO owners(owner_iso_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }
+          }else{
+            if(owners[i][0] == "IFC"){
+              await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              await sql.query("UPDATE owners SET owner_iso_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }
+          }
+        })
+      }
+      
+      
     })
     
   }
@@ -4765,8 +4799,75 @@ const submitModelledEstimatedPipes = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+const modelledEstimatedHolds = async(req, res) =>{
+  sql.query("SELECT estimated_pipes_view.tag , holds.has_holds, holds_isocontrol.`description` FROM estimated_pipes_view LEFT JOIN holds ON estimated_pipes_view.tag = holds.tag LEFT JOIN holds_isocontrol ON estimated_pipes_view.tag = holds_isocontrol.tag GROUP BY estimated_pipes_view.tag", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const getAllHolds = async(req, res) =>{
+  const tag = req.params.tag
+  let holds3d = []
+  let holdsIso = []
+  sql.query("SELECT holds.* FROM holds WHERE holds.tag = ?", [tag], (err, results)=>{
+    if(results[0]){
+      holds3d = results
+    }
+    sql.query("SELECT holds_isocontrol.id, holds_isocontrol.description FROM holds_isocontrol WHERE holds_isocontrol.tag = ?", [tag], (err, results)=>{
+      if(results[0]){
+        for(let i = 0; i < results.length; i++){
+          holdsIso.push({id: results[i].id, description: results[i].description})
+        }
+      }
+      res.send({holds3d: holds3d, holdsIso: holdsIso})
+    })
+  })
+}
+
+const submitHoldsIso = async(req, res) =>{
+  const holds = req.body.rows
+  const tag = req.body.tag
+  for(let i = 0; i < holds.length; i++){
+    if(!holds[i]["description"]){
+      sql.query("DELETE FROM holds_isocontrol WHERE id = ?", [holds[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }else if(!holds[i]["id"]){
+      sql.query("INSERT INTO holds_isocontrol(tag, description) VALUES(?,?)", [tag, holds[i].description], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }else{
+      sql.query("UPDATE holds_isocontrol SET description = ? WHERE id = ?", [holds[i].description, holds[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const getIsocontrolHolds = async(req, res) =>{
+  const tag = req.params.tag
+  sql.query("SELECT description FROM holds_isocontrol WHERE tag = ?", [tag], (err, results) =>{
+    if(!results[0]){
+      res.send({holds: []}).status(200)
+    }else{
+      res.send({holds: results}).status(200)
+    }
+  })
 }
 
 module.exports = {
@@ -4892,5 +4993,9 @@ module.exports = {
   modelledEstimatedPipes,
   getDataByRef,
   submitModelledEstimatedPipes,
-  checkOwner
+  checkOwner,
+  modelledEstimatedHolds,
+  getAllHolds,
+  submitHoldsIso,
+  getIsocontrolHolds
 };
