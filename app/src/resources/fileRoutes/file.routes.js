@@ -33,6 +33,7 @@ let routes = (app) => {
   router.get("/downloadModelled", controller.downloadModelled);
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
+  router.get("/checkOwner/:fileName", controller.checkOwner);
   router.get("/currentProgress", controller.currentProgress);
   router.get("/getMaxProgress", controller.getMaxProgress);
   router.get("/currentProgressISO", controller.currentProgressISO);
@@ -133,6 +134,7 @@ let routes = (app) => {
   router.post("/getFilenamesByUser", controller.getFilenamesByUser)
   router.get("/api/diameters", controller.getDiameters)
   router.get("/api/lineRefs", controller.getLineRefs)
+  router.get("/api/designers", controller.getDesigners)
   router.get("/modelledEstimatedPipes", controller.modelledEstimatedPipes)
   router.get("/getDataByRef/:ref", controller.getDataByRef)
   router.post("/submitModelledEstimatedPipes", controller.submitModelledEstimatedPipes)

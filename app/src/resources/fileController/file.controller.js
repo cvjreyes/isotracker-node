@@ -355,7 +355,7 @@ const getAttach = (req,res) =>{
 
 const uploadHis = async (req, res) => {
   var username = "";
-  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+  sql.query('SELECT users.* FROM owners LEFT JOIN users ON owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag WHERE isoid = ?', [req.body.fileName.split('.').slice(0, -1)], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
@@ -1557,6 +1557,22 @@ const checkPipe = async(req,res) =>{
     }else{
       res.json({
         exists: true
+      }).status(200)
+    }
+  })
+}
+
+const checkOwner = async(req,res) =>{
+  const fileName = req.params.fileName.split('.').slice(0, -1)
+  sql.query("SELECT owner_iso_id FROM dpipes_view LEFT JOIN owners ON dpipes_view.tag = owners.tag WHERE isoid = ?", [fileName], (err, results) =>{
+    console.log(results)
+    if(!results[0].owner_iso_id){
+      res.json({
+        owner: false
+      }).status(200)
+    }else{
+      res.json({
+        owner: true
       }).status(200)
     }
   })
@@ -4613,6 +4629,17 @@ const getLineRefs = async(req, res) =>{
   }) 
 }
 
+const getDesigners = async(req, res) =>{
+  sql.query("SELECT `users`.`name` as name FROM `users` LEFT JOIN model_has_roles ON `users`.id = model_has_roles.model_id  LEFT JOIN roles ON `model_has_roles`.role_id = roles.id WHERE role_id = 1", (err, results) =>{
+    if(!results[0]){
+      console.log("no lines")
+      res.json({designers: null}).status(401)
+    }else{
+      res.json({designers: results}).status(200)
+    }
+  }) 
+}
+
 const modelledEstimatedPipes = async(req, res) =>{
     sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{
       if(err){
@@ -4654,6 +4681,7 @@ const getDataByRef = async(req, res) =>{
 
 const submitModelledEstimatedPipes = async(req, res) =>{
   const new_pipes = req.body.rows
+  const owners = req.body.owners
   for(let i = 0; i < new_pipes.length; i++){
     if(new_pipes[i]["Line reference"] == "deleted"){
       sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
@@ -4687,12 +4715,58 @@ const submitModelledEstimatedPipes = async(req, res) =>{
               }
             }
           })
-        }
+        } 
       })
     }
   }
+  console.log(owners)
+  for(let i = 1; i < owners.length; i++){
+    await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{
+      const user_id = results[0].id
+      await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
+        if(!results[0] && owners[i][1] != owners[i-1][1]){
+          if(owners[i][0] == "IFC"){
+            await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+              if(err){
+                console.log(err)
+                res.status(401)
+              }
+            })
+          }else{
+            await sql.query("INSERT INTO owners(owner_iso_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+              if(err){
+                console.log(err)
+                res.status(401)
+              }
+            })
+          }
+        }else{
+          if(owners[i][0] == "IFC"){
+            await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+              if(err){
+                console.log(err)
+                res.status(401)
+              }
+            })
+          }else{
+            await sql.query("UPDATE owners SET owner_iso_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+              if(err){
+                console.log(err)
+                res.status(401)
+              }
+            })
+          }
+        }
+      })
+    })
+    
+  }
 
   res.send({success: true}).status(200)
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 module.exports = {
@@ -4814,7 +4888,9 @@ module.exports = {
   getFilenamesByUser,
   getDiameters,
   getLineRefs,
+  getDesigners,
   modelledEstimatedPipes,
   getDataByRef,
-  submitModelledEstimatedPipes
+  submitModelledEstimatedPipes,
+  checkOwner
 };
