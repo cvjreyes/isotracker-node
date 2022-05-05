@@ -4621,30 +4621,36 @@ const createByPass = (req, res) =>{
 
             sql.query("SELECT name FROM tbypass WHERE id = ?", [type], (err, results) =>{
               const t = results[0].name
-              const html_message = "<b>REFERENCE</b> " + tag + " </p><p><b>USER</b> " + email + "</p><p><b>TYPE</b> " + t + "</p><p><b>NOTES</b> " + notes + "</p>"
-              sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 15 GROUP BY email", (err, results) =>{
+              sql.query("SELECT isoid FROM misoctrls WHERE id = ?", [iso_id], (err, results) =>{
                 if(!results[0]){
-
+                  res.status(401)
                 }else{
-                  for(let i = 0; i < results.length; i++){
-                    if(results[i].email === "super@user.com"){
-                      results[i].email = "alex.dominguez-ortega@external.technipenergies.com"
+                  const iso_name = results[0].isoid
+                  const html_message = "<b>REFERENCE</b> " + tag + "<p><b>ISOMETRIC ID</b> " + iso_name + " </p><p><b>USER</b> " + email + "</p><p><b>TYPE</b> " + t + "</p><p><b>NOTES</b> " + notes + "</p>"
+                  sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 15 GROUP BY email", (err, results) =>{
+                    if(!results[0]){
+
+                    }else{
+                      for(let i = 0; i < results.length; i++){
+                        if(results[i].email === "super@user.com"){
+                          results[i].email = "alex.dominguez-ortega@external.technipenergies.com"
+                        }
+                        transporter.sendMail({
+                          from: '3DTracker@technipenergies.com',
+                          to: results[i].email,
+                          subject: 'ByPass ' + tag,
+                          text: tag,
+                          
+                          html: html_message
+                        }, (err, info) => {
+                            console.log(info.envelope);
+                            console.log(info.messageId);
+                        });
+                      }
                     }
-                    transporter.sendMail({
-                      from: '3DTracker@technipenergies.com',
-                      to: results[i].email,
-                      subject: 'ByPass ' + tag,
-                      text: tag,
-                      
-                      html: html_message
-                    }, (err, info) => {
-                        console.log(info.envelope);
-                        console.log(info.messageId);
-                    });
-                  }
+                  })
                 }
               })
-              
               res.send({success: true}).status(200)
             })
           }
@@ -4656,7 +4662,7 @@ const createByPass = (req, res) =>{
 }
 
 const getByPassData = async(req, res) =>{
-  sql.query("SELECT bypass.id, misoctrls.isoid, tbypass.name as type, bypass.tag, bypass.note, users.name as user, users.email, bstatus.name as status, bypass.updated_at as date FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
+  sql.query("SELECT bypass.id, bypass.comments, misoctrls.isoid, tbypass.name as type, bypass.tag, bypass.note, users.name as user, users.email, bstatus.name as status, bypass.updated_at as date FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
     if(!results[0]){
       res.json({rows: []}).status(200)
     }else{
@@ -4714,7 +4720,8 @@ const answerByPass = async(req, res) =>{
 
 const rejectByPass = async(req, res) =>{
   const id = req.body.id
-  sql.query("UPDATE bypass SET bstatus_id = 4 WHERE id = ?", [id], (err, results) =>{
+  const comments = req.body.comments
+  sql.query("UPDATE bypass SET bstatus_id = 4, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
     if(err){
       res.status(401)
     }else{
@@ -4722,7 +4729,7 @@ const rejectByPass = async(req, res) =>{
         let email = results[0].email
         const tag = results[0].tag
 
-        const html_message = "<p>The ByPass " + tag + " has been rejected.</p> "
+        const html_message = "<p>The ByPass " + tag + " has been rejected.</p><p>" + comments + "</p>"
 
         if(email === "super@user.com"){
           email = "alex.dominguez-ortega@external.technipenergies.com"
@@ -4756,7 +4763,8 @@ const rejectByPass = async(req, res) =>{
 
 const naByPass = async(req, res) =>{
   const id = req.body.id
-  sql.query("UPDATE bypass SET bstatus_id = 5 WHERE id = ?", [id], (err, results) =>{
+  const comments = req.body.comments
+  sql.query("UPDATE bypass SET bstatus_id = 5, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
     if(err){
       res.status(401)
     }else{
@@ -4764,7 +4772,7 @@ const naByPass = async(req, res) =>{
         let email = results[0].email
         const tag = results[0].tag
 
-        const html_message = "<p>The ByPass " + tag + " has been set to N/A.</p> "
+        const html_message = "<p>The ByPass " + tag + " has been set to N/A.</p><p>" + comments + "</p>"
 
         if(email === "super@user.com"){
           email = "alex.dominguez-ortega@external.technipenergies.com"
@@ -4856,6 +4864,16 @@ const acceptByPass = async(req, res) =>{
       res.status(401)
     }else{
       res.send({success: true}).status(200)
+    }
+  })
+}
+
+const exportByPass = async(req, res) =>{
+  sql.query("SELECT bypass.tag, misoctrls.isoid, tbypass.name as type, bypass.updated_at as date, users.name as user, bypass.note, bypass.comments, bstatus.name as status FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
     }
   })
 }
@@ -4986,5 +5004,6 @@ module.exports = {
   editByPass,
   closeByPass,
   deleteByPass,
-  answerByPass
+  answerByPass,
+  exportByPass
 };

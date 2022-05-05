@@ -141,6 +141,7 @@ let routes = (app) => {
   router.post("/editByPass", controller.editByPass)
   router.post("/closeByPass", controller.closeByPass)
   router.post("/deleteByPass", controller.deleteByPass)
+  router.get("/exportByPass", controller.exportByPass)
   app.use(router);
 };
 
