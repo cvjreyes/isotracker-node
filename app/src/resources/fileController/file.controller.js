@@ -4000,7 +4000,7 @@ const isocontrolWeights = async(req, res) =>{
 
 cron.schedule("0 */5 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
-    updateHolds()
+   updateHolds()
   }
 })
 
@@ -4141,7 +4141,7 @@ const isoControlGroupLineId = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.onhold = 1", (err, results)=>{
+  sql.query("SELECT dpipes_view.isoid, dpipes_view.tag as iso_tag, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`to`, misoctrls.user, misoctrls.role, holds.* FROM dpipes_view LEFT JOIN holds_isocontrol on dpipes_view.tag = holds_isocontrol.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id LEFT JOIN holds ON dpipes_view.tag = holds.tag WHERE misoctrls.onhold = 1 GROUP BY misoctrls.isoid", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -4214,7 +4214,6 @@ async function updateHolds(){
             }
           })
         }
-        console.log("holds up")
       }
     })
   }, 5000)
