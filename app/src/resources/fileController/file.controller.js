@@ -4869,6 +4869,281 @@ const getIsocontrolHolds = async(req, res) =>{
   })
 }
 
+const getEstimatedMatWeek = async(req, res) =>{
+  sql.query("SELECT week, estimated, material_id, name FROM epipes_new LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({estimated: results}).status(200)
+    }
+  })
+}
+
+const getForecastMatWeek = async(req, res) =>{
+  sql.query("SELECT week, estimated, material_id, name FROM forecast LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({forecast: results}).status(200)
+    }
+  })
+}
+
+const getMaterials = async(req, res) =>{
+  sql.query("SELECT id, name FROM materials", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({materials: results}).status(200)
+    }
+  })
+}
+
+const getMaterialsPipingClass = async(req, res) =>{
+  sql.query("SELECT materials.id as material_id, materials.name as material, pipingclass.id as piping_id, pipingclass.name as piping FROM pipingclass LEFT JOIN materials ON materials.id = pipingclass.material_id", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({materials: results}).status(200)
+    }
+  })
+}
+
+const getProjectSpan = async(req, res) =>{
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({span: results}).status(200)
+    }
+  })
+}
+
+const submitProjectSpan = async(req, res) =>{
+  const start = req.body.span["Starting date"].substring(6,10) + "-" +  req.body.span["Starting date"].substring(3,5) + "-" + req.body.span["Starting date"].substring(0,2)
+  const finish = req.body.span["Finishing date"].substring(6,10) + "-" +  req.body.span["Finishing date"].substring(3,5) + "-" + req.body.span["Finishing date"].substring(0,2)
+  sql.query("UPDATE project_span SET starting_date = ?, finishing_date = ?", [start, finish], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.send({success: false}).status(401)
+    }else{
+      const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
+      let currentWeeks = 0
+      sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC LIMIT 1", (err, results) =>{
+        if(results[0]){
+          currentWeeks = results[0].week
+        }
+        if(weeks < currentWeeks){
+          sql.query("DELETE FROM epipes_new WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
+          sql.query("DELETE FROM forecast WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
+        }else if(weeks > currentWeeks){
+          sql.query("SELECT id FROM materials", (err, results) =>{
+            if(!results[0]){
+              res.send({success: false}).status(401)
+            }else{
+              let materials_ids = []
+              for(let i = 0; i < results.length; i++){
+                materials_ids.push(results[i].id)
+              }
+              let newWeeks = []
+              for (var i = currentWeeks + 1; i <= weeks; i++) {
+                newWeeks.push(i);
+              }
+              for(let i = 0; i < newWeeks.length; i++){
+                for(let j = 0; j < materials_ids.length; j++){
+                  sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                  sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                }
+              }
+            }
+          })
+        }
+        res.send({success: true}).status(200)
+        
+      })
+    }
+  })
+}
+
+const submitPipingClass = async(req, res) =>{
+  const pipingClass = req.body.piping
+  for(let i = 0; i < pipingClass.length; i++){
+    if(!pipingClass[i]["PipingClass"] || pipingClass[i]["PipingClass"] == "" || !pipingClass[i]["Material"] || pipingClass[i]["Material"] == ""){
+      sql.query("DELETE FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT id FROM materials WHERE name = ?", [pipingClass[i]["Material"]], (err, results) =>{
+        if(!results[0]){
+          res.send({success: false}).status(401)
+        }else{
+          const material_id = results[0].id
+          sql.query("SELECT * FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results) =>{
+            if(!results[0]){
+              sql.query("INSERT INTO pipingclass(name, material_id) VALUES(?,?)", [pipingClass[i]["PipingClass"], material_id], (err, results) =>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }else{
+              sql.query("UPDATE pipingclass SET name = ?, material_id = ? WHERE id = ?", [pipingClass[i]["PipingClass"], material_id, results[0].id], (err, results) =>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const submitMaterials = async(req, res) =>{
+  const materials = req.body.materials
+  for(let i = 0; i < materials.length; i++){
+    if(!materials[i]["Material"] || materials[i]["Material"] == ""){
+      await sql.query("DELETE FROM materials WHERE id = ?", [materials[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
+    }else{
+      await sql.query("SELECT * FROM materials WHERE id = ?", [materials[i]["id"]], async(err, results) =>{
+        if(!results[0]){
+          await sql.query("INSERT INTO materials(name) VALUES(?)", [materials[i]["Material"]], async(err, results) =>{
+            if(err){
+              console.log(err)
+            }else{
+              await sql.query("SELECT id FROM materials WHERE name = ?", [materials[i]["Material"]], async(err, results)=>{
+                const material_id = results[0].id
+                await sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC", async(err, results) =>{
+                  if(results[0]){
+                    for(let i = 0; i < results.length; i++){
+                      await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [results[i].week, material_id], (err, results) =>{
+                        if(err){
+                          console.log(err)
+                        }
+                      })
+                      await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [results[i].week, material_id], (err, results) =>{
+                        if(err){
+                          console.log(err)
+                        }
+                      })
+                    }
+                  }
+                })
+              })
+            }
+          })
+        }else{
+          await sql.query("UPDATE materials SET name = ? WHERE id = ?", [materials[i]["Material"], materials[i]["id"]], (err, results) =>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const submitEstimatedForecast = async(req, res) =>{
+  const material_id = req.body.material_id
+  const estimated = req.body.estimated
+  const forecast = req.body.forecast
+
+  Object.keys(estimated).map(function(key, index) {
+    sql.query("UPDATE epipes_new SET estimated = ? WHERE material_id = ? AND week = ?", [estimated[key], material_id, key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  Object.keys(forecast).map(function(key, index) {
+    sql.query("UPDATE forecast SET estimated = ? WHERE material_id = ? AND week = ?", [forecast[key], material_id, key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  res.send({success: true}).status(200)
+}
+
+const getEstimatedByMaterial = async(req, res) =>{
+  sql.query("SELECT * FROM estimated_materials_view", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json({estimated: results}).status(200)
+    }
+  })
+}
+
+const getIssuedByMatWeek = async(req, res) =>{
+  sql.query("SELECT * FROM issued_material_view", (err, results) =>{
+    if(!results){
+      res.send({issued: []}).status(200)
+    }else{
+      const issued_isos = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({issued: []}).status(200)
+        }else{
+          let start = results[0].starting_date
+          let issued = {}
+          let issued_mat = {}
+          let material_id = issued_isos[0].material_id
+          for(let i = 0; i < issued_isos.length; i++){
+            let week = Math.floor((new Date(issued_isos[i].issuer_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(material_id == issued_isos[i].material_id){
+              if(issued_mat[week]){
+                issued_mat[week] += 1
+              }else{
+                issued_mat[week] = 1
+              }
+            }else{
+              issued[material_id] = issued_mat
+              material_id = issued_isos[i].material_id
+              issued_mat = {}
+              issued_mat[week] = 1
+            }
+          }
+          
+          issued[material_id] = issued_mat
+          res.send({issued: issued}).status(200)
+        }
+      })
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -4996,5 +5271,16 @@ module.exports = {
   modelledEstimatedHolds,
   getAllHolds,
   submitHoldsIso,
-  getIsocontrolHolds
+  getIsocontrolHolds,
+  getEstimatedMatWeek,
+  getForecastMatWeek,
+  getMaterials,
+  getMaterialsPipingClass,
+  getProjectSpan,
+  submitProjectSpan,
+  submitPipingClass,
+  submitMaterials,
+  submitEstimatedForecast,
+  getEstimatedByMaterial,
+  getIssuedByMatWeek
 };

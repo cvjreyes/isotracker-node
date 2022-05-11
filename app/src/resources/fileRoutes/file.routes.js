@@ -143,6 +143,17 @@ let routes = (app) => {
   router.get("/getAllHolds/:tag", controller.getAllHolds) 
   router.post("/submit/holdsIso", controller.submitHoldsIso)
   router.get("/getIsocontrolHolds/:tag", controller.getIsocontrolHolds) 
+  router.get("/getEstimatedMatWeek", controller.getEstimatedMatWeek) 
+  router.get("/getForecastMatWeek", controller.getForecastMatWeek) 
+  router.get("/getMaterials", controller.getMaterials)
+  router.get("/getMaterialsPipingClass", controller.getMaterialsPipingClass)
+  router.get("/getProjectSpan", controller.getProjectSpan)
+  router.post("/submitProjectSpan", controller.submitProjectSpan)
+  router.post("/submitPipingClass", controller.submitPipingClass)
+  router.post("/submitMaterials", controller.submitMaterials)
+  router.post("/submitEstimatedForecast", controller.submitEstimatedForecast)
+  router.get("/getEstimatedByMaterial", controller.getEstimatedByMaterial)
+  router.get("/getIssuedByMatWeek", controller.getIssuedByMatWeek)
   app.use(router);
 };
 
