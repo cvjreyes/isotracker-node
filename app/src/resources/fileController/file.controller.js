@@ -5108,7 +5108,7 @@ const getEstimatedByMaterial = async(req, res) =>{
 
 const getIssuedByMatWeek = async(req, res) =>{
   sql.query("SELECT * FROM issued_material_view", (err, results) =>{
-    if(!results){
+    if(!results[0]){
       res.send({issued: []}).status(200)
     }else{
       const issued_isos = results
