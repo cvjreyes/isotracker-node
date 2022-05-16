@@ -4902,7 +4902,7 @@ const getMaterials = async(req, res) =>{
 const getMaterialsPipingClass = async(req, res) =>{
   sql.query("SELECT materials.id as material_id, materials.name as material, pipingclass.id as piping_id, pipingclass.name as piping FROM pipingclass LEFT JOIN materials ON materials.id = pipingclass.material_id", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({materials: []}).status(200)
     }else{
       res.json({materials: results}).status(200)
     }
@@ -4912,7 +4912,7 @@ const getMaterialsPipingClass = async(req, res) =>{
 const getProjectSpan = async(req, res) =>{
   sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({span: []}).status(200)
     }else{
       res.json({span: results}).status(200)
     }
@@ -5040,15 +5040,21 @@ const submitMaterials = async(req, res) =>{
             }else{
               await sql.query("SELECT id FROM materials WHERE name = ?", [materials[i]["Material"]], async(err, results)=>{
                 const material_id = results[0].id
+                /*
                 await sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC", async(err, results) =>{
                   if(results[0]){
-                    for(let i = 0; i < results.length; i++){
-                      await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [results[i].week, material_id], (err, results) =>{
+                */
+                  await sql.query("SELECT * FROM project_span", async(err, results) =>{
+                      if(results[0]){
+                        let week = Math.floor((new Date(results[0].finishing_date) - new Date(results[0].starting_date)) / (1000 * 60 * 60 * 24) / 7)
+                        
+                      for(let w = 1; w < week + 1; w++){
+                      await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
                         if(err){
                           console.log(err)
                         }
                       })
-                      await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [results[i].week, material_id], (err, results) =>{
+                      await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
                         if(err){
                           console.log(err)
                         }
@@ -5099,7 +5105,7 @@ const submitEstimatedForecast = async(req, res) =>{
 const getEstimatedByMaterial = async(req, res) =>{
   sql.query("SELECT * FROM estimated_materials_view", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({estimated: []}).status(200)
     }else{
       res.json({estimated: results}).status(200)
     }
