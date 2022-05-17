@@ -75,7 +75,16 @@ let routes = (app) => {
   router.post("/sendHold", controller.sendHold);
 
   router.post("/getFilenamesByUser", controller.getFilenamesByUser)
-
+  router.post("/createByPass", controller.createByPass)
+  router.get("/getByPassData", controller.getByPassData)
+  router.post("/acceptByPass", controller.acceptByPass)
+  router.post("/answerByPass", controller.answerByPass)
+  router.post("/rejectByPass", controller.rejectByPass)
+  router.post("/naByPass", controller.naByPass)
+  router.post("/editByPass", controller.editByPass)
+  router.post("/closeByPass", controller.closeByPass)
+  router.post("/deleteByPass", controller.deleteByPass)
+  router.get("/exportByPass", controller.exportByPass)
   app.use(router);
 };
 

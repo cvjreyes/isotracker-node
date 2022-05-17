@@ -1,16 +1,12 @@
 const uploadFile = require("../fileMiddleware/file.middleware");
 const uploadBom = require("../fileMiddleware/bom.middleware");
 const fs = require("fs");
-const bodyParser = require('body-parser')
 const sql = require("../../db.js");
-const pathPackage = require("path")
 var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
-const { verify } = require("crypto");
-const { type } = require("os");
-
+const nodemailer = require("nodemailer");
 
 const upload = async (req, res) => {
   try {
@@ -1286,13 +1282,13 @@ const toIssue = async(req,res) =>{
         
       })
     }else{
-      sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+      sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
         if(!results[0]){
           res.status(401).send("File not found")
         }else{
           const revision = results[0].revision
           const newFileName = fileName.split('.').slice(0, -1).join('.') + '-' + revision + '.pdf'
-    
+          const isoid = results[0].isoid
           let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
     
           if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
@@ -1399,7 +1395,28 @@ const toIssue = async(req,res) =>{
                                               console.log("error: ", err);
                                             }else{
                                               console.log("issued in misoctrls");
-                                              res.status(200).send({issued: "issued"})
+                                              sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid = ?", [isoid], (err, results) =>{
+                                                if(!results[0]){
+                                                  res.status(200).send({revision: "newRev"})
+                                                }else{
+                                                  for(let i = 0; i < results.length; i++){
+                                                    let closed = 0
+                                                     if(results[i].bstatus_id == 2){
+                                                      closed = 6
+                                                    }else if(results[i].bstatus_id == 3){
+                                                      closed = 7
+                                                    }
+                                                    sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, results[i].id], (err, results) =>{
+                                                      if(err){
+                                                        console.log(err)
+                                                        res.status(401)
+                                                      }
+                                                    })
+                                                  }
+                                                  res.status(200).send({issued: "issued"})
+                                                }
+                                              })
+                                              
                                             }
                                           })
                                         }
@@ -1509,10 +1526,11 @@ const newRev = (req, res) =>{
                 res.status(401).send("Username or password incorrect");
               }else{   
                 username  = results[0].name
-                sql.query("SELECT revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                sql.query("SELECT id, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
                   if(!results[0]){
                     res.status(401).send("File not found")
                   }else{
+                    const iso_id = results[0].id
                     const revision = results[0].revision
                     if(process.env.NODE_PROGRESS == "0"){
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
@@ -3099,6 +3117,296 @@ const getFilenamesByUser = (req, res) =>{
   })
 }
 
+const createByPass = (req, res) =>{
+  const email = req.body.username
+  const type = req.body.type
+  const notes = req.body.notes
+  const iso_id = req.body.id
+  sql.query('SELECT id FROM users WHERE email = ?', [email], (err, results) =>{
+    if (!results[0]){
+      res.status(401)
+    }else{   
+      const user_id = results[0].id
+      sql.query("SELECT id FROM bypass ORDER BY id DESC LIMIT 1", (err, results) =>{
+        let tag = "BP000001"
+        if(results[0]){
+          tag = "BP000001".substring(0, tag.length - (results[0].id + 1).toString().length) + (results[0].id + 1).toString()
+          console.log(tag)
+        }
+        sql.query("INSERT INTO bypass(misoctrls_id, tbypass_id, tag, note, user_id) VALUES(?,?,?,?,?)", [iso_id, type, tag, notes, user_id], (err, results)=>{
+          if(err){
+            console.log(err)
+            res.status(401)
+          }else{
+            var transporter = nodemailer.createTransport({
+              host: "es001vs0064",
+              port: 25,
+              secure: false,
+              auth: {
+                  user: "3DTracker@technipenergies.com",
+                  pass: "1Q2w3e4r..24"    
+              }
+            });
+
+            sql.query("SELECT name FROM tbypass WHERE id = ?", [type], (err, results) =>{
+              const t = results[0].name
+              sql.query("SELECT isoid FROM misoctrls WHERE id = ?", [iso_id], (err, results) =>{
+                if(!results[0]){
+                  res.status(401)
+                }else{
+                  const iso_name = results[0].isoid
+                  const html_message = "<b>REFERENCE</b> " + tag + "<p><b>ISOMETRIC ID</b> " + iso_name + " </p><p><b>USER</b> " + email + "</p><p><b>TYPE</b> " + t + "</p><p><b>NOTES</b> " + notes + "</p>"
+                  sql.query("SELECT email FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id = 15 GROUP BY email", (err, results) =>{
+                    if(!results[0]){
+
+                    }else{
+                      for(let i = 0; i < results.length; i++){
+                        if(results[i].email === "super@user.com"){
+                          results[i].email = "alex.dominguez-ortega@external.technipenergies.com"
+                        }
+                        transporter.sendMail({
+                          from: '3DTracker@technipenergies.com',
+                          to: results[i].email,
+                          subject: 'ByPass ' + tag,
+                          text: tag,
+                          
+                          html: html_message
+                        }, (err, info) => {
+                            console.log(info.envelope);
+                            console.log(info.messageId);
+                        });
+                      }
+                    }
+                  })
+                }
+              })
+              res.send({success: true}).status(200)
+            })
+          }
+        })
+      })
+      
+    }
+  })
+}
+
+const getByPassData = async(req, res) =>{
+  sql.query("SELECT bypass.id, bypass.comments, misoctrls.isoid, tbypass.name as type, bypass.tag, bypass.note, users.name as user, users.email, bstatus.name as status, bypass.updated_at as date FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
+    if(!results[0]){
+      res.json({rows: []}).status(200)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const answerByPass = async(req, res) =>{
+  const id = req.body.id
+  const type = req.body.type
+  let answer = "CODE3"
+  if(type == 3){
+    answer = "IFC"
+  }
+  sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [type, id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+        const html_message = "<p>The ByPass " + tag + " has been approved. Answer: " + answer + ".</p>"
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been accepted. " + answer + ".",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
+  })
+}
+
+const rejectByPass = async(req, res) =>{
+  const id = req.body.id
+  const comments = req.body.comments
+  sql.query("UPDATE bypass SET bstatus_id = 4, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+
+        const html_message = "<p>The ByPass " + tag + " has been rejected.</p><p>" + comments + "</p>"
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been rejected.",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
+  })
+}
+
+const naByPass = async(req, res) =>{
+  const id = req.body.id
+  const comments = req.body.comments
+  sql.query("UPDATE bypass SET bstatus_id = 5, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
+        let email = results[0].email
+        const tag = results[0].tag
+
+        const html_message = "<p>The ByPass " + tag + " has been set to N/A.</p><p>" + comments + "</p>"
+
+        if(email === "super@user.com"){
+          email = "alex.dominguez-ortega@external.technipenergies.com"
+        }
+        var transporter = nodemailer.createTransport({
+          host: "es001vs0064",
+          port: 25,
+          secure: false,
+          auth: {
+              user: "3DTracker@technipenergies.com",
+              pass: "1Q2w3e4r..24"    
+          }
+        });
+        transporter.sendMail({
+          from: '3DTracker@technipenergies.com',
+          to: email,
+          subject: 'ByPass ' + tag + " has been set to N/A.",
+          text: tag,
+          
+          html: html_message
+        }, (err, info) => {
+            console.log(info.envelope);
+            console.log(info.messageId);
+        });
+      
+        res.send({success: true}).status(200)
+        })
+      }
+  })
+}
+
+const editByPass = async(req, res) =>{
+  const type = req.body.type
+  const notes = req.body.notes
+  const iso_id = req.body.id
+
+  sql.query("UPDATE bypass SET tbypass_id = ?, note = ? WHERE id = ?", [type, notes, iso_id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
+const closeByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("SELECT bstatus_id FROM bypass WHERE id = ?", [iso_id], (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      let closed = 0
+      if(results[0].bstatus_id == 2){
+        closed = 6
+      }else{
+        closed = 7
+      }
+      sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [closed, iso_id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }else{
+          res.send({success: true}).status(200)
+        }
+      })
+    }
+  })
+ 
+}
+
+const deleteByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("DELETE FROM bypass WHERE id = ?", [iso_id], (err, results) =>{
+    if(err){
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+ 
+}
+
+const acceptByPass = async(req, res) =>{
+  const iso_id = req.body.id
+  sql.query("UPDATE bypass SET bstatus_id = 8 WHERE id = ?", [iso_id], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.send({success: true}).status(200)
+    }
+  })
+}
+
+const exportByPass = async(req, res) =>{
+  sql.query("SELECT bypass.tag, misoctrls.isoid, tbypass.name as type, bypass.updated_at as date, users.name as user, bypass.note, bypass.comments, bstatus.name as status FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id LEFT JOIN tbypass ON bypass.tbypass_id = tbypass.id LEFT JOIN users ON bypass.user_id = users.id LEFT JOIN bstatus on bypass.bstatus_id = bstatus.id", (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      res.json(JSON.stringify(results)).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3162,5 +3470,15 @@ module.exports = {
   submitRevision,
   excludeHold,
   sendHold,
-  getFilenamesByUser
+  getFilenamesByUser,
+  createByPass,
+  getByPassData,
+  acceptByPass,
+  rejectByPass,
+  naByPass,
+  editByPass,
+  closeByPass,
+  deleteByPass,
+  answerByPass,
+  exportByPass
 };
