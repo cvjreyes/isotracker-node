@@ -4872,7 +4872,7 @@ const getIsocontrolHolds = async(req, res) =>{
 const getEstimatedMatWeek = async(req, res) =>{
   sql.query("SELECT week, estimated, material_id, name FROM epipes_new LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({estimated: []}).status(401)
     }else{
       res.json({estimated: results}).status(200)
     }
@@ -4882,7 +4882,7 @@ const getEstimatedMatWeek = async(req, res) =>{
 const getForecastMatWeek = async(req, res) =>{
   sql.query("SELECT week, estimated, material_id, name FROM forecast LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({forecast: []}).status(401)
     }else{
       res.json({forecast: results}).status(200)
     }
@@ -4892,7 +4892,7 @@ const getForecastMatWeek = async(req, res) =>{
 const getMaterials = async(req, res) =>{
   sql.query("SELECT id, name FROM materials", (err, results) =>{
     if(!results[0]){
-      res.status(401)
+      res.json({materials: []}).status(401)
     }else{
       res.json({materials: results}).status(200)
     }
