@@ -28,6 +28,10 @@ let routes = (app) => {
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
 
+  router.post("/toIssue", controller.toIssue);
+  router.post("/request", controller.request);
+  router.post("/newRev", controller.newRev);
+
   router.post("/rename", controller.rename);
   router.post("/unlock", controller.unlock);
   router.post("/unlockAll", controller.unlockAll);
