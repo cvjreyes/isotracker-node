@@ -825,7 +825,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
@@ -898,7 +898,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
@@ -970,7 +970,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
@@ -1042,7 +1042,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
@@ -1115,7 +1115,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
@@ -1187,7 +1187,7 @@ const updateStatus = async(req, res) =>{
                                                 }
                                             });
 
-                                            if(reciever_email = "super@user.com"){
+                                            if(reciever_email === "super@user.com"){
                                                 reciever_email = "alex.dominguez-ortega@external.technipenergies.com"
                                             }
                 
