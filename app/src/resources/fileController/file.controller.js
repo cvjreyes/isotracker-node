@@ -4976,6 +4976,33 @@ const submitProjectSpan = async(req, res) =>{
             }
           })
         }
+        sql.query("SELECT DISTINCT week FROM eweights ORDER BY week DESC LIMIT 1", (err, results) =>{
+          let currentWeeks = 0
+          const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
+          if(results[0]){
+            currentWeeks = results[0].week
+          }
+          if(weeks < currentWeeks){
+            sql.query("DELETE FROM eweights WHERE week > ?", [weeks], (err, results) =>{
+              if(err){
+                console.log(err)
+                res.send({success: false}).status(401)
+              }
+            })
+          }else if(weeks > currentWeeks){
+            let newWeeks = []
+            for (var i = currentWeeks + 1; i <= weeks; i++) {
+              newWeeks.push(i);
+            }
+            for(let i = 0; i < newWeeks.length; i++){
+              sql.query("INSERT INTO eweights(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          }
+        })
         res.send({success: true}).status(200)
         
       })
@@ -5150,6 +5177,68 @@ const getIssuedByMatWeek = async(req, res) =>{
   })
 }
 
+const getIssuedWeightByMatWeek = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_issued_weight_view", (err, results) =>{
+    if(!results[0]){
+      res.send({issued: []}).status(200)
+    }else{
+      const issued_isos = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({issued: []}).status(200)
+        }else{
+          let start = results[0].starting_date
+          let issued = {}
+          let issued_mat = {}
+          let material_id = issued_isos[0].material_id
+          for(let i = 0; i < issued_isos.length; i++){
+            let week = Math.floor((new Date(issued_isos[i].issued_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(material_id == issued_isos[i].material_id){
+              if(issued_mat[week]){
+                issued_mat[week] += issued_isos[i].total_weight
+              }else{
+                issued_mat[week] = issued_isos[i].total_weight
+              }
+            }else{
+              issued[material_id] = issued_mat
+              material_id = issued_isos[i].material_id
+              issued_mat = {}
+              issued_mat[week] = issued_isos[i].total_weight
+            }
+          }
+          
+          issued[material_id] = issued_mat
+          res.send({issued: issued}).status(200)
+        }
+      })
+    }
+  })
+}
+
+const getEstimatedForecastWeight = async(req, res) =>{
+  sql.query("SELECT * FROM eweights", (err, results) =>{
+    if(!results[0]){
+      res.send({estimated: []}).status(200)
+    }else{
+        res.send({estimated: results}).status(200)
+    }
+  })
+}
+
+const submitEstimatedForecastWeight = async(req, res) =>{
+  const estimated = req.body.estimated
+  const forecast = req.body.forecast
+  Object.keys(estimated).map(function(key, index) {
+    sql.query("UPDATE eweights SET estimated = ?, forecast = ? WHERE week = ?", [estimated[key], forecast[key], key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  res.send({success: true}).status(200)
+}
+
 module.exports = {
   upload,
   update,
@@ -5288,5 +5377,8 @@ module.exports = {
   submitMaterials,
   submitEstimatedForecast,
   getEstimatedByMaterial,
-  getIssuedByMatWeek
+  getIssuedByMatWeek,
+  getIssuedWeightByMatWeek,
+  getEstimatedForecastWeight,
+  submitEstimatedForecastWeight
 };
