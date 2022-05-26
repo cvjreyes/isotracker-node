@@ -1904,7 +1904,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train, spec) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train, csv[i].spec], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -1933,7 +1933,7 @@ async function uploadReportPeriod(){
                       tl = 2
                     }
                   }
-                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train], (err, results)=>{
+                  sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id, diameter, calc_notes_description, pid, stress_level, insulation, unit, fluid, seq, train, spec) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [areaid, csv[i].tag, diameterid, calc_notes, tl, csv[i].diameter, csv[i].calc_notes, csv[i].pid, csv[i].stresslevel, csv[i].insulation, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].train, csv[i].spec], (err, results)=>{
                     if(err){
                       console.log(err)
                     }
@@ -2565,7 +2565,7 @@ const updateBom = async(req, res) =>{
   })
 }
 
-cron.schedule("0 */5 * * * *", () => {
+cron.schedule("0 */4 * * * *", () => {
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){
     updateHolds()
   }
