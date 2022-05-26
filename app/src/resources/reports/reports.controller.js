@@ -18,9 +18,9 @@ const downloadHistory = async(req,res) =>{
     sql.query("SELECT isoid, deleted, onhold, issued, `from`, `to`, role, verifydesign FROM misoctrls ORDER BY isoid ASC", (err, results)=>{
       let delhold = results
       if(process.env.NODE_PROGRESS == "1"){
-        sql.query("SELECT misoctrls.isoid, deleted, onhold, issued, `from`, `to`, role,  misoctrls.created_at, misoctrls.updated_at, code, revision, verifydesign FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results)=>{
+        sql.query("SELECT misoctrls.isoid, deleted, onhold, issued, `from`, `to`, role,  misoctrls.created_at, misoctrls.updated_at, code, revision, verifydesign FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid, misoctrls.`to` ASC", (err, results)=>{
           delhold = results
-          sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid ASC", (err, results) =>{
+          sql.query("SELECT misoctrls.isoid, misoctrls.created_at, misoctrls.updated_at, code, revision, `to` FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY misoctrls.isoid, misoctrls.`to` ASC", (err, results) =>{
             if(!results[0]){
               res.status(401).send("El historial esta vacio")
             }else{
