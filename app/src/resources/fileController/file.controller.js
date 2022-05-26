@@ -7,6 +7,7 @@ var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
 const nodemailer = require("nodemailer");
+const { Console } = require("console");
 
 const upload = async (req, res) => {
   try {
@@ -370,7 +371,7 @@ const uploadHis = async (req, res) => {
             }else{
               type = "value_ifc"
             }
-            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+            sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
               if(!results[0]){
                 console.log("No se encuentra isoid")
                 res.status(401)
@@ -1253,8 +1254,11 @@ const uploadReport = async(req,res) =>{
 }
 
 const checkPipe = async(req,res) =>{
-  const fileName = req.params.fileName.split('.').slice(0, -1)
-  sql.query("SELECT * FROM dpipes_view WHERE isoid = ?", [fileName], (err, results) =>{
+  let fileName = req.params.fileName.split('.').slice(0, -1)
+  if(fileName.toString().includes("-CL")){
+     fileName = fileName.toString().split('-').slice(0, -1)
+  }
+  sql.query("SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName], (err, results) =>{
     if(!results[0]){
       res.json({
         exists: false
