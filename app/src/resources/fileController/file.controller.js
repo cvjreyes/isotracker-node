@@ -4763,7 +4763,8 @@ const submitModelledEstimatedPipes = async(req, res) =>{
                 }
               })
             }else{
-              await sql.query("INSERT INTO owners(owner_iso_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+              let now = new Date()
+              await sql.query("INSERT INTO owners(owner_iso_id, tag, assignation_date) VALUES(?,?,?)", [user_id, owners[i][1], now], async(err, results) =>{
                 if(err){
                   console.log(err)
                   res.status(401)
@@ -4779,12 +4780,20 @@ const submitModelledEstimatedPipes = async(req, res) =>{
                 }
               })
             }else{
-              await sql.query("UPDATE owners SET owner_iso_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
-                if(err){
-                  console.log(err)
-                  res.status(401)
+              let now = new Date()
+              await sql.query("SELECT owner_iso_id FROM owners WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+                if(results[0]){
+                  if(results[0].owner_iso_id != user_id){
+                    await sql.query("UPDATE owners SET owner_iso_id = ?, assignation_date = ? WHERE tag = ?", [user_id, now, owners[i][1]], async(err, results) =>{
+                      if(err){
+                        console.log(err)
+                        res.status(401)
+                      }
+                    })
+                  }
                 }
               })
+              
             }
           }
         })
@@ -5239,6 +5248,289 @@ const submitEstimatedForecastWeight = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
+const getIsosByUserWeek = async(req, res) =>{
+  sql.query("SELECT name, assignation_date FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id ORDER BY name", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      let assignations = results
+      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const start = results[0].starting_date
+          const finish = results[0].finishing_date
+          let user_isos = {}
+          let current_user = assignations[0].name
+          let user = {}
+          for(let i = 0; i < assignations.length; i++){
+            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(current_user === assignations[i].name){
+              if(user[week]){
+                user[week] += 1
+              }else{
+                user[week] = 1
+              }
+            }else{
+              user_isos[current_user] = {assigned: user}
+              user = {}
+              current_user = assignations[i].name
+              user[week] = 1
+            }
+          }
+          user_isos[current_user] = {assigned: user}
+
+          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let current_user = transactions[0].name
+              let user_sent = {}
+              let user_returned = {} 
+              for(let i = 0; i < transactions.length; i++){
+                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(current_user === transactions[i].name){
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += 1
+                    }else{
+                      user_sent[week] = 1
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_sent[week]){
+                      user_sent[week] -= 1
+                    }else{
+                      user_sent[week] = -1
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += 1
+                    }else{
+                      user_isos[current_user]["assigned"][week] = 1
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] += 1
+                    }else{
+                      user_returned[week] = 1
+                    }
+                  }
+                }else{
+                  user_isos[current_user]["sent"] = user_sent
+                  user_isos[current_user]["returned"] = user_returned
+                  user_sent = {}
+                  user_returned = {}
+                  current_user = transactions[i].name
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += 1
+                    }else{
+                      user_sent[week] = 1
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_sent[week]){
+                      user_sent[week] -= 1
+                    }else{
+                      user_sent[week] = -1
+                      console.log(week)
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += 1
+                    }else{
+                      user_isos[current_user]["assigned"][week] = 1
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] -= 1
+                    }else{
+                      user_returned[week] = 0
+                    }
+                  }
+                }
+              }
+              user_isos[current_user]["sent"] = user_sent
+              user_isos[current_user]["returned"] = user_returned
+
+              let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+              Object.keys(user_isos).map(function(key, index) {
+                user_isos[key]["remaining"] = {}
+                for(let w = 1; w < total_weeks + 1; w++){
+                  let remaining = 0
+                  if(w > 1){
+                    remaining = user_isos[key]["remaining"][w-1]
+                  }
+                  if(user_isos[key]["assigned"]){
+                    if(user_isos[key]["assigned"][w]){
+                      remaining += user_isos[key]["assigned"][w]
+                    }
+                  }
+                  if(user_isos[key]["sent"]){
+                    if(user_isos[key]["sent"][w]){
+                      remaining -= user_isos[key]["sent"][w]
+                    }
+                  }
+                  if(user_isos[key]["returned"]){
+                    if(user_isos[key]["returned"][w]){
+                      remaining += user_isos[key]["returned"][w]
+                    }
+                  }
+                  user_isos[key]["remaining"][w] = remaining
+                }
+                
+              });
+              res.json({user_isos: user_isos}).status(200)
+            }
+          })
+        }
+      })
+      
+    }
+  })
+}
+
+const getWeightByUserWeek = async(req, res) =>{
+  sql.query("SELECT users.name, assignation_date, tpipes.weight FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY name", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      let assignations = results
+      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const start = results[0].starting_date
+          const finish = results[0].finishing_date
+          let user_isos = {}
+          let current_user = assignations[0].name
+          let user = {}
+          for(let i = 0; i < assignations.length; i++){
+            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(current_user === assignations[i].name){
+              if(user[week]){
+                user[week] += assignations[i].weight
+              }else{
+                user[week] = assignations[i].weight
+              }
+            }else{
+              user_isos[current_user] = {assigned: user}
+              user = {}
+              current_user = assignations[i].name
+              user[week] = assignations[i].weight
+            }
+          }
+          user_isos[current_user] = {assigned: user}
+
+          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let current_user = transactions[0].name
+              let user_sent = {}
+              let user_returned = {} 
+              for(let i = 0; i < transactions.length; i++){
+                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(current_user === transactions[i].name){
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += transactions[i].weight
+                    }else{
+                      user_sent[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_sent[week]){
+                      user_sent[week] -= transactions[i].weight
+                    }else{
+                      user_sent[week] = -transactions[i].weight
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += transactions[i].weight
+                    }else{
+                      user_isos[current_user]["assigned"][week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }
+                }else{
+                  user_isos[current_user]["sent"] = user_sent
+                  user_isos[current_user]["returned"] = user_returned
+                  user_sent = {}
+                  user_returned = {}
+                  current_user = transactions[i].name
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += transactions[i].weight
+                    }else{
+                      user_sent[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_sent[week]){
+                      user_sent[week] -= transactions[i].weight
+                    }else{
+                      user_sent[week] = -transactions[i].weight
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += transactions[i].weight
+                    }else{
+                      user_isos[current_user]["assigned"][week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] -= transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }
+                }
+              }
+              user_isos[current_user]["sent"] = user_sent
+              user_isos[current_user]["returned"] = user_returned
+
+              let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+              Object.keys(user_isos).map(function(key, index) {
+                user_isos[key]["remaining"] = {}
+                for(let w = 1; w < total_weeks + 1; w++){
+                  let remaining = 0
+                  if(w > 1){
+                    remaining = user_isos[key]["remaining"][w-1]
+                  }
+                  if(user_isos[key]["assigned"]){
+                    if(user_isos[key]["assigned"][w]){
+                      remaining += user_isos[key]["assigned"][w]
+                    }
+                  }
+                  if(user_isos[key]["sent"]){
+                    if(user_isos[key]["sent"][w]){
+                      remaining -= user_isos[key]["sent"][w]
+                    }
+                  }
+                  if(user_isos[key]["returned"]){
+                    if(user_isos[key]["returned"][w]){
+                      remaining += user_isos[key]["returned"][w]
+                    }
+                  }
+                  user_isos[key]["remaining"][w] = remaining
+                }
+                
+              });
+              res.json({user_isos: user_isos}).status(200)
+            }
+          })
+        }
+      })
+      
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -5380,5 +5672,7 @@ module.exports = {
   getIssuedByMatWeek,
   getIssuedWeightByMatWeek,
   getEstimatedForecastWeight,
-  submitEstimatedForecastWeight
+  submitEstimatedForecastWeight,
+  getIsosByUserWeek,
+  getWeightByUserWeek
 };

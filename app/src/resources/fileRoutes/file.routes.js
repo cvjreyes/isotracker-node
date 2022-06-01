@@ -157,6 +157,8 @@ let routes = (app) => {
   router.get("/getIssuedWeightByMatWeek", controller.getIssuedWeightByMatWeek)
   router.get("/getEstimatedForecastWeight", controller.getEstimatedForecastWeight)
   router.post("/submitEstimatedForecastWeight", controller.submitEstimatedForecastWeight)
+  router.get("/getIsosByUserWeek", controller.getIsosByUserWeek)
+  router.get("/getWeightByUserWeek", controller.getWeightByUserWeek)
 
   app.use(router);
 };
