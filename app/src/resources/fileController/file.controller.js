@@ -5298,10 +5298,10 @@ const getIsosByUserWeek = async(req, res) =>{
                       user_sent[week] = 1
                     }
                   }else if(transactions[i].to === "Cancel verify"){
-                    if(user_sent[week]){
-                      user_sent[week] -= 1
+                    if(user_returned[week]){
+                      user_returned[week] += 1
                     }else{
-                      user_sent[week] = -1
+                      user_returned[week] = 1
                     }
                   }else if(transactions[i].from === "Issued"){
                     if(user_isos[current_user]["assigned"][week]){
@@ -5329,11 +5329,10 @@ const getIsosByUserWeek = async(req, res) =>{
                       user_sent[week] = 1
                     }
                   }else if(transactions[i].to === "Cancel verify"){
-                    if(user_sent[week]){
-                      user_sent[week] -= 1
+                    if(user_returned[week]){
+                      user_returned[week] += 1
                     }else{
-                      user_sent[week] = -1
-                      console.log(week)
+                      user_returned[week] = 1
                     }
                   }else if(transactions[i].from === "Issued"){
                     if(user_isos[current_user]["assigned"][week]){
@@ -5440,10 +5439,10 @@ const getWeightByUserWeek = async(req, res) =>{
                       user_sent[week] = transactions[i].weight
                     }
                   }else if(transactions[i].to === "Cancel verify"){
-                    if(user_sent[week]){
-                      user_sent[week] -= transactions[i].weight
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
                     }else{
-                      user_sent[week] = -transactions[i].weight
+                      user_returned[week] = transactions[i].weight
                     }
                   }else if(transactions[i].from === "Issued"){
                     if(user_isos[current_user]["assigned"][week]){
@@ -5471,10 +5470,10 @@ const getWeightByUserWeek = async(req, res) =>{
                       user_sent[week] = transactions[i].weight
                     }
                   }else if(transactions[i].to === "Cancel verify"){
-                    if(user_sent[week]){
-                      user_sent[week] -= transactions[i].weight
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
                     }else{
-                      user_sent[week] = -transactions[i].weight
+                      user_returned[week] = transactions[i].weight
                     }
                   }else if(transactions[i].from === "Issued"){
                     if(user_isos[current_user]["assigned"][week]){
