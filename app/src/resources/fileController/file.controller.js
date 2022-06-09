@@ -1877,6 +1877,13 @@ async function uploadReportPeriod(){
         }
       })
       for(let i = 0; i < csv.length; i++){
+        if(csv[i].spo === "true"){
+          sql.query('UPDATE misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid SET spo = 1 WHERE dpipes_view.tag = ?', [csv[i].tag], (err, results)=>{
+            if(err){
+              console.log("Error updating")
+            }
+          })
+        }
         if(csv[i].area != '' && csv[i].area != null && !csv[i].tag.includes("/") && !csv[i].tag.includes("=") && !csv[i].diameter != null){
           sql.query("SELECT id FROM areas WHERE name = ?", [csv[i].area], (err, results) =>{
             let areaid = null
