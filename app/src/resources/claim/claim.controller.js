@@ -29,6 +29,7 @@ const singleClaim = async (req, res) => {
           }else if (results[0].claimed == 1 && role !== "DesignLead" && role !== "SupportsLead" && role !== "StressLead" && results.verifydesign === 1){   
             res.status(401).send("This isometric has already been claimed");
           }else{
+            const tray = results[0].to
             sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
               if(!results[0]){
                   res.status(401).send("No files found");
@@ -40,7 +41,7 @@ const singleClaim = async (req, res) => {
                       }
                   }
                   sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-                  [fileName, last.revision, last.spo, last.sit, 1, last.to, "Claimed" , last.comments, username, role, 0], (err, results) => {
+                  [fileName, last.revision, last.spo, last.sit, 1, tray, "Claimed" , last.comments, username, role, 0], (err, results) => {
                   if (err) {
                       console.log("error: ", err);
                   }else{

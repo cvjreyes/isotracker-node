@@ -5248,7 +5248,7 @@ const submitEstimatedForecastWeight = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const getIsosByUserWeek = async(req, res) =>{
+const getIsosByUserWeekDesign = async(req, res) =>{
   sql.query("SELECT name, assignation_date FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id ORDER BY name", (err, results) =>{
     if(!results[0]){
       res.send({user_isos: []}).status(200)
@@ -5379,7 +5379,7 @@ const getIsosByUserWeek = async(req, res) =>{
                 }
                 
               });
-              res.json({user_isos: user_isos}).status(200)
+              res.json({design_isos: user_isos}).status(200)
             }
           })
         }
@@ -5389,7 +5389,7 @@ const getIsosByUserWeek = async(req, res) =>{
   })
 }
 
-const getWeightByUserWeek = async(req, res) =>{
+const getWeightByUserWeekDesign = async(req, res) =>{
   sql.query("SELECT users.name, assignation_date, tpipes.weight FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY name", (err, results) =>{
     if(!results[0]){
       res.send({user_isos: []}).status(200)
@@ -5520,7 +5520,7 @@ const getWeightByUserWeek = async(req, res) =>{
                 }
                 
               });
-              res.json({user_isos: user_isos}).status(200)
+              res.json({design_isos: user_isos}).status(200)
             }
           })
         }
@@ -5528,6 +5528,236 @@ const getWeightByUserWeek = async(req, res) =>{
       
     }
   })
+}
+
+
+const getIsosByUserWeek = async(req, res) =>{
+ 
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      const start = results[0].starting_date
+      const finish = results[0].finishing_date
+      const total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+      let user_isos = {}
+
+      sql.query("SELECT `users`.`name` as `user`, `roles`.`name` as `role` FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id LEFT JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id >= 2 AND roles.id <= 8 ORDER BY `roles`.`name`", (err, results)=>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const roles = results
+          const order = ["Design", "DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer"]
+          let role = results[0].role
+          user_isos[role] = {}
+          let weeksClaimed = {}
+          let weeksSent = {}
+          let weeksReturned = {}
+          let weeksRemaining = {}
+          for(let i = 0; i < roles.length; i++){
+            
+            if(role == results[i].role){
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }else{
+              role = results[i].role
+              user_isos[role] = {}
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }
+          }
+          
+          sql.query("SELECT * FROM transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let owners_by_role = {}
+              for(let i = 0; i < transactions.length; i++){
+                let w = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(transactions[i].to == "Claimed"){
+                  if(!owners_by_role[transactions[i].filename + transactions[i].from + transactions[i].revision]){
+                    if(user_isos[transactions[i].from][transactions[i].name]["claimed"][w]){
+                      user_isos[transactions[i].from][transactions[i].name]["claimed"][w] += 1
+                    }else{
+                      user_isos[transactions[i].from][transactions[i].name]["claimed"][w] = 1
+                    }
+                  }
+                }else if(transactions[i].to == "Cancel verify"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["returned"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] += 1
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] = 1
+                  }
+                }else if(transactions[i].to == "Unclaimed"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] -= 1
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = -1
+                  }
+                }else{
+                  if(user_isos[transactions[i].from][transactions[i].name]["sent"][w]){
+                    user_isos[transactions[i].from][transactions[i].name]["sent"][w] += 1
+                  }else{
+                    user_isos[transactions[i].from][transactions[i].name]["sent"][w] = 1 
+                  }
+                  
+                  if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) < order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify")){
+                    if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                      user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += 1
+                    }else{
+                      user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = 1
+                    }
+
+                  }else{
+                    owners_by_role[transactions[i].filename + transactions[i].from + transactions[i].revision] = transactions[i].name
+                  }
+                }
+              }
+              Object.keys(user_isos).map(function(role, index) {
+                Object.keys(user_isos[role]).map(function(user, index) {
+                    for(let w = 1; w < total_weeks + 1; w++){
+                      let remaining = 0
+                      if(w > 1){
+                        remaining = user_isos[role][user]["remaining"][w-1]
+                      }
+                      if(user_isos[role][user]["claimed"][w]){
+                        remaining += user_isos[role][user]["claimed"][w]
+                      }
+                      if(user_isos[role][user]["sent"][w]){
+                        remaining -= user_isos[role][user]["sent"][w]
+                      }
+                      if(user_isos[role][user]["returned"][w]){
+                        remaining += user_isos[role][user]["returned"][w]
+                      }
+                      user_isos[role][user]["remaining"][w] = remaining
+                    }
+                })
+              })
+            }
+            res.json({user_isos: user_isos}).status(200)
+          })
+        }
+      })
+    }
+  })
+  
+}
+
+
+const getWeightByUserWeek = async(req, res) =>{
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      const start = results[0].starting_date
+      const finish = results[0].finishing_date
+      const total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+      let user_isos = {}
+
+      sql.query("SELECT `users`.`name` as `user`, `roles`.`name` as `role` FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id LEFT JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id >= 2 AND roles.id <= 8 ORDER BY `roles`.`name`", (err, results)=>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const roles = results
+          let role = results[0].role
+          user_isos[role] = {}
+          let weeksClaimed = {}
+          let weeksSent = {}
+          let weeksReturned = {}
+          let weeksRemaining = {}
+          for(let i = 0; i < roles.length; i++){
+            
+            if(role == results[i].role){
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }else{
+              role = results[i].role
+              user_isos[role] = {}
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }
+          }
+          
+          sql.query("SELECT * FROM transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let owners_by_role = {}
+              for(let i = 0; i < transactions.length; i++){
+                let w = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(transactions[i].to == "Claimed"){
+                  if(user_isos[transactions[i].from][transactions[i].name]["claimed"][w]){
+                    user_isos[transactions[i].from][transactions[i].name]["claimed"][w] += transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].from][transactions[i].name]["claimed"][w] = transactions[i].weight
+                  }
+                }else if(transactions.to == "Cancel verify"){
+                  if(user_isos[transactions[i].from][transactions[i].name]["returned"][w]){
+                    user_isos[transactions[i].from][transactions[i].name]["returned"][w] += transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].from][transactions[i].name]["returned"][w] = transactions[i].weight
+                  }
+                }else if(transactions.to == "Unclaimed"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] -= transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = -transactions[i].weight
+                  }
+                }else{
+                  if(user_isos[transactions[i].from][transactions[i].name]["sent"][w]){
+                    user_isos[transactions[i].from][transactions[i].name]["sent"][w] += transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].from][transactions[i].name]["sent"][w] = transactions[i].weight
+                  }
+                  owners_by_role[transactions[i].filename + transactions[i].from + transactions[i].revision] = transactions[i].name
+                  if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]){
+                    user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += transactions[i].weight
+                  }
+                }
+              }
+
+              Object.keys(user_isos).map(function(role, index) {
+                Object.keys(user_isos[role]).map(function(user, index) {
+                    for(let w = 1; w < total_weeks + 1; w++){
+                      let remaining = 0
+                      if(w > 1){
+                        remaining = user_isos[role][user]["remaining"][w-1]
+                      }
+                      if(user_isos[role][user]["claimed"][w]){
+                        remaining += user_isos[role][user]["claimed"][w]
+                      }
+                      if(user_isos[role][user]["sent"][w]){
+                        remaining -= user_isos[role][user]["sent"][w]
+                      }
+                      if(user_isos[role][user]["returned"][w]){
+                        remaining += user_isos[role][user]["returned"][w]
+                      }
+                      user_isos[role][user]["remaining"][w] = remaining
+                    }
+                })
+              })
+            }
+            res.json({user_isos: user_isos}).status(200)
+          })
+        }
+      })
+    }
+  })
+  
 }
 
 module.exports = {
@@ -5672,6 +5902,8 @@ module.exports = {
   getIssuedWeightByMatWeek,
   getEstimatedForecastWeight,
   submitEstimatedForecastWeight,
+  getIsosByUserWeekDesign,
+  getWeightByUserWeekDesign,
   getIsosByUserWeek,
   getWeightByUserWeek
 };
