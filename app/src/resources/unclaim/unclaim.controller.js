@@ -71,22 +71,28 @@ const forceUnclaim = async(req,res) =>{
                             last = results[i]
                         }
                     }
-                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, 0, last.spo, last.sit, 0, last.from, last.to, "Forced unclaim", username, req.body.role], (err, results) => {
-                    if (err) {
-                        console.log("error: ", err);
-                    }else{
-                        console.log("created unclaim in hisoctrls");
-                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
-                            if (err) {
-                                console.log("error: ", err);
-                            }else{
-                            console.log("unclaimed iso " + fileName);
-                            res.status(200).send({"unclaimed": true})
+                    sql.query("SELECT user, role, `to` FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                        const tray = results[0].to
+                        const owner = results[0].user
+                        const owner_role = results[0].role
+                        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                        [fileName, 0, last.spo, last.sit, 0, tray, tray, "FU-" + owner + "-" + owner_role, username, req.body.role], (err, results) => {
+                        if (err) {
+                            console.log("error: ", err);
+                        }else{
+                            console.log("created unclaim in hisoctrls");
+                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
+                                if (err) {
+                                    console.log("error: ", err);
+                                }else{
+                                console.log("unclaimed iso " + fileName);
+                                res.status(200).send({"unclaimed": true})
+                                }
+                            })
                             }
                         })
-                        }
                     })
+                    
                 }
             })
         }

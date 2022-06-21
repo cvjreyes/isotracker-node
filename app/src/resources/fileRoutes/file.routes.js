@@ -161,6 +161,7 @@ let routes = (app) => {
   router.get("/getWeightByUserWeekDesign", controller.getWeightByUserWeekDesign)
   router.get("/getIsosByUserWeek", controller.getIsosByUserWeek)
   router.get("/getWeightByUserWeek", controller.getWeightByUserWeek)
+  router.get("/trayCount", controller.trayCount)
 
   app.use(router);
 };
