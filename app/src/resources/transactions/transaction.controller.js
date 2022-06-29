@@ -492,7 +492,7 @@ const transaction = async (req, res) => {
 
 const returnLead = async(req, res) =>{
   const fileName = req.body.fileName
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
     if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
@@ -662,7 +662,7 @@ const returnLeadStress = async(req, res) =>{
   let username = "";
   let dest_role = "StressLead";
 
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
     if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
@@ -1007,7 +1007,7 @@ const returnIso = async(req, res) =>{
   let dest_role = destiny;
 
   
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
     if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
