@@ -1377,7 +1377,7 @@ const toIssue = async(req,res) =>{
                                 }else{
                                   type = "value_ifc"
                                 }
-                                sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                                sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                                   if(!results[0]){
                                     res.status(401)
                                   }else{
@@ -1399,7 +1399,7 @@ const toIssue = async(req,res) =>{
                                               console.log("error: ", err);
                                             }else{
                                               console.log("issued in misoctrls");
-                                              sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid = ?", [isoid], (err, results) =>{
+                                              sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid COLLATE utf8mb4_unicode_ci = ?", [isoid], (err, results) =>{
                                                 if(!results[0]){
                                                   res.status(200).send({revision: "newRev"})
                                                 }else{
@@ -1509,7 +1509,7 @@ const newRev = (req, res) =>{
   const origin_path = './app/storage/isoctrl/lde/' + fileName
   const destiny_path = './app/storage/isoctrl/design/' + newFileName
 
-  sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('-').slice(0, -1)], (err, results)=>{
     if(!results && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
@@ -1568,7 +1568,7 @@ const newRev = (req, res) =>{
                       }else{
                         type = "value_ifc"
                       }
-                      sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
+                      sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [newFileName.split('.').slice(0, -1)], (err, results)=>{
                         if(!results[0]){
                           res.status(401)
                         }else{
@@ -1659,7 +1659,7 @@ const newRev = (req, res) =>{
                   console.log("error: ", err);
                 }else{
                   console.log("created hisoctrls");
-                  sql.query('UPDATE misoctrls SET filename = ?, isoid = ? WHERE filename = ?', [newName, newName.split('.').slice(0, -1), oldName], (err, results)=>{
+                  sql.query('UPDATE misoctrls SET filename = ?, isoid COLLATE utf8mb4_unicode_ci = ? WHERE filename = ?', [newName, newName.split('.').slice(0, -1), oldName], (err, results)=>{
                     if(err){
                       res.status(401)
                     }else{
@@ -1747,7 +1747,7 @@ const newRev = (req, res) =>{
 
   const unlock = (req, res) =>{
     isoid = req.body.isoid
-    sql.query('UPDATE misoctrls SET blocked = 0 WHERE isoid = ?', [isoid],(err, results)=>{
+    sql.query('UPDATE misoctrls SET blocked = 0 WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [isoid],(err, results)=>{
       if(err){
         res.status(401)
       }else{
@@ -1862,7 +1862,7 @@ async function uploadReportPeriod(){
         }else{
           const isoids = results
           for(let i = 0; i < isoids.length; i++){
-            sql.query('UPDATE misoctrls set before_tpipes_id = ? WHERE isoid = ?', [isoids[i].tpipes_id, isoids[i].isoid], (err, results)=>{
+            sql.query('UPDATE misoctrls set before_tpipes_id = ? WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [isoids[i].tpipes_id, isoids[i].isoid], (err, results)=>{
               if(err){
                 console.log("Error updating")
               }
@@ -1977,7 +1977,7 @@ async function refreshProgress(){
         type = "value_ifc"
       }
       for(let i = 0; i < lines.length; i++){
-        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [lines[i].isoid], (err, results)=>{
+        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [lines[i].isoid], (err, results)=>{
           if(!results[0]){
             console.log("No existe en dpipes ", lines[i].isoid)
           }else{

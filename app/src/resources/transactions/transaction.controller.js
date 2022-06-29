@@ -123,7 +123,7 @@ const transaction = async (req, res) => {
                                         }else{
                                           type = "value_ifc"
                                         }
-                                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                                           if(!results[0]){
                                             res.status(401)
                                           }else{
@@ -326,7 +326,7 @@ const transaction = async (req, res) => {
                                         }else{
                                           type = "value_ifc"
                                         }
-                                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
                                           if(!results[0]){
                                             res.status(401)
                                           }else{
@@ -590,7 +590,7 @@ const returnLead = async(req, res) =>{
                               }else{
                                 type = "value_ifc"
                               }
-                              sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
+                              sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
                                 if(!results[0]){
                                   res.status(401)
                                 }else{
@@ -778,7 +778,7 @@ const returnLeadStress = async(req, res) =>{
                                   }else{
                                     type = "value_ifc"
                                   }
-                                  sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                                  sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                                     if(!results[0]){
                                       res.status(401)
                                     }else{
@@ -924,7 +924,7 @@ const returnLeadStress = async(req, res) =>{
                         }else{
                           type = "value_ifc"
                         }
-                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                        sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                           if(!results[0]){
                             res.status(401)
                           }else{
@@ -1131,7 +1131,7 @@ const returnIso = async(req, res) =>{
                                           }else{
                                             type = "value_ifc"
                                           }
-                                          sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                                          sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                                             if(!results[0]){
                                               res.status(401)
                                             }else{
@@ -1329,7 +1329,7 @@ const returnIso = async(req, res) =>{
                           }else{
                             type = "value_ifc"
                           }
-                          sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
+                          sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName.split('.').slice(0, -1)], (err, results)=>{
                             if(!results[0]){
                               res.status(401)
                             }else{
