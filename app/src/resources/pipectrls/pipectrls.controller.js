@@ -14,7 +14,6 @@ const getPipesByStatus = async(req, res) =>{
             }
             sql.query("SELECT DISTINCT pipectrls.id, pipectrls.tag, pipectrls.status_id, pestpipes.progress, pestpipes.stage1, pipectrls.valves, pipectrls.instruments, tpipes.code, pipectrls.updated_at, users.name, CASE WHEN misoctrls.id IS NULL THEN 'Not in IsoTracker' ELSE 'In IsoTracker' END AS isotracker FROM pipectrls LEFT JOIN dpipes_view ON pipectrls.tag = dpipes_view.tag LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id LEFT JOIN users ON pipectrls.user_id = users.id LEFT JOIN pestpipes ON pipectrls.status_id = pestpipes.id WHERE status_id IN (?) AND pipectrls.`deleted` is null", [status_ids], (err, results) =>{
                 if(!results[0]){
-                    console.log("Pipes not found")
                     res.json({rows: []}).status(401)
                 }else{
                     res.json({rows: results}).status(200)
@@ -74,7 +73,6 @@ const pipingMyTray = async(req, res) =>{
             const user_id = results[0].id
             sql.query("SELECT DISTINCT pipectrls.id, pipectrls.tag, pipectrls.status_id, pestpipes.name as tray, next_status.name as next, pestpipes.progress, pestpipes.stage1, pipectrls.valves, pipectrls.instruments, tpipes.code, pipectrls.updated_at, users.name, CASE WHEN misoctrls.id IS NULL THEN 'Not in IsoTracker' ELSE 'In IsoTracker' END AS isotracker FROM pipectrls LEFT JOIN dpipes_view ON pipectrls.tag = dpipes_view.tag LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id LEFT JOIN users ON pipectrls.user_id = users.id LEFT JOIN pestpipes ON pipectrls.status_id = pestpipes.id LEFT JOIN pestpipes next_status ON (pipectrls.status_id + 1) = next_status.id  WHERE users.id = ? AND pipectrls.`deleted` is null", [user_id], (err, results) =>{
                 if(!results[0]){
-                    console.log("Pipes not found")
                     res.send({rows: []}).status(401)
                 }else{
                     res.json({rows: results}).status(200)
@@ -89,7 +87,6 @@ const nextStep = async(req, res) =>{
     for(let i = 0; i < pipes.length; i++){
         sql.query("SELECT status_id, code FROM pipectrls LEFT JOIN dpipes ON pipectrls.tag = dpipes.tag LEFT JOIN tpipes ON dpipes.tpipes_id = tpipes.id WHERE pipectrls.id = ?", [pipes[i]], (err, results) =>{
             if(!results[0]){
-                console.log("Pipes not found")
                 res.send({success: false}).status(401)
             }else{
                 let next_id = null
@@ -203,7 +200,6 @@ const returnPipes = async(req, res) =>{
     for(let i = 0; i < pipes.length; i++){
         sql.query("SELECT status_id, code FROM pipectrls LEFT JOIN dpipes ON pipectrls.tag = dpipes.tag LEFT JOIN tpipes ON dpipes.tpipes_id = tpipes.id WHERE pipectrls.id = ?", [pipes[i]], (err, results) =>{
             if(!results[0]){
-                console.log("Pipes not found")
                 res.send({success: false}).status(401)
             }else{
                 let next_id = null
@@ -240,7 +236,6 @@ const returnPipes = async(req, res) =>{
 const getDeletedPipes = async(req, res) =>{
     sql.query("SELECT pipectrls.id, pipectrls.tag, pipectrls.status_id, tpipes.code, pipectrls.updated_at, users.name FROM pipectrls LEFT JOIN dpipes ON pipectrls.tag = dpipes.tag LEFT JOIN tpipes ON dpipes.tpipes_id = tpipes.id LEFT JOIN users ON pipectrls.user_id = users.id WHERE `deleted` = 1", (err, results) =>{
         if(!results[0]){
-            console.log("Pipes not found")
             res.send({rows: []}).status(401)
         }else{
             res.json({rows: results}).status(200)

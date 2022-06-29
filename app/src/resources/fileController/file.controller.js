@@ -5443,7 +5443,27 @@ const getWeightByUserWeekDesign = async(req, res) =>{
 
           sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
             if(!results[0]){
-              res.send({user_isos: user_isos}).status(200)
+                let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                Object.keys(user_isos).map(function(user, index) {
+                  user_isos[user]["sent"] = {}
+                  user_isos[user]["returned"] = {}
+  
+                  user_isos[user]["remaining"] = {}
+                  for(let w = 1; w < total_weeks + 1; w++){
+                    let remaining = 0
+                    if(w > 1){
+                      remaining = user_isos[user]["remaining"][w-1]
+                    }
+                    if(user_isos[user]["assigned"]){
+                      if(user_isos[user]["assigned"][w]){
+                        remaining += user_isos[user]["assigned"][w]
+                      }
+                    }
+                    user_isos[user]["remaining"][w] = remaining
+                  }
+                  
+                })
+                res.send({design_isos: user_isos}).status(200)
             }else{
               let transactions = results
               let current_user = transactions[0].name
@@ -5567,7 +5587,7 @@ const getIsosByUserWeek = async(req, res) =>{
           res.send({user_isos: []}).status(200)
         }else{
           const roles = results
-          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer"]
+          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"]
           let role = results[0].role
           user_isos[role] = {}
           let weeksClaimed = {}
@@ -5630,6 +5650,7 @@ const getIsosByUserWeek = async(req, res) =>{
                         }else{
                           user_isos[comments[2]][comments[1]]["returned"][w] = -1
                         }
+                        delete owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision]
                       }else{
                         if(user_isos[comments[2]][comments[1]]["claimed"][w]){
                           user_isos[comments[2]][comments[1]]["claimed"][w] -= 1
@@ -5650,6 +5671,25 @@ const getIsosByUserWeek = async(req, res) =>{
                           user_isos[comments[2]][comments[1]]["claimed"][w] += 1
                         }else{
                           user_isos[comments[2]][comments[1]]["claimed"][w] = 1
+                        }
+                      }
+                    }else{
+                      if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                        if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += 1
+                        }else{
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = 1
+                        }
+                      }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                        owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                      }
+                      
+                      if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                        if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += 1
+                        }else{
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = 1
                         }
                       }
                     }
@@ -5673,6 +5713,7 @@ const getIsosByUserWeek = async(req, res) =>{
                     }
                   }else{
                     if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
                       if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
                         user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += 1
                       }else{
@@ -5693,6 +5734,7 @@ const getIsosByUserWeek = async(req, res) =>{
                   
                 }
               }
+
               Object.keys(user_isos).map(function(role, index) {
                 Object.keys(user_isos[role]).map(function(user, index) {
                     for(let w = 1; w < total_weeks + 1; w++){
@@ -5740,9 +5782,8 @@ const getWeightByUserWeek = async(req, res) =>{
           res.send({user_isos: []}).status(200)
         }else{
           const roles = results
+          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"]
           let role = results[0].role
-          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer"]
-
           user_isos[role] = {}
           let weeksClaimed = {}
           let weeksSent = {}
@@ -5772,7 +5813,6 @@ const getWeightByUserWeek = async(req, res) =>{
               res.send({user_isos: user_isos}).status(200)
             }else{
               let transactions = results
-              
               let owners_by_role = {}
               for(let i = 0; i < transactions.length; i++){
                 let w = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
@@ -5805,6 +5845,7 @@ const getWeightByUserWeek = async(req, res) =>{
                         }else{
                           user_isos[comments[2]][comments[1]]["returned"][w] = -transactions[i].weight
                         }
+                        delete owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision]
                       }else{
                         if(user_isos[comments[2]][comments[1]]["claimed"][w]){
                           user_isos[comments[2]][comments[1]]["claimed"][w] -= transactions[i].weight
@@ -5814,7 +5855,6 @@ const getWeightByUserWeek = async(req, res) =>{
                       }
                       
                     }else if(comments[0] == "FC"){
-                      console.log(user_isos[comments[2]])
                       if(owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision] == comments[1]){
                         if(user_isos[comments[2]][comments[1]]["returned"][w]){
                           user_isos[comments[2]][comments[1]]["returned"][w] += transactions[i].weight
@@ -5828,13 +5868,32 @@ const getWeightByUserWeek = async(req, res) =>{
                           user_isos[comments[2]][comments[1]]["claimed"][w] = transactions[i].weight
                         }
                       }
+                    }else{
+                      if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                        if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += transactions[i].weight
+                        }else{
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = transactions[i].weight
+                        }
+                      }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                        owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                      }
+                      
+                      if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                        if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += transactions[i].weight
+                        }else{
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = transactions[i].weight
+                        }
+                      }
                     }
                 }else{
                   
                   if(user_isos[transactions[i].role][transactions[i].name]["sent"][w]){
                     user_isos[transactions[i].role][transactions[i].name]["sent"][w] += transactions[i].weight
                   }else{
-                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] = transactions[i].weight 
+                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] = transactions[i].weight
                   }
 
                   if(transactions[i].role == "SupportsLead" && transactions[i].verify == 1){
@@ -5849,6 +5908,7 @@ const getWeightByUserWeek = async(req, res) =>{
                     }
                   }else{
                     if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
                       if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
                         user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += transactions[i].weight
                       }else{
@@ -5869,6 +5929,7 @@ const getWeightByUserWeek = async(req, res) =>{
                   
                 }
               }
+
               Object.keys(user_isos).map(function(role, index) {
                 Object.keys(user_isos[role]).map(function(user, index) {
                     for(let w = 1; w < total_weeks + 1; w++){
