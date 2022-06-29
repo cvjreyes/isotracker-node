@@ -16,7 +16,7 @@ const singleClaim = async (req, res) => {
       }
     });
 
-    sql.query('SELECT * FROM dpipes_view WHERE isoid = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+    sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
       if(!results[0] && process.env.NODE_PROGRESS == "1"){
         sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
           res.status(200).send({blocked:"1"})
