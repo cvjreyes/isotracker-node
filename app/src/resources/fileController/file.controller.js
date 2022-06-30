@@ -2970,7 +2970,11 @@ const submitRevision = async(req, res) =>{
 function downloadIssuedTo3D(){
   let exists = false
   sql.query("SELECT dpipes_view.tag, revision, issued, issuer_date, issuer_designation, issuer_draw, issuer_check, issuer_appr FROM dpipes_view JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE `to` = ?", ["Issuer"], (err, results) =>{
-    if(!results[0]){
+      if(err){
+        console.log(err)
+      }
+      if(!results[0]){
+
       let emptylog = []
       emptylog.push("DESIGN\n")
       emptylog.push("ONERROR CONTINUE\n")
@@ -3049,8 +3053,11 @@ function downloadIssuedTo3D(){
       for(let i = 0; i < log.length; i++){
         logToText += log[i]+"\n"
       }
-
       if(exists){
+        fs.unlink('IssuerFromIsoTrackerTo3d.mac',function(err){
+          if(err) return console.log(err);
+        
+        });  
         fs.writeFile("IssuerFromIsoTrackerTo3d.mac", logToText, function (err) {
           if (err) return console.log(err);
           fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
@@ -3067,8 +3074,13 @@ function downloadIssuedTo3D(){
         for(let i = 0; i < emptylog.length; i++){
           emptyLogToText += emptylog[i]+"\n"
         }
+        fs.unlink('IssuerFromIsoTrackerTo3d.mac',function(err){
+          if(err) return console.log(err);
+        });
         fs.writeFile("IssuerFromIsoTrackerTo3d.mac", emptyLogToText, function (err) {
+	
           if (err) return console.log(err);
+	  
           fs.copyFile('./IssuerFromIsoTrackerTo3d.mac', process.env.NODE_ISSUER_ROUTE, (err) => {
             if (err) throw err;
           });
