@@ -1842,7 +1842,7 @@ cron.schedule('0 */7 * * * *', async () => {
     if(process.env.NODE_ISSUER == "1"){
       const timeoutObj = setTimeout(() => {
         downloadIssuedTo3D()
-      }, 10000)
+      }, 15000)
       
     }
   }
