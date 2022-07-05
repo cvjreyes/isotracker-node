@@ -89,6 +89,9 @@ let routes = (app) => {
   router.post("/closeByPass", controller.closeByPass)
   router.post("/deleteByPass", controller.deleteByPass)
   router.get("/exportByPass", controller.exportByPass)
+
+  router.get("/isCancellable/:filename", controller.isCancellable)
+  router.post("/cancelRev", controller.cancelRev)
   app.use(router);
 };
 

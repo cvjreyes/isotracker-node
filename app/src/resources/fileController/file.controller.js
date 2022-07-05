@@ -1835,7 +1835,7 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 
-cron.schedule('0 */5 * * * *', async () => {
+cron.schedule('0 */7 * * * *', async () => {
   
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
@@ -3430,6 +3430,73 @@ const exportByPass = async(req, res) =>{
   })
 }
 
+const isCancellable = async(req, res) =>{
+  const filename = req.params.filename
+  sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const isoid = results[0].isoid
+      const revision = results[0].revision
+      sql.query("SELECT * FROM misoctrls WHERE isoid = ? AND revision > ?", [isoid, revision], (err, results) =>{
+        if(results[0]){
+          res.send({cancellable: false})
+        }else{
+          sql.query("SELECT `to` FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL)", [isoid, revision], (err, results) =>{
+            if(!results[0]){
+              res.send({cancellable: false})
+            }else{
+              const tray = results[0].to
+              if(tray == "Design"){
+                res.send({cancellable: true})
+              }else{
+                res.send({cancellable: false})
+              }
+            }
+          })
+        }
+      })
+    }
+  })
+  
+}
+
+const cancelRev = async(req, res) =>{
+  const filename = req.body.filename
+  sql.query("SELECT isoid FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
+    if(!results[0]){
+      res.status(401)
+    }else{
+      const isoid = results[0].isoid
+      sql.query("SELECT filename FROM misoctrls WHERE isoid = ?", [isoid], (err, results) =>{
+        const newRevFilename = results[0].filename
+        sql.query("DELETE FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL) AND `to` = ?", [isoid, "Design"], (err, results) =>{
+          if(err){
+            console.log(err)
+            res.status(401)
+          }else{
+            fs.unlink('./app/storage/design/' + newRevFilename, function(err){
+              if(err){
+                console.log(err)
+              } 
+            }); 
+            sql.query("UPDATE misoctrls SET requested = 0 WHERE filename = ?", [filename], (err, results) =>{
+              if(err){
+                console.log(err)
+                res.status(401)
+              }else{
+                res.send({success: true}).status(200)
+              }
+            })
+          }
+        })
+      })
+      
+    }
+  })
+  
+}
+
 module.exports = {
   upload,
   update,
@@ -3503,5 +3570,7 @@ module.exports = {
   closeByPass,
   deleteByPass,
   answerByPass,
-  exportByPass
+  exportByPass,
+  isCancellable,
+  cancelRev
 };
