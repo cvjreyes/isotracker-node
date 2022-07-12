@@ -128,7 +128,7 @@ const equipEstimated = (req, res) =>{
   
           if(results[i].elements == 0){
             results[i].progress = 10
-          }else if(results[i].percentage != 100){
+          }else if(results[i].progress != 100){
             results[i].progress = 65
           }else{
             results[i].progress = 100
