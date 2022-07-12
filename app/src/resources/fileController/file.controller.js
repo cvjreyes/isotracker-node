@@ -3463,6 +3463,7 @@ const isCancellable = async(req, res) =>{
 
 const cancelRev = async(req, res) =>{
   const filename = req.body.filename
+  const user = req.body.user
   sql.query("SELECT isoid FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
     if(!results[0]){
       res.status(401)
@@ -3475,6 +3476,14 @@ const cancelRev = async(req, res) =>{
             console.log(err)
             res.status(401)
           }else{
+            sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+              const username = results[0].name
+              sql.query("INSERT INTO hisoctrls (filename, isoid, user, role) VALUES (?,?,?,?)", [filename, isoid,  username, "SpecialityLead"], (err, results) => {
+                if(err){
+                  console.log(err)
+                }
+              })
+            })
             fs.unlink('./app/storage/design/' + newRevFilename, function(err){
               if(err){
                 console.log(err)
