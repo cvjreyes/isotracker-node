@@ -5104,7 +5104,6 @@ module.exports = {
   submitRevision,
   excludeHold,
   sendHold,
-  getFilenamesByUser,
   createByPass,
   getByPassData,
   acceptByPass,
