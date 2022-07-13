@@ -28,9 +28,6 @@ let routes = (app) => {
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
   router.get("/checkOwner/:fileName", controller.checkOwner);
-  router.get("/currentProgress", controller.currentProgress);
-  router.get("/getMaxProgress", controller.getMaxProgress);
-  router.get("/currentProgressISO", controller.currentProgressISO);
 
   router.post("/toIssue", controller.toIssue);
   router.post("/request", controller.request);
