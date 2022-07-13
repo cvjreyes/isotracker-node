@@ -4883,7 +4883,27 @@ const getEstimatedMatWeek = async(req, res) =>{
     if(!results[0]){
       res.json({estimated: []}).status(401)
     }else{
-      res.json({estimated: results}).status(200)
+      let estimated = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        const start = results[0].starting_date
+        const oneJan = new Date(start.getFullYear(),0,1);
+        const numberOfDays = Math.floor((start - oneJan) / (24 * 60 * 60 * 1000));
+        const initial_week = Math.ceil(( start.getDay() + 1 + numberOfDays) / 7);
+        let counter = 0
+        let mat = estimated[0].material_id
+        for(let i = 0; i < estimated.length; i++){
+          if(mat == estimated[i].material_id){
+            estimated[i].weekY = initial_week + counter
+            counter += 1
+          }else{
+            mat = estimated[i].material_id
+            estimated[i].weekY = initial_week
+            counter = 1
+          }
+        }
+        res.json({estimated: estimated}).status(200)
+      })
+      
     }
   })
 }
