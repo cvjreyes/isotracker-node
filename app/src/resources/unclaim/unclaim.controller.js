@@ -11,12 +11,8 @@ const singleUnclaim = async (req, res) => {
         res.status(401).send("Username or password incorrect");
         }else{
             username  = results[0].name
-            sql.query("SELECT forced, returned FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
-                /*if(results[0].forced == 1){
-                    res.status(401).send({"error": "forced"})
-                }else if(results[0].returned == 1){
-                    res.status(401).send({"error": "returned"})
-                }else{*/
+            sql.query("SELECT forced, returned, `to` FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
+                    let tray = results[0].to
                     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
                         if(!results[0]){
                             res.status(401).send("No files found");
@@ -28,7 +24,7 @@ const singleUnclaim = async (req, res) => {
                                 }
                             }
                             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-                            [fileName, last.revision, last.spo, last.sit, 0, last.from, last.to, "Unclaimed", username, req.body.role], (err, results) => {
+                            [fileName, last.revision, last.spo, last.sit, 0, tray, "Unclaimed", "Unclaimed", username, req.body.role], (err, results) => {
                             if (err) {
                                 console.log("error: ", err);
                             }else{
@@ -75,22 +71,28 @@ const forceUnclaim = async(req,res) =>{
                             last = results[i]
                         }
                     }
-                    sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, 0, last.spo, last.sit, 0, last.from, last.to, "Forced unclaim", username, req.body.role], (err, results) => {
-                    if (err) {
-                        console.log("error: ", err);
-                    }else{
-                        console.log("created unclaim in hisoctrls");
-                        sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
-                            if (err) {
-                                console.log("error: ", err);
-                            }else{
-                            console.log("unclaimed iso " + fileName);
-                            res.status(200).send({"unclaimed": true})
+                    sql.query("SELECT user, role, `to` FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                        const tray = results[0].to
+                        const owner = results[0].user
+                        const owner_role = results[0].role
+                        sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
+                        [fileName, 0, last.spo, last.sit, 0, tray, tray, "FU-" + owner + "-" + owner_role, username, req.body.role], (err, results) => {
+                        if (err) {
+                            console.log("error: ", err);
+                        }else{
+                            console.log("created unclaim in hisoctrls");
+                            sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
+                                if (err) {
+                                    console.log("error: ", err);
+                                }else{
+                                console.log("unclaimed iso " + fileName);
+                                res.status(200).send({"unclaimed": true})
+                                }
+                            })
                             }
                         })
-                        }
                     })
+                    
                 }
             })
         }

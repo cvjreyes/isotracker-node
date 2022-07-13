@@ -30,6 +30,8 @@ const transaction = async (req, res) => {
                   if (!results[0]){
                       res.status(401).send("File not found");
                   }else{
+                    const role = results[0].role
+                    const username = results[0].user
                       let revisionCompleted = false
                       if(results[0].issuer_date && results[0].issuer_date != "" && results[0].issuer_designation && results[0].issuer_designation != "" && results[0].issuer_draw && results[0].issuer_draw != "" && results[0].issuer_check && results[0].issuer_check != "" && results[0].issuer_appr && results[0].issuer_appr != ""){
                         revisionCompleted = true
@@ -111,7 +113,7 @@ const transaction = async (req, res) => {
                                   }
     
                                   sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                                  [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, "Unclaimed by leader", dest_user, dest_role], (err, results) => {
+                                  [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, dest_user, username, role], (err, results) => {
                                     if (err) {
                                       console.log("error: ", err);
                                     }else{
@@ -689,12 +691,13 @@ const returnLeadStress = async(req, res) =>{
                     res.status(401).send("File not found");
                 }else{
                     const from = results[0].to
+                    
                     let created_at = results[0].created_at
                     if(!fs.existsSync('./app/storage/isoctrl/' + from + "/attach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf') && destiny == "LDE/Isocontrol"){
                       res.status(401)
                     }else{
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, role, user, verifydesign) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
-                      [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, from, destiny, comments, null, "None", 1], (err, results) => {
+                      [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, from, destiny, comments, "SupportsLead", username, 1], (err, results) => {
                           if (err) {
                               console.log("error: ", err);
                           }else{
@@ -1247,13 +1250,12 @@ const returnIso = async(req, res) =>{
             })
             }else{
               const dest_user = results[0].user
-              const dest_role = results[0].role
               sql.query('SELECT * from misoctrls WHERE filename = ?', [fileName], (err, results)=>{
                 if(!results[0]){
                   res.status(401)
                 }else{
                   let from = results[0].to
-                  
+                  const role = results[0].role
     
                   let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                   masterName = fileName.split('.').slice(0, -1)
@@ -1317,7 +1319,7 @@ const returnIso = async(req, res) =>{
                     }
     
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, comments, username, dest_role], (err, results) => {
+                    [fileName, results[0].revision, results[0].spo, results[0].sit,results[0].deleted, results[0].onhold, from_text, destiny, comments, username, role], (err, results) => {
                       if (err) {
                         console.log("error: ", err);
                       }else{

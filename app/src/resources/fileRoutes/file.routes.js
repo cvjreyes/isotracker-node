@@ -27,6 +27,10 @@ let routes = (app) => {
   router.get("/getAttach/:fileName", controller.getAttach);
   router.post("/uploadReport", controller.uploadReport);
   router.get("/checkPipe/:fileName", controller.checkPipe);
+  router.get("/checkOwner/:fileName", controller.checkOwner);
+  router.get("/currentProgress", controller.currentProgress);
+  router.get("/getMaxProgress", controller.getMaxProgress);
+  router.get("/currentProgressISO", controller.currentProgressISO);
 
   router.post("/toIssue", controller.toIssue);
   router.post("/request", controller.request);
@@ -89,6 +93,36 @@ let routes = (app) => {
   router.post("/closeByPass", controller.closeByPass)
   router.post("/deleteByPass", controller.deleteByPass)
   router.get("/exportByPass", controller.exportByPass)
+  router.get("/api/diameters", controller.getDiameters)
+  router.get("/api/lineRefs", controller.getLineRefs)
+  router.get("/api/designers", controller.getDesigners)
+  router.get("/modelledEstimatedPipes", controller.modelledEstimatedPipes)
+  router.get("/getDataByRef/:ref", controller.getDataByRef)
+  router.post("/submitModelledEstimatedPipes", controller.submitModelledEstimatedPipes)
+  router.get("/modelledEstimatedHolds", controller.modelledEstimatedHolds)
+  router.get("/modelledEstimatedHolds", controller.modelledEstimatedHolds)
+  router.get("/getAllHolds/:tag", controller.getAllHolds) 
+  router.post("/submit/holdsIso", controller.submitHoldsIso)
+  router.get("/getIsocontrolHolds/:tag", controller.getIsocontrolHolds) 
+  router.get("/getEstimatedMatWeek", controller.getEstimatedMatWeek) 
+  router.get("/getForecastMatWeek", controller.getForecastMatWeek) 
+  router.get("/getMaterials", controller.getMaterials)
+  router.get("/getMaterialsPipingClass", controller.getMaterialsPipingClass)
+  router.get("/getProjectSpan", controller.getProjectSpan)
+  router.post("/submitProjectSpan", controller.submitProjectSpan)
+  router.post("/submitPipingClass", controller.submitPipingClass)
+  router.post("/submitMaterials", controller.submitMaterials)
+  router.post("/submitEstimatedForecast", controller.submitEstimatedForecast)
+  router.get("/getEstimatedByMaterial", controller.getEstimatedByMaterial)
+  router.get("/getIssuedByMatWeek", controller.getIssuedByMatWeek)
+  router.get("/getIssuedWeightByMatWeek", controller.getIssuedWeightByMatWeek)
+  router.get("/getEstimatedForecastWeight", controller.getEstimatedForecastWeight)
+  router.post("/submitEstimatedForecastWeight", controller.submitEstimatedForecastWeight)
+  router.get("/getIsosByUserWeekDesign", controller.getIsosByUserWeekDesign)
+  router.get("/getWeightByUserWeekDesign", controller.getWeightByUserWeekDesign)
+  router.get("/getIsosByUserWeek", controller.getIsosByUserWeek)
+  router.get("/getWeightByUserWeek", controller.getWeightByUserWeek)
+  router.get("/trayCount", controller.trayCount)
 
   router.get("/isCancellable/:filename", controller.isCancellable)
   router.post("/cancelRev", controller.cancelRev)

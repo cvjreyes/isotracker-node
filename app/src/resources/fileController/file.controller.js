@@ -6,6 +6,9 @@ var format = require('date-format');
 var cron = require('node-cron');
 const csv=require('csvtojson')
 const readXlsxFile = require('read-excel-file/node');
+const { verify } = require("crypto");
+const { type } = require("os");
+const { resourceLimits } = require("worker_threads");
 const nodemailer = require("nodemailer");
 const { Console } = require("console");
 
@@ -41,7 +44,6 @@ const update = async (req, res) => {
     await uploadFile.updateFileMiddleware(req, res);
 
     if (req.file == undefined) {
-      console.log("undef")
       return res.status(400).send({ message: "Please upload a file!" });
     }
 
@@ -100,7 +102,7 @@ const update = async (req, res) => {
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   if(process.env.NODE_PROGRESS === "1"){
-    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND (onhold != 1 || onhold IS NULL)', [tab], (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code`, pestpipes.progress as status FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id LEFT JOIN pipectrls ON dpipes_view.tag = pipectrls.tag LEFT JOIN pestpipes ON pipectrls.status_id = pestpipes.id WHERE misoctrls.`to` = ? AND (onhold != 1 || onhold IS NULL)', [tab], (err, results) =>{
       
       res.json({
         rows: results
@@ -223,7 +225,7 @@ const download = (req, res) => {
         const date = results[0].issued_date
         res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
           if (err) {
-            console.log("error")
+            console.log("error download")
             res.status(500).send({
               message: "Could not download the file. " + err,
             });
@@ -352,7 +354,7 @@ const getAttach = (req,res) =>{
 
 const uploadHis = async (req, res) => {
   var username = "";
-  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+  sql.query('SELECT users.* FROM owners LEFT JOIN users ON owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag WHERE isoid = ?', [req.body.fileName.split('.').slice(0, -1)], (err, results) =>{
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
@@ -1186,7 +1188,7 @@ const uploadReport = async(req,res) =>{
           if(process.env.NODE_MMDN == 1){
             sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                console.log("ivalid diameter")
+                console.log("ivalid diameter: " + req.body[i][diameter_index])
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
@@ -1215,7 +1217,7 @@ const uploadReport = async(req,res) =>{
           }else{
             sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
-                console.log("ivalid diameter")
+                console.log("ivalid diameter: " + req.body[i][diameter_index])
               }else{
                 const diameterid = results[0].id
                 let calc_notes = 0
@@ -1269,6 +1271,89 @@ const checkPipe = async(req,res) =>{
       }).status(200)
     }
   })
+}
+
+const checkOwner = async(req,res) =>{
+  const fileName = req.params.fileName.split('.').slice(0, -1)
+  sql.query("SELECT owner_iso_id FROM dpipes_view LEFT JOIN owners ON dpipes_view.tag = owners.tag WHERE isoid = ?", [fileName], (err, results) =>{
+    console.log(results)
+    if(!results[0].owner_iso_id){
+      res.json({
+        owner: false
+      }).status(200)
+    }else{
+      res.json({
+        owner: true
+      }).status(200)
+    }
+  })
+}
+
+const currentProgress = async(req,res) =>{
+  let progress = 0
+  let realprogress = 0
+  sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
+    if(results[0]["SUM(progress)"]){
+      progress = results[0]["SUM(progress)"]
+    }
+    sql.query("SELECT SUM(realprogress) FROM misoctrls WHERE requested is null OR requested = 1", (req, results) =>{
+      if(results[0]["SUM(realprogress)"]){
+        realprogress = results[0]["SUM(realprogress)"]
+      }
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              res.json({
+                weight: maxProgress,
+                progress: (progress/maxProgress * 100).toFixed(2),
+                realprogress: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const currentProgressISO = async(req,res) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
+    const progress = results[0]["SUM(progress)"]
+    sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE requested is null OR requested = 1", (req, results) =>{
+      const realprogress = results[0]["SUM(realprogress)"]
+      sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+        const tp1 = results[0]["COUNT(tpipes_id)"]
+        sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+          const tp2 = results[0]["COUNT(tpipes_id)"]
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+            const tp3 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT weight FROM tpipes", (err, results) =>{
+              const weights = results
+              const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+              res.json({
+                progressISO: (progress/maxProgress * 100).toFixed(2),
+                realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
+              }).status(200)
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+const getMaxProgress = async(req,res) =>{
+        sql.query("SELECT weight FROM tpipes", (err, results) =>{
+          res.json({
+            weights: results
+          }).status(200)
+        })
 }
 
 const toIssue = async(req,res) =>{
@@ -1475,7 +1560,7 @@ const request = (req,res) =>{
               }else{
                 
                 sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
-                  console.log(results)
+                  
                   if(results[0].requested !== null){
                     res.status(401).send("Isometric already requested")
                   }else{
@@ -1503,7 +1588,6 @@ const newRev = (req, res) =>{
   const user = req.body.user
   const role = req.body.role
   const comments = req.body.comments
-  console.log(comments)
   const newFileName = fileName.substring(0,fileName.length-6) + ".pdf"
 
   const origin_path = './app/storage/isoctrl/lde/' + fileName
@@ -1685,7 +1769,6 @@ const newRev = (req, res) =>{
 
                      
                       if(fs.existsSync(origin_path)){
-                        console.log("existe",origin_path)
                           fs.rename(origin_path, destiny_path, function (err) {
                               if (err) throw err
 
@@ -1915,6 +1998,23 @@ async function uploadReportPeriod(){
                     if(err){
                       console.log(err)
                     }
+                    sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
+                      if(!results[0]){
+                        let initial_state = 0
+                        if(tl == 1){
+                          initial_state = 10
+                        }else if(tl == 2){
+                          initial_state = 7
+                        }else{
+                          initial_state = 1
+                        }
+                        sql.query("INSERT INTO pipectrls(tag, status_id) VALUES(?,?)", [csv[i].tag, initial_state], (err, results) =>{
+                          if(err){
+                            console.log(err)
+                          }
+                        })
+                      }
+                    })
                   })
                 }
               })
@@ -1944,6 +2044,23 @@ async function uploadReportPeriod(){
                     if(err){
                       console.log(err)
                     }
+                    sql.query("SELECT id FROM pipectrls WHERE tag = ?", [ csv[i].tag], (err, results) =>{
+                      if(!results[0]){
+                        let initial_state = 0
+                        if(tl == 1){
+                          initial_state = 10
+                        }else if(tl == 2){
+                          initial_state = 7
+                        }else{
+                          initial_state = 1
+                        }
+                        sql.query("INSERT INTO pipectrls(tag, status_id) VALUES(?,?)", [csv[i].tag, initial_state], (err, results) =>{
+                          if(err){
+                            console.log(err)
+                          }
+                        })
+                      }
+                    })
                   })
                 }
               })
@@ -2062,7 +2179,6 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                console.log(req.body[i][type_index])
                 res.json({invalid: i}).status(401)
                 return;
               }else{
@@ -2572,14 +2688,48 @@ const updateBom = async(req, res) =>{
   })
 }
 
-cron.schedule("0 */4 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){
-    updateHolds()
+
+const getNotModelled = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_not_modelled", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const isocontrolWeights = async(req, res) =>{
+  let modelledWeight, notModelledWeight
+  sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_all_view WHERE area IS NOT null", (err, results)=>{
+    if(err){
+      res.status(401)
+    }else{
+      modelledWeight = results[0].modelledWeight
+      sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_all_view WHERE area IS null", (err, results)=>{
+        if(err){
+          res.status(401)
+        }else{
+          notModelledWeight = results[0].notModelledWeight
+          res.json({
+            modelledWeight: modelledWeight,
+            notModelledWeight: notModelledWeight
+          })
+        }
+      })
+    }
+  })
+}
+
+
+cron.schedule("0 */5 * * * *", () => {
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
+   updateHolds()
   }
 })
 
 cron.schedule("0 */30 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL == "1"){
 	updateLines()
 	const timeoutObj = setTimeout(() => {
         updateIsocontrolModelled()
@@ -2695,7 +2845,7 @@ const exportNotModelled = async(req, res) =>{
 }
 
 const holds = async(req, res) =>{
-  sql.query("SELECT holds.*, dpipes_view.isoid, misoctrls.filename, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`to`, misoctrls.user, misoctrls.role FROM holds LEFT JOIN dpipes_view on holds.tag = dpipes_view.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.onhold = 1", (err, results)=>{
+  sql.query("SELECT dpipes_view.isoid, dpipes_view.tag as iso_tag, misoctrls.onhold, tpipes.code, misoctrls.revision, misoctrls.updated_at, misoctrls.`to`, misoctrls.user, misoctrls.role, holds.* FROM dpipes_view LEFT JOIN holds_isocontrol on dpipes_view.tag = holds_isocontrol.tag LEFT JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id LEFT JOIN holds ON dpipes_view.tag = holds.tag WHERE misoctrls.onhold = 1 GROUP BY misoctrls.isoid", (err, results)=>{
     if(err){
       res.status(401)
     }else{
@@ -2719,6 +2869,7 @@ async function updateHolds(){
   })
 
   const timeoutObj = setTimeout(() => {
+    
     sql.query("TRUNCATE holds", (err, results) =>{
       if(err){
         console.log(err)
@@ -2755,6 +2906,18 @@ async function updateHolds(){
         
        
 
+      }
+    })
+
+    sql.query("SELECT tag FROM holds_isocontrol", (err, results)=>{
+      if(results[0]){
+        for(let i = 0; i < results.length; i++){
+          sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ? AND onhold != 2", [results[i].tag], (err, results)=>{                  
+            if(err){
+              console.log(err)
+            }
+          })
+        }
       }
     })
   }, 5000)
@@ -3506,6 +3669,1378 @@ const cancelRev = async(req, res) =>{
   
 }
 
+const getDiameters = (req, res) =>{
+  if(process.env.NODE_MMDN == "0"){
+    sql.query("SELECT dn as diameter FROM diameters", (err, results) =>{
+      res.json({diameters: results}).status(200)
+    })
+  }else{
+    sql.query("SELECT nps as diameter FROM diameters", (err, results) =>{
+      res.json({diameters: results}).status(200)
+    })
+  } 
+}
+
+const getLineRefs = async(req, res) =>{
+  sql.query("SELECT tag as line_ref FROM `lines`", (err, results) =>{
+    if(!results[0]){
+      console.log("no lines")
+      res.json({line_refs: null}).status(401)
+    }else{
+      res.json({line_refs: results}).status(200)
+    }
+  }) 
+}
+
+const getDesigners = async(req, res) =>{
+  sql.query("SELECT `users`.`name` as name FROM `users` LEFT JOIN model_has_roles ON `users`.id = model_has_roles.model_id  LEFT JOIN roles ON `model_has_roles`.role_id = roles.id WHERE role_id = 1", (err, results) =>{
+    if(!results[0]){
+      console.log("no lines")
+      res.json({designers: null}).status(401)
+    }else{
+      res.json({designers: results}).status(200)
+    }
+  }) 
+}
+
+const modelledEstimatedPipes = async(req, res) =>{
+    sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{
+      if(err){
+        console.log(err)
+        res.status(401)
+      }else{
+        for(let i = 0; i < results.length; i++){
+          if(!results[i].type){
+            if(process.env.NODE_MMDN == "0"){
+              if(results[i].diameter < 2.00){
+                results[i].type = "TL1"
+              }else{
+                results[i].type = "TL2"
+              }
+            }else{
+              if(results[i].diameter < 50){
+                results[i].type = "TL1"
+              }else{
+                results[i].type = "TL2"
+              }
+            }
+          }
+        }
+        res.json({rows: results}).status(200)
+      }
+    })
+}
+
+const getDataByRef = async(req, res) =>{
+  const ref = req.params.ref
+  sql.query("SELECT unit, fluid, seq, spec_code, insulation, calc_notes FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
+    if(!results[0]){
+      res.send({pipe: null}).status(401)
+    }else{
+      res.json({pipe: results}).status(200)
+    }
+  })
+}
+
+const submitModelledEstimatedPipes = async(req, res) =>{
+  const new_pipes = req.body.rows
+  const owners = req.body.owners
+  for(let i = 0; i < new_pipes.length; i++){
+    if(new_pipes[i]["Line reference"] == "deleted"){
+      sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }else{
+      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+        if(!results[0]){
+          console.log("Line tag incorrecto")
+        }else{
+          const line_ref_id = results[0].id
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], (err, results) =>{
+            if(!results[0]){
+              console.log("Area incorrecta")
+            }else{
+              const area_id = results[0].id
+              if(new_pipes[i].id){
+                sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].id], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }else{
+                sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+            }
+          })
+        } 
+      })
+    }
+  }
+
+  for(let i = 1; i < owners.length; i++){
+    await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{
+      if(!results){
+        if(owners[i][0] == "IFC"){
+          await sql.query("UPDATE owners SET owner_ifc_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
+        }else{
+          await sql.query("UPDATE owners SET owner_iso_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
+        }
+      }else{
+        const user_id = results[0].id
+        await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
+          if(!results[0] && owners[i][1] != owners[i-1][1]){
+            if(owners[i][0] == "IFC"){
+              await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              let now = new Date()
+              await sql.query("INSERT INTO owners(owner_iso_id, tag, assignation_date) VALUES(?,?,?)", [user_id, owners[i][1], now], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }
+          }else{
+            if(owners[i][0] == "IFC"){
+              await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              let now = new Date()
+              await sql.query("SELECT owner_iso_id FROM owners WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+                if(results[0]){
+                  if(results[0].owner_iso_id != user_id){
+                    await sql.query("UPDATE owners SET owner_iso_id = ?, assignation_date = ? WHERE tag = ?", [user_id, now, owners[i][1]], async(err, results) =>{
+                      if(err){
+                        console.log(err)
+                        res.status(401)
+                      }
+                    })
+                  }
+                }
+              })
+              
+            }
+          }
+        })
+      }
+      
+      
+    })
+    
+  }
+
+  res.send({success: true}).status(200)
+}
+
+const modelledEstimatedHolds = async(req, res) =>{
+  sql.query("SELECT estimated_pipes_view.tag , holds.has_holds, holds_isocontrol.`description` FROM estimated_pipes_view LEFT JOIN holds ON estimated_pipes_view.tag = holds.tag LEFT JOIN holds_isocontrol ON estimated_pipes_view.tag = holds_isocontrol.tag GROUP BY estimated_pipes_view.tag", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
+const getAllHolds = async(req, res) =>{
+  const tag = req.params.tag
+  let holds3d = []
+  let holdsIso = []
+  sql.query("SELECT holds.* FROM holds WHERE holds.tag = ?", [tag], (err, results)=>{
+    if(results[0]){
+      holds3d = results
+    }
+    sql.query("SELECT holds_isocontrol.id, holds_isocontrol.description FROM holds_isocontrol WHERE holds_isocontrol.tag = ?", [tag], (err, results)=>{
+      if(results[0]){
+        for(let i = 0; i < results.length; i++){
+          holdsIso.push({id: results[i].id, description: results[i].description})
+        }
+      }
+      res.send({holds3d: holds3d, holdsIso: holdsIso})
+    })
+  })
+}
+
+const submitHoldsIso = async(req, res) =>{
+  const holds = req.body.rows
+  const tag = req.body.tag
+  for(let i = 0; i < holds.length; i++){
+    if(!holds[i]["description"]){
+      sql.query("DELETE FROM holds_isocontrol WHERE id = ?", [holds[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }else if(!holds[i]["id"]){
+      sql.query("INSERT INTO holds_isocontrol(tag, description) VALUES(?,?)", [tag, holds[i].description], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }else{
+      sql.query("UPDATE holds_isocontrol SET description = ? WHERE id = ?", [holds[i].description, holds[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+          res.status(401)
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const getIsocontrolHolds = async(req, res) =>{
+  const tag = req.params.tag
+  sql.query("SELECT description FROM holds_isocontrol WHERE tag = ?", [tag], (err, results) =>{
+    if(!results[0]){
+      res.send({holds: []}).status(200)
+    }else{
+      res.send({holds: results}).status(200)
+    }
+  })
+}
+
+const getEstimatedMatWeek = async(req, res) =>{
+  sql.query("SELECT week, estimated, material_id, name FROM epipes_new LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
+    if(!results[0]){
+      res.json({estimated: []}).status(401)
+    }else{
+      let estimated = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        const start = results[0].starting_date
+        const oneJan = new Date(start.getFullYear(),0,1);
+        const numberOfDays = Math.floor((start - oneJan) / (24 * 60 * 60 * 1000));
+        const initial_week = Math.ceil(( start.getDay() + 1 + numberOfDays) / 7);
+        let counter = 0
+        let mat = estimated[0].material_id
+        for(let i = 0; i < estimated.length; i++){
+          if(mat == estimated[i].material_id){
+            estimated[i].weekY = initial_week + counter
+            counter += 1
+          }else{
+            mat = estimated[i].material_id
+            estimated[i].weekY = initial_week
+            counter = 1
+          }
+        }
+        res.json({estimated: estimated}).status(200)
+      })
+      
+    }
+  })
+}
+
+const getForecastMatWeek = async(req, res) =>{
+  sql.query("SELECT week, estimated, material_id, name FROM forecast LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
+    if(!results[0]){
+      res.json({forecast: []}).status(401)
+    }else{
+      res.json({forecast: results}).status(200)
+    }
+  })
+}
+
+const getMaterials = async(req, res) =>{
+  sql.query("SELECT id, name FROM materials", (err, results) =>{
+    if(!results[0]){
+      res.json({materials: []}).status(401)
+    }else{
+      res.json({materials: results}).status(200)
+    }
+  })
+}
+
+const getMaterialsPipingClass = async(req, res) =>{
+  sql.query("SELECT materials.id as material_id, materials.name as material, pipingclass.id as piping_id, pipingclass.name as piping FROM pipingclass LEFT JOIN materials ON materials.id = pipingclass.material_id", (err, results) =>{
+    if(!results[0]){
+      res.json({materials: []}).status(200)
+    }else{
+      res.json({materials: results}).status(200)
+    }
+  })
+}
+
+const getProjectSpan = async(req, res) =>{
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.json({span: []}).status(200)
+    }else{
+      res.json({span: results}).status(200)
+    }
+  })
+}
+
+const submitProjectSpan = async(req, res) =>{
+  const start = req.body.span["Starting date"].substring(6,10) + "-" +  req.body.span["Starting date"].substring(3,5) + "-" + req.body.span["Starting date"].substring(0,2)
+  const finish = req.body.span["Finishing date"].substring(6,10) + "-" +  req.body.span["Finishing date"].substring(3,5) + "-" + req.body.span["Finishing date"].substring(0,2)
+  sql.query("UPDATE project_span SET starting_date = ?, finishing_date = ?", [start, finish], (err, results) =>{
+    if(err){
+      console.log(err)
+      res.send({success: false}).status(401)
+    }else{
+      const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
+      let currentWeeks = 0
+      sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC LIMIT 1", (err, results) =>{
+        if(results[0]){
+          currentWeeks = results[0].week
+        }
+        if(weeks < currentWeeks){
+          sql.query("DELETE FROM epipes_new WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
+          sql.query("DELETE FROM forecast WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
+        }else if(weeks > currentWeeks){
+          sql.query("SELECT id FROM materials", (err, results) =>{
+            if(!results[0]){
+              res.send({success: false}).status(401)
+            }else{
+              let materials_ids = []
+              for(let i = 0; i < results.length; i++){
+                materials_ids.push(results[i].id)
+              }
+              let newWeeks = []
+              for (var i = currentWeeks + 1; i <= weeks; i++) {
+                newWeeks.push(i);
+              }
+              for(let i = 0; i < newWeeks.length; i++){
+                for(let j = 0; j < materials_ids.length; j++){
+                  sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                  sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+                    if(err){
+                      console.log(err)
+                    }
+                  })
+                }
+              }
+            }
+          })
+        }
+        sql.query("SELECT DISTINCT week FROM eweights ORDER BY week DESC LIMIT 1", (err, results) =>{
+          let currentWeeks = 0
+          const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
+          if(results[0]){
+            currentWeeks = results[0].week
+          }
+          if(weeks < currentWeeks){
+            sql.query("DELETE FROM eweights WHERE week > ?", [weeks], (err, results) =>{
+              if(err){
+                console.log(err)
+                res.send({success: false}).status(401)
+              }
+            })
+          }else if(weeks > currentWeeks){
+            let newWeeks = []
+            for (var i = currentWeeks + 1; i <= weeks; i++) {
+              newWeeks.push(i);
+            }
+            for(let i = 0; i < newWeeks.length; i++){
+              sql.query("INSERT INTO eweights(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          }
+        })
+        res.send({success: true}).status(200)
+        
+      })
+    }
+  })
+}
+
+const submitPipingClass = async(req, res) =>{
+  const pipingClass = req.body.piping
+  for(let i = 0; i < pipingClass.length; i++){
+    if(!pipingClass[i]["PipingClass"] || pipingClass[i]["PipingClass"] == "" || !pipingClass[i]["Material"] || pipingClass[i]["Material"] == ""){
+      sql.query("DELETE FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
+    }else{
+      sql.query("SELECT id FROM materials WHERE name = ?", [pipingClass[i]["Material"]], (err, results) =>{
+        if(!results[0]){
+          res.send({success: false}).status(401)
+        }else{
+          const material_id = results[0].id
+          sql.query("SELECT * FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results) =>{
+            if(!results[0]){
+              sql.query("INSERT INTO pipingclass(name, material_id) VALUES(?,?)", [pipingClass[i]["PipingClass"], material_id], (err, results) =>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }else{
+              sql.query("UPDATE pipingclass SET name = ?, material_id = ? WHERE id = ?", [pipingClass[i]["PipingClass"], material_id, results[0].id], (err, results) =>{
+                if(err){
+                  console.log(err)
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const submitMaterials = async(req, res) =>{
+  const materials = req.body.materials
+  for(let i = 0; i < materials.length; i++){
+    if(!materials[i]["Material"] || materials[i]["Material"] == ""){
+      await sql.query("DELETE FROM materials WHERE id = ?", [materials[i]["id"]], (err, results)=>{
+          if(err){
+              console.log(err)
+              res.status(401)
+          }
+      })
+    }else{
+      await sql.query("SELECT * FROM materials WHERE id = ?", [materials[i]["id"]], async(err, results) =>{
+        if(!results[0]){
+          await sql.query("INSERT INTO materials(name) VALUES(?)", [materials[i]["Material"]], async(err, results) =>{
+            if(err){
+              console.log(err)
+            }else{
+              await sql.query("SELECT id FROM materials WHERE name = ?", [materials[i]["Material"]], async(err, results)=>{
+                const material_id = results[0].id
+                /*
+                await sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC", async(err, results) =>{
+                  if(results[0]){
+                */
+                  await sql.query("SELECT * FROM project_span", async(err, results) =>{
+                      if(results[0]){
+                        let week = Math.floor((new Date(results[0].finishing_date) - new Date(results[0].starting_date)) / (1000 * 60 * 60 * 24) / 7)
+                        
+                      for(let w = 1; w < week + 1; w++){
+                      await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
+                        if(err){
+                          console.log(err)
+                        }
+                      })
+                      await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
+                        if(err){
+                          console.log(err)
+                        }
+                      })
+                    }
+                  }
+                })
+              })
+            }
+          })
+        }else{
+          await sql.query("UPDATE materials SET name = ? WHERE id = ?", [materials[i]["Material"], materials[i]["id"]], (err, results) =>{
+            if(err){
+              console.log(err)
+            }
+          })
+        }
+      })
+    }
+  }
+  res.send({success: true}).status(200)
+}
+
+const submitEstimatedForecast = async(req, res) =>{
+  const material_id = req.body.material_id
+  const estimated = req.body.estimated
+  const forecast = req.body.forecast
+
+  Object.keys(estimated).map(function(key, index) {
+    sql.query("UPDATE epipes_new SET estimated = ? WHERE material_id = ? AND week = ?", [estimated[key], material_id, key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  Object.keys(forecast).map(function(key, index) {
+    sql.query("UPDATE forecast SET estimated = ? WHERE material_id = ? AND week = ?", [forecast[key], material_id, key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  res.send({success: true}).status(200)
+}
+
+const getEstimatedByMaterial = async(req, res) =>{
+  sql.query("SELECT * FROM estimated_materials_view", (err, results) =>{
+    if(!results[0]){
+      res.json({estimated: []}).status(200)
+    }else{
+      res.json({estimated: results}).status(200)
+    }
+  })
+}
+
+const getIssuedByMatWeek = async(req, res) =>{
+  sql.query("SELECT * FROM issued_material_view", (err, results) =>{
+    if(!results[0]){
+      res.send({issued: []}).status(200)
+    }else{
+      const issued_isos = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({issued: []}).status(200)
+        }else{
+          let start = results[0].starting_date
+          let issued = {}
+          let issued_mat = {}
+          let material_id = issued_isos[0].material_id
+          for(let i = 0; i < issued_isos.length; i++){
+            let week = Math.floor((new Date(issued_isos[i].issuer_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(material_id == issued_isos[i].material_id){
+              if(issued_mat[week]){
+                issued_mat[week] += 1
+              }else{
+                issued_mat[week] = 1
+              }
+            }else{
+              issued[material_id] = issued_mat
+              material_id = issued_isos[i].material_id
+              issued_mat = {}
+              issued_mat[week] = 1
+            }
+          }
+          
+          issued[material_id] = issued_mat
+          res.send({issued: issued}).status(200)
+        }
+      })
+    }
+  })
+}
+
+const getIssuedWeightByMatWeek = async(req, res) =>{
+  sql.query("SELECT * FROM isocontrol_issued_weight_view", (err, results) =>{
+    if(!results[0]){
+      res.send({issued: []}).status(200)
+    }else{
+      const issued_isos = results
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({issued: []}).status(200)
+        }else{
+          let start = results[0].starting_date
+          let issued = {}
+          let issued_mat = {}
+          let material_id = issued_isos[0].material_id
+          for(let i = 0; i < issued_isos.length; i++){
+            let week = Math.floor((new Date(issued_isos[i].issued_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(material_id == issued_isos[i].material_id){
+              if(issued_mat[week]){
+                issued_mat[week] += issued_isos[i].total_weight
+              }else{
+                issued_mat[week] = issued_isos[i].total_weight
+              }
+            }else{
+              issued[material_id] = issued_mat
+              material_id = issued_isos[i].material_id
+              issued_mat = {}
+              issued_mat[week] = issued_isos[i].total_weight
+            }
+          }
+          
+          issued[material_id] = issued_mat
+          res.send({issued: issued}).status(200)
+        }
+      })
+    }
+  })
+}
+
+const getEstimatedForecastWeight = async(req, res) =>{
+  sql.query("SELECT * FROM eweights", (err, results) =>{
+    if(!results[0]){
+      res.send({estimated: []}).status(200)
+    }else{
+        res.send({estimated: results}).status(200)
+    }
+  })
+}
+
+const submitEstimatedForecastWeight = async(req, res) =>{
+  const estimated = req.body.estimated
+  const forecast = req.body.forecast
+  Object.keys(estimated).map(function(key, index) {
+    sql.query("UPDATE eweights SET estimated = ?, forecast = ? WHERE week = ?", [estimated[key], forecast[key], key], (err, results) =>{
+      if(err){
+        console.log(err)
+      }
+    })
+  });
+
+  res.send({success: true}).status(200)
+}
+
+const getIsosByUserWeekDesign = async(req, res) =>{
+  sql.query("SELECT name, assignation_date FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id ORDER BY name", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      let assignations = results
+      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const start = results[0].starting_date
+          const finish = results[0].finishing_date
+          let user_isos = {}
+          let current_user = assignations[0].name
+          let user = {}
+          for(let i = 0; i < assignations.length; i++){
+            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(current_user === assignations[i].name){
+              if(user[week]){
+                user[week] += 1
+              }else{
+                user[week] = 1
+              }
+            }else{
+              user_isos[current_user] = {assigned: user}
+              user = {}
+              current_user = assignations[i].name
+              user[week] = 1
+            }
+          }
+          user_isos[current_user] = {assigned: user}
+
+          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
+            if(!results[0]){
+              let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+              Object.keys(user_isos).map(function(user, index) {
+                user_isos[user]["sent"] = {}
+                user_isos[user]["returned"] = {}
+
+                user_isos[user]["remaining"] = {}
+                for(let w = 1; w < total_weeks + 1; w++){
+                  let remaining = 0
+                  if(w > 1){
+                    remaining = user_isos[user]["remaining"][w-1]
+                  }
+                  if(user_isos[user]["assigned"]){
+                    if(user_isos[user]["assigned"][w]){
+                      remaining += user_isos[user]["assigned"][w]
+                    }
+                  }
+                  user_isos[user]["remaining"][w] = remaining
+                }
+                
+              })
+              res.send({design_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let current_user = transactions[0].name
+              let user_sent = {}
+              let user_returned = {} 
+              for(let i = 0; i < transactions.length; i++){
+                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(current_user === transactions[i].name){
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += 1
+                    }else{
+                      user_sent[week] = 1
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_returned[week]){
+                      user_returned[week] += 1
+                    }else{
+                      user_returned[week] = 1
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += 1
+                    }else{
+                      user_isos[current_user]["assigned"][week] = 1
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] += 1
+                    }else{
+                      user_returned[week] = 1
+                    }
+                  }
+                }else{
+                  user_isos[current_user]["sent"] = user_sent
+                  user_isos[current_user]["returned"] = user_returned
+                  user_sent = {}
+                  user_returned = {}
+                  current_user = transactions[i].name
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += 1
+                    }else{
+                      user_sent[week] = 1
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_returned[week]){
+                      user_returned[week] += 1
+                    }else{
+                      user_returned[week] = 1
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += 1
+                    }else{
+                      user_isos[current_user]["assigned"][week] = 1
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] -= 1
+                    }else{
+                      user_returned[week] = 0
+                    }
+                  }
+                }
+              }
+              user_isos[current_user]["sent"] = user_sent
+              user_isos[current_user]["returned"] = user_returned
+
+              let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+              Object.keys(user_isos).map(function(key, index) {
+                user_isos[key]["remaining"] = {}
+                for(let w = 1; w < total_weeks + 1; w++){
+                  let remaining = 0
+                  if(w > 1){
+                    remaining = user_isos[key]["remaining"][w-1]
+                  }
+                  if(user_isos[key]["assigned"]){
+                    if(user_isos[key]["assigned"][w]){
+                      remaining += user_isos[key]["assigned"][w]
+                    }
+                  }
+                  if(user_isos[key]["sent"]){
+                    if(user_isos[key]["sent"][w]){
+                      remaining -= user_isos[key]["sent"][w]
+                    }
+                  }
+                  if(user_isos[key]["returned"]){
+                    if(user_isos[key]["returned"][w]){
+                      remaining += user_isos[key]["returned"][w]
+                    }
+                  }
+                  user_isos[key]["remaining"][w] = remaining
+                }
+                
+              });
+              res.json({design_isos: user_isos}).status(200)
+            }
+          })
+        }
+      })
+      
+    }
+  })
+}
+
+const getWeightByUserWeekDesign = async(req, res) =>{
+  sql.query("SELECT users.name, assignation_date, tpipes.weight FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY name", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      let assignations = results
+      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const start = results[0].starting_date
+          const finish = results[0].finishing_date
+          let user_isos = {}
+          let current_user = assignations[0].name
+          let user = {}
+          for(let i = 0; i < assignations.length; i++){
+            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+            if(current_user === assignations[i].name){
+              if(user[week]){
+                user[week] += assignations[i].weight
+              }else{
+                user[week] = assignations[i].weight
+              }
+            }else{
+              user_isos[current_user] = {assigned: user}
+              user = {}
+              current_user = assignations[i].name
+              user[week] = assignations[i].weight
+            }
+          }
+          user_isos[current_user] = {assigned: user}
+
+          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
+            if(!results[0]){
+                let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                Object.keys(user_isos).map(function(user, index) {
+                  user_isos[user]["sent"] = {}
+                  user_isos[user]["returned"] = {}
+  
+                  user_isos[user]["remaining"] = {}
+                  for(let w = 1; w < total_weeks + 1; w++){
+                    let remaining = 0
+                    if(w > 1){
+                      remaining = user_isos[user]["remaining"][w-1]
+                    }
+                    if(user_isos[user]["assigned"]){
+                      if(user_isos[user]["assigned"][w]){
+                        remaining += user_isos[user]["assigned"][w]
+                      }
+                    }
+                    user_isos[user]["remaining"][w] = remaining
+                  }
+                  
+                })
+                res.send({design_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let current_user = transactions[0].name
+              let user_sent = {}
+              let user_returned = {} 
+              for(let i = 0; i < transactions.length; i++){
+                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(current_user === transactions[i].name){
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += transactions[i].weight
+                    }else{
+                      user_sent[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += transactions[i].weight
+                    }else{
+                      user_isos[current_user]["assigned"][week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }
+                }else{
+                  user_isos[current_user]["sent"] = user_sent
+                  user_isos[current_user]["returned"] = user_returned
+                  user_sent = {}
+                  user_returned = {}
+                  current_user = transactions[i].name
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+                    if(user_sent[week]){
+                      user_sent[week] += transactions[i].weight
+                    }else{
+                      user_sent[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Cancel verify"){
+                    if(user_returned[week]){
+                      user_returned[week] += transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].from === "Issued"){
+                    if(user_isos[current_user]["assigned"][week]){
+                      user_isos[current_user]["assigned"][week] += transactions[i].weight
+                    }else{
+                      user_isos[current_user]["assigned"][week] = transactions[i].weight
+                    }
+                  }else if(transactions[i].to === "Design"){
+                    if(user_returned[week]){
+                      user_returned[week] -= transactions[i].weight
+                    }else{
+                      user_returned[week] = transactions[i].weight
+                    }
+                  }
+                }
+              }
+              user_isos[current_user]["sent"] = user_sent
+              user_isos[current_user]["returned"] = user_returned
+
+              let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+              Object.keys(user_isos).map(function(key, index) {
+                user_isos[key]["remaining"] = {}
+                for(let w = 1; w < total_weeks + 1; w++){
+                  let remaining = 0
+                  if(w > 1){
+                    remaining = user_isos[key]["remaining"][w-1]
+                  }
+                  if(user_isos[key]["assigned"]){
+                    if(user_isos[key]["assigned"][w]){
+                      remaining += user_isos[key]["assigned"][w]
+                    }
+                  }
+                  if(user_isos[key]["sent"]){
+                    if(user_isos[key]["sent"][w]){
+                      remaining -= user_isos[key]["sent"][w]
+                    }
+                  }
+                  if(user_isos[key]["returned"]){
+                    if(user_isos[key]["returned"][w]){
+                      remaining += user_isos[key]["returned"][w]
+                    }
+                  }
+                  user_isos[key]["remaining"][w] = remaining
+                }
+                
+              });
+              res.json({design_isos: user_isos}).status(200)
+            }
+          })
+        }
+      })
+      
+    }
+  })
+}
+
+
+const getIsosByUserWeek = async(req, res) =>{
+ 
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      const start = results[0].starting_date
+      const finish = results[0].finishing_date
+      const total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+      let user_isos = {}
+
+      sql.query("SELECT `users`.`name` as `user`, `roles`.`name` as `role` FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id LEFT JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id >= 2 AND roles.id <= 8 ORDER BY `roles`.`name`", (err, results)=>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const roles = results
+          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"]
+          let role = results[0].role
+          user_isos[role] = {}
+          let weeksClaimed = {}
+          let weeksSent = {}
+          let weeksReturned = {}
+          let weeksRemaining = {}
+          for(let i = 0; i < roles.length; i++){
+            
+            if(role == results[i].role){
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }else{
+              role = results[i].role
+              user_isos[role] = {}
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }
+          }
+          
+          sql.query("SELECT * FROM transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let owners_by_role = {}
+              for(let i = 0; i < transactions.length; i++){
+                let w = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(transactions[i].to == "Claimed"){
+                  if(!owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision]){
+                    if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                      user_isos[transactions[i].role][transactions[i].name]["claimed"][w] += 1
+                    }else{
+                      user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = 1
+                    }
+                  }
+                }else if(transactions[i].to == "Cancel verify"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["returned"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] += 1
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] = 1
+                  }
+                }else if(transactions[i].to == "Unclaimed"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] -= 1
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = -1
+                  }
+                }else if(transactions[i].role == "SpecialityLead"){
+                    let comments = transactions[i].comments.split("-")
+                    if(comments[0] == "FU"){
+                      if(owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision] == comments[1]){
+                        if(user_isos[comments[2]][comments[1]]["returned"][w]){
+                          user_isos[comments[2]][comments[1]]["returned"][w] -= 1
+                        }else{
+                          user_isos[comments[2]][comments[1]]["returned"][w] = -1
+                        }
+                        delete owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision]
+                      }else{
+                        if(user_isos[comments[2]][comments[1]]["claimed"][w]){
+                          user_isos[comments[2]][comments[1]]["claimed"][w] -= 1
+                        }else{
+                          user_isos[comments[2]][comments[1]]["claimed"][w] = -1
+                        }
+                      }
+                      
+                    }else if(comments[0] == "FC"){
+                      if(owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision] == comments[1]){
+                        if(user_isos[comments[2]][comments[1]]["returned"][w]){
+                          user_isos[comments[2]][comments[1]]["returned"][w] += 1
+                        }else{
+                          user_isos[comments[2]][comments[1]]["returned"][w] = 1
+                        }
+                      }else{
+                        if(user_isos[comments[2]][comments[1]]["claimed"][w]){
+                          user_isos[comments[2]][comments[1]]["claimed"][w] += 1
+                        }else{
+                          user_isos[comments[2]][comments[1]]["claimed"][w] = 1
+                        }
+                      }
+                    }else{
+                      if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                        if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += 1
+                        }else{
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = 1
+                        }
+                      }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                        owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                      }
+                      
+                      if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                        if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += 1
+                        }else{
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = 1
+                        }
+                      }
+                    }
+                }else{
+                  
+                  if(user_isos[transactions[i].role][transactions[i].name]["sent"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] += 1
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] = 1 
+                  }
+
+                  if(transactions[i].role == "SupportsLead" && transactions[i].verify == 1){
+                    if(owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision] && (order.indexOf(transactions[i].to) < order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w]){
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w] += 1
+                      }else{
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w] = 1
+                      }
+                    }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                      owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                    }
+                  }else{
+                    if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                      if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += 1
+                      }else{
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = 1
+                      }
+                    }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                      owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                    }
+                    
+                    if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                      if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                        user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += 1
+                      }else{
+                        user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = 1
+                      }
+                    }
+                  }
+                  
+                }
+              }
+
+              Object.keys(user_isos).map(function(role, index) {
+                Object.keys(user_isos[role]).map(function(user, index) {
+                    for(let w = 1; w < total_weeks + 1; w++){
+                      let remaining = 0
+                      if(w > 1){
+                        remaining = user_isos[role][user]["remaining"][w-1]
+                      }
+                      if(user_isos[role][user]["claimed"][w]){
+                        remaining += user_isos[role][user]["claimed"][w]
+                      }
+                      if(user_isos[role][user]["sent"][w]){
+                        remaining -= user_isos[role][user]["sent"][w]
+                      }
+                      if(user_isos[role][user]["returned"][w]){
+                        remaining += user_isos[role][user]["returned"][w]
+                      }
+                      user_isos[role][user]["remaining"][w] = remaining
+                    }
+                })
+              })
+              res.json({user_isos: user_isos}).status(200)
+            }
+            
+          })
+        }
+      })
+    }
+  })
+  
+}
+
+
+const getWeightByUserWeek = async(req, res) =>{
+  sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+    if(!results[0]){
+      res.send({user_isos: []}).status(200)
+    }else{
+      const start = results[0].starting_date
+      const finish = results[0].finishing_date
+      const total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+      let user_isos = {}
+
+      sql.query("SELECT `users`.`name` as `user`, `roles`.`name` as `role` FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id LEFT JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id >= 2 AND roles.id <= 8 ORDER BY `roles`.`name`", (err, results)=>{
+        if(!results[0]){
+          res.send({user_isos: []}).status(200)
+        }else{
+          const roles = results
+          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"]
+          let role = results[0].role
+          user_isos[role] = {}
+          let weeksClaimed = {}
+          let weeksSent = {}
+          let weeksReturned = {}
+          let weeksRemaining = {}
+          for(let i = 0; i < roles.length; i++){
+            
+            if(role == results[i].role){
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }else{
+              role = results[i].role
+              user_isos[role] = {}
+              user_isos[role][roles[i].user] = {}
+              user_isos[role][roles[i].user]["claimed"] = {}
+              user_isos[role][roles[i].user]["sent"] = {}
+              user_isos[role][roles[i].user]["returned"] = {}
+              user_isos[role][roles[i].user]["remaining"] = {}
+            }
+          }
+          
+          sql.query("SELECT * FROM transactions_view", (err, results)=>{
+            if(!results[0]){
+              res.send({user_isos: user_isos}).status(200)
+            }else{
+              let transactions = results
+              let owners_by_role = {}
+              for(let i = 0; i < transactions.length; i++){
+                let w = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
+                if(transactions[i].to == "Claimed"){
+                  if(!owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision]){
+                    if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                      user_isos[transactions[i].role][transactions[i].name]["claimed"][w] += transactions[i].weight
+                    }else{
+                      user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = transactions[i].weight
+                    }
+                  }
+                }else if(transactions[i].to == "Cancel verify"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["returned"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] += transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["returned"][w] = transactions[i].weight
+                  }
+                }else if(transactions[i].to == "Unclaimed"){
+                  if(user_isos[transactions[i].role][transactions[i].name]["claimed"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] -= transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["claimed"][w] = -transactions[i].weight
+                  }
+                }else if(transactions[i].role == "SpecialityLead"){
+                    let comments = transactions[i].comments.split("-")
+                    if(comments[0] == "FU"){
+                      if(owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision] == comments[1]){
+                        if(user_isos[comments[2]][comments[1]]["returned"][w]){
+                          user_isos[comments[2]][comments[1]]["returned"][w] -= transactions[i].weight
+                        }else{
+                          user_isos[comments[2]][comments[1]]["returned"][w] = -transactions[i].weight
+                        }
+                        delete owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision]
+                      }else{
+                        if(user_isos[comments[2]][comments[1]]["claimed"][w]){
+                          user_isos[comments[2]][comments[1]]["claimed"][w] -= transactions[i].weight
+                        }else{
+                          user_isos[comments[2]][comments[1]]["claimed"][w] = -transactions[i].weight
+                        }
+                      }
+                      
+                    }else if(comments[0] == "FC"){
+                      if(owners_by_role[transactions[i].filename + comments[2] + transactions[i].revision] == comments[1]){
+                        if(user_isos[comments[2]][comments[1]]["returned"][w]){
+                          user_isos[comments[2]][comments[1]]["returned"][w] += transactions[i].weight
+                        }else{
+                          user_isos[comments[2]][comments[1]]["returned"][w] = transactions[i].weight
+                        }
+                      }else{
+                        if(user_isos[comments[2]][comments[1]]["claimed"][w]){
+                          user_isos[comments[2]][comments[1]]["claimed"][w] += transactions[i].weight
+                        }else{
+                          user_isos[comments[2]][comments[1]]["claimed"][w] = transactions[i].weight
+                        }
+                      }
+                    }else{
+                      if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                        if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += transactions[i].weight
+                        }else{
+                          user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = transactions[i].weight
+                        }
+                      }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                        owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                      }
+                      
+                      if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                        if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += transactions[i].weight
+                        }else{
+                          user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = transactions[i].weight
+                        }
+                      }
+                    }
+                }else{
+                  
+                  if(user_isos[transactions[i].role][transactions[i].name]["sent"][w]){
+                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] += transactions[i].weight
+                  }else{
+                    user_isos[transactions[i].role][transactions[i].name]["sent"][w] = transactions[i].weight
+                  }
+
+                  if(transactions[i].role == "SupportsLead" && transactions[i].verify == 1){
+                    if(owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision] && (order.indexOf(transactions[i].to) < order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w]){
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w] += transactions[i].weight
+                      }else{
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + "StressLead" + transactions[i].revision]]["returned"][w] = transactions[i].weight
+                      }
+                    }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                      owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                    }
+                  }else{
+                    if(owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision] && (order.indexOf(transactions[i].to) <= order.indexOf(transactions[i].from) || transactions[i].to == "Cancel verify") && transactions[i].to != "Design"  && transactions[i].to != "Verify"){
+                      
+                      if(user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w]){
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] += transactions[i].weight
+                      }else{
+                        user_isos[transactions[i].to][owners_by_role[transactions[i].filename + transactions[i].to + transactions[i].revision]]["returned"][w] = transactions[i].weight
+                      }
+                    }else if(order.indexOf(transactions[i].to) > order.indexOf(transactions[i].from)){
+                      owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] = transactions[i].name
+                    }
+                    
+                    if(owners_by_role[transactions[i].filename + transactions[i].role + transactions[i].revision] == transactions[i].comments && transactions[i].comments != null && transactions[i].role == "StressLead"){
+                      if(user_isos["SupportsLead"][transactions[i].comments]["claimed"][w]){
+                        user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] += transactions[i].weight
+                      }else{
+                        user_isos["SupportsLead"][transactions[i].comments]["claimed"][w] = transactions[i].weight
+                      }
+                    }
+                  }
+                  
+                }
+              }
+
+              Object.keys(user_isos).map(function(role, index) {
+                Object.keys(user_isos[role]).map(function(user, index) {
+                    for(let w = 1; w < total_weeks + 1; w++){
+                      let remaining = 0
+                      if(w > 1){
+                        remaining = user_isos[role][user]["remaining"][w-1]
+                      }
+                      if(user_isos[role][user]["claimed"][w]){
+                        remaining += user_isos[role][user]["claimed"][w]
+                      }
+                      if(user_isos[role][user]["sent"][w]){
+                        remaining -= user_isos[role][user]["sent"][w]
+                      }
+                      if(user_isos[role][user]["returned"][w]){
+                        remaining += user_isos[role][user]["returned"][w]
+                      }
+                      user_isos[role][user]["remaining"][w] = remaining
+                    }
+                })
+              })
+              res.json({user_isos: user_isos}).status(200)
+            }
+            
+          })
+        }
+      })
+    }
+  })
+  
+}
+
+const trayCount = async(req, res) =>{
+  sql.query("SELECT * FROM iquoxe_db.tray_count_view", (err, results) =>{
+    if(!results[0]){
+      res.send({isoCount: [{Design: 0, DesignLead: 0, Stress: 0, StressLead: 0, Supports:0, SupportsLead: 0, Materials: 0, Issuer: 0}]}).status(200)
+    }else{
+      res.send({isoCount: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -3582,4 +5117,35 @@ module.exports = {
   exportByPass,
   isCancellable,
   cancelRev
+  getFilenamesByUser,
+  getDiameters,
+  getLineRefs,
+  getDesigners,
+  modelledEstimatedPipes,
+  getDataByRef,
+  submitModelledEstimatedPipes,
+  checkOwner,
+  modelledEstimatedHolds,
+  getAllHolds,
+  submitHoldsIso,
+  getIsocontrolHolds,
+  getEstimatedMatWeek,
+  getForecastMatWeek,
+  getMaterials,
+  getMaterialsPipingClass,
+  getProjectSpan,
+  submitProjectSpan,
+  submitPipingClass,
+  submitMaterials,
+  submitEstimatedForecast,
+  getEstimatedByMaterial,
+  getIssuedByMatWeek,
+  getIssuedWeightByMatWeek,
+  getEstimatedForecastWeight,
+  submitEstimatedForecastWeight,
+  getIsosByUserWeekDesign,
+  getWeightByUserWeekDesign,
+  getIsosByUserWeek,
+  getWeightByUserWeek,
+  trayCount
 };
