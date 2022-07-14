@@ -1836,7 +1836,7 @@ function downloadStatus3DPeriod(){
 }
 
 cron.schedule('0 */7 * * * *', async () => {
-  
+  /*
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
     if(process.env.NODE_ISSUER == "1"){
@@ -1846,7 +1846,7 @@ cron.schedule('0 */7 * * * *', async () => {
       
     }
   }
-  
+  */
 })
 
 async function uploadReportPeriod(){
