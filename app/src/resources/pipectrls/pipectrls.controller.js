@@ -1,5 +1,6 @@
 const fs = require('fs');
 const sql = require("../../db.js");
+var cron = require('node-cron');
 
 const getPipesByStatus = async(req, res) =>{
     const tray = req.params.status
@@ -307,6 +308,118 @@ const estimatedPipingWeight = async(req, res) =>{
     })
 }
 
+const isocontrolProgress = async(req, res) =>{
+    sql.query("SELECT week, progress FROM pisocontrol", (err, results) =>{
+        if(err){
+            console.log(err)
+            res.send({progress: []}).status(401)
+        }else{
+            res.send({progress: results}).status(401)
+        }
+    })  
+}
+
+const isocontrolEstimated = async(req, res) =>{
+    sql.query("SELECT week, progress FROM epipes_ifd", (err, results) =>{
+        if(err){
+            console.log(err)
+            res.send({progress: []}).status(401)
+        }else{
+            res.send({progress: results}).status(401)
+        }
+    })  
+}
+
+const isocontrolForecast = async(req, res) =>{
+    sql.query("SELECT week, progress FROM forecast_ifd", (err, results) =>{
+        if(err){
+            console.log(err)
+            res.send({progress: []}).status(401)
+        }else{
+            res.send({progress: results}).status(401)
+        }
+    })  
+}
+
+const submitEstimatedForecastIFD = async(req, res) =>{
+    const estimated = req.body.estimated
+    const forecast = req.body.forecast
+    console.log(estimated)
+    for(let i = 0; i < estimated.length; i++){
+        if(!estimated[i]){
+            estimated[i] = null
+        }
+        sql.query("UPDATE epipes_ifd SET progress = ? WHERE week = ?", [estimated[i], i+1], (err, results) =>{
+            if(err){
+                console.log(err)
+            }
+        })
+    }
+    for(let i = 1; i+1 < forecast.length; i++){
+        if(!forecast[i]){
+            forecast[i] = null
+        }
+        sql.query("UPDATE forecast_ifd SET progress = ? WHERE week = ?", [forecast[i], i+1], (err, results) =>{
+            if(err){
+                console.log(err)
+            }
+        })
+        
+    }
+
+    res.send({success: true}).status(200)
+}
+
+cron.schedule('0 0 * * 0', async() => {
+    let estimated_weight = 0, modelled_weight = 0, progress = 0
+    await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
+        if(results[0]){
+            for(let i = 0; i < results.length; i++){
+                if(results[i].calc_notes != "NA"){
+                    estimated_weight += 10
+                  }else{
+                    if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
+                        estimated_weight += 3
+                    }else{
+                        estimated_weight += 5
+                    }
+                  }
+            }
+        }
+        sql.query("SELECT SUM(stage1_weight) as weight FROM dpipes LEFT JOIN tpipes ON dpipes.tpipes_id = tpipes.id", (err, results) =>{
+            if(results[0]){
+                modelled_weight = results[0].weight
+            }
+            sql.query("SELECT stage1 as weight, valves, instruments FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+                if(results[0]){
+                    let weight = 0
+                    for(let i = 0; i < results.length; i++){
+                        weight += results[i].weight
+                        if(results[i].valves || results[i].instruments){
+                            weight += 1
+                        }
+                    }
+                    progress = (weight/modelled_weight*100).toFixed(2)
+                }
+                sql.query("SELECT `week` FROM pisocontrol ORDER BY `week` DESC LIMIT 1", (err, results)=>{
+                    let week = 1
+                    if(!results[0]){
+                        
+                    }else{
+                        week = results[0].week
+                        sql.query("INSERT INTO pisocontrol(week, progress) VALUES(?,?)", [week, progress], (err, results) =>{
+                            if(err){
+                                console.log(err)
+                            }
+                        })
+                    }
+                })
+                
+            })
+        })
+    })
+})
+
 module.exports = {
     getPipesByStatus,
     claimPipes,
@@ -323,5 +436,9 @@ module.exports = {
     getDeletedPipes,
     deletePipes,
     restorePipes,
-    estimatedPipingWeight
+    estimatedPipingWeight,
+    isocontrolProgress,
+    isocontrolEstimated,
+    isocontrolForecast,
+    submitEstimatedForecastIFD
 }

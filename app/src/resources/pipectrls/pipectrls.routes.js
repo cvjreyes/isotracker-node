@@ -17,4 +17,8 @@ module.exports = app => {
     app.post("/deletePipes", pipectrls.deletePipes)
     app.post("/restorePipes", pipectrls.restorePipes)
     app.get("/estimatedPipingWeight", pipectrls.estimatedPipingWeight)
+    app.get("/isocontrolProgress", pipectrls.isocontrolProgress)
+    app.get("/isocontrolEstimated", pipectrls.isocontrolEstimated)
+    app.get("/isocontrolForecast", pipectrls.isocontrolForecast)
+    app.post("/submitEstimatedForecastIFD", pipectrls.submitEstimatedForecastIFD)
   };

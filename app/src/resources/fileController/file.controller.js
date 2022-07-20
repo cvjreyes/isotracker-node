@@ -4025,6 +4025,18 @@ const submitProjectSpan = async(req, res) =>{
               res.send({success: false}).status(401)
             }
           })
+          sql.query("DELETE FROM epipes_ifd WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
+          sql.query("DELETE FROM forecast_ifd WHERE week > ?", [weeks], (err, results) =>{
+            if(err){
+              console.log(err)
+              res.send({success: false}).status(401)
+            }
+          })
         }else if(weeks > currentWeeks){
           sql.query("SELECT id FROM materials", (err, results) =>{
             if(!results[0]){
@@ -4050,7 +4062,18 @@ const submitProjectSpan = async(req, res) =>{
                       console.log(err)
                     }
                   })
+                  
                 }
+                sql.query("INSERT INTO epipes_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                  if(err){
+                    console.log(err)
+                  }
+                })
+                sql.query("INSERT INTO forecast_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                  if(err){
+                    console.log(err)
+                  }
+                })
               }
             }
           })
