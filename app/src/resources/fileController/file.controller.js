@@ -697,8 +697,8 @@ const restore = async(req,res) =>{
             if (err) {
               console.log("error: ", err);
             }else{
-              sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, `user` = ?, role = ? WHERE filename = ?", 
-              [origin, destiny, "Restored", "None", role, fileName], (err, results) => {
+              sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, role = ? WHERE filename = ?", 
+              [origin, destiny, "Restored", role, fileName], (err, results) => {
                 if (err) {
                   console.log("error: ", err);
                 }else{
@@ -2723,7 +2723,7 @@ async function updateHolds(){
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0, user = ?, claimed = 1 WHERE misoctrls.onhold = 1", ["None", "On hold"], (err, results)=>{
+        sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1",  (err, results)=>{
           if(err){
             console.log(err)
             res.status(401)
