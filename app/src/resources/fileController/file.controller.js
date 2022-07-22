@@ -100,7 +100,7 @@ const update = async (req, res) => {
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
   if(process.env.NODE_PROGRESS === "1"){
-    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND (onhold != 1 || onhold IS NULL)', [tab], (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code`, (SELECT hisoctrls.created_at FROM hisoctrls WHERE filename = misoctrls.filename ORDER BY id DESC LIMIT 1) as last_update FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = "Issuer" AND (onhold != 1 || onhold IS NULL)', [tab], (err, results) =>{
       
       res.json({
         rows: results
