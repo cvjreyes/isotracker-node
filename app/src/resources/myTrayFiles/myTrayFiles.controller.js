@@ -56,7 +56,7 @@ exports.getFilesByTray = async(req, res) => {
                 }).status(200)
               })
             }else{
-              sql.query('SELECT misoctrls.id as iso_id, misoctrls.*, dpipes_view.*, tpipes.name, tpipes.weight, tpipes.code FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1 GROUP BY misoctrls.isoid', [folder, username, role], async (err, results) => { 
+              sql.query('SELECT misoctrls.id as iso_id, misoctrls.*, dpipes_view.*, tpipes.name, tpipes.weight, tpipes.code FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE `to` = ? AND user = ? AND role = ? AND claimed = 1 AND onhold != 1 GROUP BY misoctrls.isoid', [folder, username, role], async (err, results) => { 
                 res.json({
                   rows: results
                 }).status(200)
