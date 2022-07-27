@@ -3464,46 +3464,91 @@ const isCancellable = async(req, res) =>{
 const cancelRev = async(req, res) =>{
   const filename = req.body.filename
   const user = req.body.user
-  sql.query("SELECT isoid FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
+
+  sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
     if(!results[0]){
       res.status(401)
     }else{
       const isoid = results[0].isoid
-      sql.query("SELECT filename FROM misoctrls WHERE isoid = ?", [isoid], (err, results) =>{
-        const newRevFilename = results[0].filename
-        sql.query("DELETE FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL) AND `to` = ?", [isoid, "Design"], (err, results) =>{
-          if(err){
-            console.log(err)
-            res.status(401)
-          }else{
-            sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
-              const username = results[0].name
-              sql.query("INSERT INTO hisoctrls (filename, isoid, user, role) VALUES (?,?,?,?)", [filename, isoid,  username, "SpecialityLead"], (err, results) => {
-                if(err){
-                  console.log(err)
-                }
-              })
-            })
-            fs.unlink('./app/storage/design/' + newRevFilename, function(err){
-              if(err){
-                console.log(err)
-              } 
-            }); 
-            sql.query("UPDATE misoctrls SET requested = 0 WHERE filename = ?", [filename], (err, results) =>{
-              if(err){
-                console.log(err)
-                res.status(401)
+      const revision = results[0].revision
+      sql.query("SELECT * FROM misoctrls WHERE isoid = ? AND revision > ?", [isoid, revision], (err, results) =>{
+        if(results[0]){
+          res.send({success: false})
+        }else{
+          sql.query("SELECT `to` FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL)", [isoid, revision], (err, results) =>{
+            if(!results[0]){
+              res.send({success: false})
+            }else{
+              const tray = results[0].to
+              if(tray == "Design"){
+                sql.query("SELECT isoid FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
+                  if(!results[0]){
+                    res.status(401)
+                  }else{
+                    const isoid = results[0].isoid
+                    sql.query("SELECT filename FROM misoctrls WHERE isoid = ?", [isoid], (err, results) =>{
+                      const newRevFilename = results[0].filename
+                      sql.query("DELETE FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL) AND `to` = ?", [isoid, "Design"], (err, results) =>{
+                        if(err){
+                          console.log(err)
+                          res.status(401)
+                        }else{
+                          sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
+                            const username = results[0].name
+                            sql.query("INSERT INTO hisoctrls (filename, isoid, user, role) VALUES (?,?,?,?)", [filename, isoid,  username, "SpecialityLead"], (err, results) => {
+                              if(err){
+                                console.log(err)
+                              }
+                            })
+                          })
+                          fs.unlink('./app/storage/design/' + newRevFilename, function(err){
+                            if(err){
+                              console.log(err)
+                            } 
+                          }); 
+                          sql.query("UPDATE misoctrls SET requested = 0 WHERE filename = ?", [filename], (err, results) =>{
+                            if(err){
+                              console.log(err)
+                              res.status(401)
+                            }else{
+                              res.send({success: true}).status(200)
+                            }
+                          })
+                        }
+                      })
+                    })
+                    
+                  }
+                })
               }else{
-                res.send({success: true}).status(200)
+                res.send({success: false})
               }
-            })
-          }
-        })
+            }
+          })
+        }
       })
-      
     }
   })
-  
+}
+
+const issuedFiles = async(req, res) =>{
+  if(process.env.NODE_PROGRESS === "1"){
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = "LDE/IsoControl" && issued = 1', (err, results) =>{
+      
+      res.json({
+        rows: results
+      })
+    
+    })
+  }else{
+    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = LDE/IsoControl && issued = 1', (err, results) =>{
+      
+      res.json({
+        rows: results
+      })
+    
+    })
+  }
 }
 
 module.exports = {
@@ -3581,5 +3626,6 @@ module.exports = {
   answerByPass,
   exportByPass,
   isCancellable,
-  cancelRev
+  cancelRev,
+  issuedFiles
 };

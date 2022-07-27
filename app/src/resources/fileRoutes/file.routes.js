@@ -92,6 +92,7 @@ let routes = (app) => {
 
   router.get("/isCancellable/:filename", controller.isCancellable)
   router.post("/cancelRev", controller.cancelRev)
+  router.get("/issuedFiles", controller.issuedFiles)
   app.use(router);
 };
 
