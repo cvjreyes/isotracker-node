@@ -18,10 +18,11 @@ const login = async(req, res) => {
         res.json({
           token: token,
           user: email
-        });
+        }).status(200);
+        console.log("The user "+ email +" logged in.");    
       }
     })       
-    console.log("The user "+ email +" logged in.");    
+    
 };
 
 module.exports = {

@@ -363,7 +363,6 @@ const uploadHis = async (req, res) => {
           console.log("error: ", err);
           res.status(401)
         }else{
-          console.log("created hisoctrls");
           if(process.env.NODE_PROGRESS == "1"){
             let type = ""
             if(process.env.NODE_IFC == "0"){
@@ -373,7 +372,6 @@ const uploadHis = async (req, res) => {
             }
             sql.query("SELECT tpipes_id FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [req.body.fileName.split('.').slice(0, -1)], (err, results)=>{
               if(!results[0]){
-                console.log("No se encuentra isoid")
                 res.status(401)
               }else{
                 tl = results[0].tpipes_id
@@ -395,7 +393,6 @@ const uploadHis = async (req, res) => {
                         console.log("error: ", err);
                         res.status(401)
                       }else{
-                        console.log("created misoctrls");
                         res.status(200).send("created misoctrls")
                       }
                     });
@@ -411,7 +408,6 @@ const uploadHis = async (req, res) => {
                 console.log("error: ", err);
                 res.status(401)
               }else{
-                console.log("created misoctrls");
                 res.status(200).send("created misoctrls")
               }
             });
@@ -451,7 +447,6 @@ const updateHis = async (req, res) => {
               res.send({success:1}).status(200)
             }else{
               res.send({success:1}).status(200)
-              console.log("created hisoctrls");
             }
           });
         }
@@ -702,7 +697,6 @@ const restore = async(req,res) =>{
                 if (err) {
                   console.log("error: ", err);
                 }else{
-                  console.log("created misoctrls");
                   if(destiny == "LDE/Isocontrol"){
                     destiny = "lde"
                   }
@@ -742,7 +736,6 @@ const restore = async(req,res) =>{
                           let attachName = file.split('.').slice(0, -1)
                           if(String(masterName).trim() == String(attachName).trim()){
                             fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
-                                console.log("moved attach "+ file)
                                 if (err) throw err
 
                             })
@@ -753,21 +746,18 @@ const restore = async(req,res) =>{
                     if(fs.existsSync(origin_cl_path)){
                         fs.rename(origin_cl_path, destiny_cl_path, function (err) {
                             if (err) throw err
-                            console.log('Successfully renamed - AKA moved!')
                         })
                     }
 
                     if(fs.existsSync(origin_proc_path)){
                       fs.rename(origin_proc_path, destiny_proc_path, function (err) {
                           if (err) throw err
-                          console.log('Successfully renamed - AKA moved!')
                       })
                   }
 
                   if(fs.existsSync(origin_inst_path)){
                       fs.rename(origin_inst_path, destiny_inst_path, function (err) {
                           if (err) throw err
-                          console.log('Successfully renamed - AKA moved!')
                       })
                   }
                     
@@ -1356,7 +1346,6 @@ const toIssue = async(req,res) =>{
                       if (err) {
                         console.log("error: ", err);
                       }else{
-                        console.log("issued in hisoctrls");
                         sql.query("UPDATE misoctrls SET filename = ?  WHERE filename = ?", [newFileName, fileName], (err, results)=>{
                           if (err) {
                             console.log("error: ", err);
@@ -1366,7 +1355,6 @@ const toIssue = async(req,res) =>{
                                 if (err) {
                                   console.log("error: ", err);
                                 }else{
-                                  console.log("issued in misoctrls");
                                   res.status(200).send({issued: "issued"})
                                 }
                               })
@@ -1398,7 +1386,6 @@ const toIssue = async(req,res) =>{
                                             if (err) {
                                               console.log("error: ", err);
                                             }else{
-                                              console.log("issued in misoctrls");
                                               sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid COLLATE utf8mb4_unicode_ci = ?", [isoid], (err, results) =>{
                                                 if(!results[0]){
                                                   res.status(200).send({revision: "newRev"})
@@ -1475,7 +1462,6 @@ const request = (req,res) =>{
               }else{
                 
                 sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
-                  console.log(results)
                   if(results[0].requested !== null){
                     res.status(401).send("Isometric already requested")
                   }else{
@@ -1503,7 +1489,6 @@ const newRev = (req, res) =>{
   const user = req.body.user
   const role = req.body.role
   const comments = req.body.comments
-  console.log(comments)
   const newFileName = fileName.substring(0,fileName.length-6) + ".pdf"
 
   const origin_path = './app/storage/isoctrl/lde/' + fileName
@@ -1542,13 +1527,11 @@ const newRev = (req, res) =>{
                         if (err) {
                           console.log("error: ", err);
                         }else{
-                          console.log("created hisoctrls");
                           sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
                           [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead", null], (err, results) => {
                             if (err) {
                               console.log("error: ", err);
                             }else{
-                              console.log("created misoctrls");
                               sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
                                 if(err){
                                   res.status(401).send(err)
@@ -1591,13 +1574,11 @@ const newRev = (req, res) =>{
                                   if (err) {
                                     console.log("error: ", err);
                                   }else{
-                                    console.log("created hisoctrls");
                                     sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress, realprogress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
                                     [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead", newprogress, newprogress], (err, results) => {
                                       if (err) {
                                         console.log("error: ", err);
                                       }else{
-                                        console.log("created misoctrls");
                                         sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
                                           if(err){
                                             res.status(401).send(err)
@@ -1658,12 +1639,10 @@ const newRev = (req, res) =>{
                 if (err) {
                   console.log("error: ", err);
                 }else{
-                  console.log("created hisoctrls");
                   sql.query('UPDATE misoctrls SET filename = ?, isoid COLLATE utf8mb4_unicode_ci = ? WHERE filename = ?', [newName, newName.split('.').slice(0, -1), oldName], (err, results)=>{
                     if(err){
                       res.status(401)
                     }else{
-                      console.log("renamed")
 
                       let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                       masterName = oldName.split('.').slice(0, -1)
@@ -1685,7 +1664,6 @@ const newRev = (req, res) =>{
 
                      
                       if(fs.existsSync(origin_path)){
-                        console.log("existe",origin_path)
                           fs.rename(origin_path, destiny_path, function (err) {
                               if (err) throw err
 
@@ -1751,7 +1729,6 @@ const newRev = (req, res) =>{
       if(err){
         res.status(401)
       }else{
-        console.log("unlocked")
         res.status(200)
       }
     })
@@ -1763,7 +1740,6 @@ const newRev = (req, res) =>{
         console.log(err)
         res.status(401)
       }else{
-        console.log("unlocked all")
         res.send({success: true}).status(200)
       }
     })
@@ -1993,7 +1969,7 @@ async function refreshProgress(){
             }
             sql.query(q, [level, tl], (err, results)=>{
               if(!results[0]){
-                console.log("No existe")
+
               }else{
                 let newRealRrogress = null
                 if(type == "value_ifc"){
@@ -2010,13 +1986,12 @@ async function refreshProgress(){
                     const q2 = "SELECT "+type+ " as newp FROM ppipes WHERE level = ? AND tpipes_id = ?"
                     sql.query(q2, [max_tray, lines[i].before_tpipes_id], (err, results)=>{
                       if(!results[0]){
-                        console.log("No existe")
+
                       }else{
                         
                         const newProgress = results[0].newp
                         sql.query("UPDATE misoctrls SET progress = ?, realprogress = ? WHERE filename = ?", [newRealRrogress, newProgress, lines[i].filename], (err, results) =>{
                           if (err) {
-                              console.log("No existe")
                               console.log("error: ", err);
                           }else{
                               
@@ -2062,7 +2037,6 @@ const uploadEquisModelledReport = (req, res) =>{
           const areaid = results[0].id
             sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
               if(!results[0]){
-                console.log(req.body[i][type_index])
                 res.json({invalid: i}).status(401)
                 return;
               }else{
@@ -3533,7 +3507,7 @@ const cancelRev = async(req, res) =>{
 
 const issuedFiles = async(req, res) =>{
   if(process.env.NODE_PROGRESS === "1"){
-    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = "LDE/IsoControl" && issued = 1', (err, results) =>{
+    sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.to = "LDE/IsoControl" && issued = 1 ORDER BY issued_date DESC', (err, results) =>{
       
       res.json({
         rows: results

@@ -44,12 +44,10 @@ const singleClaim = async (req, res) => {
                   if (err) {
                       console.log("error: ", err);
                   }else{
-                      console.log("created claim in hisoctrls");
                       sql.query("UPDATE misoctrls SET claimed = 1, forced = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                           if (err) {
                               console.log("error: ", err);
                           }else{
-                              console.log("claimed iso " + fileName);
                               res.status(200).send("claimed")
                           }
                       })
@@ -99,7 +97,6 @@ const singleClaimProc = async(req, res) =>{
                 if (err) {
                     console.log("error: ", err);
                 }else{
-                    console.log("created claim in hisoctrls");
                     let spo = 1
                     if(spouser){
                       spo = 4
@@ -108,7 +105,6 @@ const singleClaimProc = async(req, res) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
-                            console.log("claimed iso for process " + fileName);
                             res.status(200).send("claimed")
                         }
                     })
@@ -157,7 +153,6 @@ const singleClaimInst = async(req, res) =>{
                 if (err) {
                     console.log("error: ", err);
                 }else{
-                    console.log("created claim in hisoctrls");
                     let sit = 1
                     if(situser){
                       sit = 4
@@ -166,7 +161,6 @@ const singleClaimInst = async(req, res) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
-                            console.log("claimed iso for instrument " + fileName);
                             res.status(200).send("claimed")
                         }
                     })
@@ -215,12 +209,10 @@ const forceClaim = async(req,res) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
-                        console.log("created forced claim in hisoctrls");
                         sql.query("UPDATE misoctrls SET claimed = 1, verifydesign = 0, user = ?, role = ?, forced = 1, forceduser = ? WHERE filename = ?", [user, role, los, fileName], (err, results) =>{
                             if (err) {
                                 console.log("error: ", err);
                             }else{
-                                console.log("forced claim iso " + fileName);
                                 res.status(200).send("claimed")
                             }
                         })
