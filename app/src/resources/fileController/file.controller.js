@@ -3515,7 +3515,7 @@ const issuedFiles = async(req, res) =>{
     
     })
   }else{
-    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = LDE/IsoControl && issued = 1', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = "LDE/IsoControl" && issued = 1', (err, results) =>{
       
       res.json({
         rows: results
