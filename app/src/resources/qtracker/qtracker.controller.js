@@ -103,7 +103,6 @@ const requestNWC = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -216,7 +215,6 @@ const requestNVN = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -328,7 +326,6 @@ const requestNRI = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -441,7 +438,6 @@ const requestNRB = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -551,7 +547,6 @@ const requestNRIDS = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -664,7 +659,6 @@ const requestRR = async(req, res) =>{
                                                 }
                                             })
                                         }
-                                        console.log("Request sent")
             
                                     })
                                 }
@@ -777,9 +771,6 @@ const updateStatus = async(req, res) =>{
     const status_id = req.body.status_id
     const type = req.body.type
     const email = req.body.email
-
-    console.log(incidence_number)
-    
 
     if(type == "NWC"){
         sql.query("UPDATE qtracker_not_working_component SET status = ? WHERE incidence_number = ?", [status_id, incidence_number], (err, results) =>{

@@ -28,12 +28,10 @@ const verify = async(req, res) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
-                    console.log("verified in hisoctrls")
                     sql.query("UPDATE misoctrls SET verifydesign = 1, returned = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
-                            console.log("verified iso " + fileName);
                             res.status(200).send("verified")
                         }
                     })

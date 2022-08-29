@@ -117,7 +117,6 @@ const transaction = async (req, res) => {
                                     if (err) {
                                       console.log("error: ", err);
                                     }else{
-                                      console.log("created return in hisoctrls");
                                       if(process.env.NODE_PROGRESS == "1"){
                                         let type = ""
                                         if(process.env.NODE_IFC == "0"){
@@ -206,7 +205,6 @@ const transaction = async (req, res) => {
                                 if (err) {
                                     console.log("error: ", err);
                                 }else{
-                                    console.log("created transaction");
                                     let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                                     masterName = req.body.fileName.split('.').slice(0, -1)
       
@@ -364,7 +362,6 @@ const transaction = async (req, res) => {
                                                           res.status(401).send("cant update")
                                                           console.log("error: ", err);
                                                       }else{
-                                                          console.log("iso moved" );
                                                           res.status(200).send({"moved": 1})
                                                       }
                                                     })
@@ -380,7 +377,6 @@ const transaction = async (req, res) => {
                                             if (err) {
                                                 console.log("error: ", err);
                                             }else{
-                                                console.log("iso moved" );
                                                 res.status(200).send({"moved": 1})
                                             }
                                         })
@@ -554,7 +550,6 @@ const returnLead = async(req, res) =>{
                                   let attachName = file.split('.').slice(0, -1)
                                   if(String(masterName).trim() == String(attachName).trim()){
                                     fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
-                                        console.log("moved attach "+ file)
                                         if (err) throw err
     
                                     })
@@ -622,7 +617,6 @@ const returnLead = async(req, res) =>{
                                               if (err) {
                                                   console.log("error: ", err);
                                               }else{
-                                                  console.log("iso moved" );
                                                   res.status(200).send("moved")
                                               }
                                           })
@@ -637,7 +631,6 @@ const returnLead = async(req, res) =>{
                                   if (err) {
                                       console.log("error: ", err);
                                   }else{
-                                      console.log("iso moved" );
                                       res.status(200).send("moved")
                                   }
                               })
@@ -701,7 +694,6 @@ const returnLeadStress = async(req, res) =>{
                           if (err) {
                               console.log("error: ", err);
                           }else{
-                              console.log("created transaction");
                               let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                               masterName = fileName.split('.').slice(0, -1)
   
@@ -734,7 +726,6 @@ const returnLeadStress = async(req, res) =>{
                                         let attachName = file.split('.').slice(0, -1)
                                         if(String(masterName).trim() == String(attachName).trim()){
                                           fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
-                                              console.log("moved attach "+ file)
                                               if (err) throw err
       
                                           })
@@ -815,7 +806,6 @@ const returnLeadStress = async(req, res) =>{
                                                     res.status(401).send("cant update")
                                                     console.log("error: ", err);
                                                 }else{
-                                                    console.log("iso moved" );
                                                     res.status(200).send({"moved": 1})
                                                 }
                                               })
@@ -831,7 +821,6 @@ const returnLeadStress = async(req, res) =>{
                                       if (err) {
                                           console.log("error: ", err);
                                       }else{
-                                          console.log("iso moved" );
                                           res.status(200).send({"moved": 1})
                                       }
                                   })
@@ -919,7 +908,6 @@ const returnLeadStress = async(req, res) =>{
                     if (err) {
                       console.log("error: ", err);
                     }else{
-                      console.log("created return in hisoctrls");
                       if(process.env.NODE_PROGRESS == "1"){
                         let type = ""
                         if(process.env.NODE_IFC == "0"){
@@ -962,7 +950,6 @@ const returnLeadStress = async(req, res) =>{
                                           console.log("error: ", err);
                                       }else{
                                           
-                                          console.log("iso moved" );
                                           res.status(200).send({"moved": 1})
                                       }
                                     })
@@ -978,7 +965,6 @@ const returnLeadStress = async(req, res) =>{
                             if (err) {
                                 console.log("error: ", err);
                             }else{
-                                console.log("iso moved" );
                                 res.status(200).send({"moved": 1})
                             }
                         })
@@ -1052,7 +1038,6 @@ const returnIso = async(req, res) =>{
                                   if (err) {
                                       console.log("error: ", err);
                                   }else{
-                                      console.log("created transaction");
                                       let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                                       masterName = fileName.split('.').slice(0, -1)
     
@@ -1087,7 +1072,6 @@ const returnIso = async(req, res) =>{
                                                 let attachName = file.split('.').slice(0, -1)
                                                 if(String(masterName).trim() == String(attachName).trim()){
                                                   fs.rename(origin_attach_path+file, destiny_attach_path+file, function (err) {
-                                                      console.log("moved attach "+ file)
                                                       if (err) throw err
               
                                                   })
@@ -1168,8 +1152,6 @@ const returnIso = async(req, res) =>{
                                                             res.status(401).send("cant update")
                                                             console.log("error: ", err);
                                                         }else{
-                                                            console.log("iso moved" );
-                                                            
                                                             sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
                                                               let rejector = null
                                                               if(!results[0]){
@@ -1209,7 +1191,6 @@ const returnIso = async(req, res) =>{
                                               if (err) {
                                                   console.log("error: ", err);
                                               }else{
-                                                  console.log("iso moved returnISO" );
                                                   sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
                                                     let rejector = null
                                                     if(!results[0]){
@@ -1323,7 +1304,6 @@ const returnIso = async(req, res) =>{
                       if (err) {
                         console.log("error: ", err);
                       }else{
-                        console.log("created return in hisoctrls");
                         if(process.env.NODE_PROGRESS == "1"){
                           let type = ""
                           if(process.env.NODE_IFC == "0"){
@@ -1365,8 +1345,6 @@ const returnIso = async(req, res) =>{
                                             res.status(401).send("cant update")
                                             console.log("error: ", err);
                                         }else{
-                                            console.log("iso moved" );
-                                            
                                             sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
                                               let rejector = null
                                               if(!results[0]){
@@ -1405,7 +1383,6 @@ const returnIso = async(req, res) =>{
                               if (err) {
                                   console.log("error: ", err);
                               }else{
-                                  console.log("iso moved" );
                                   sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
                                     let rejector = null
                                     if(!results[0]){
@@ -1570,9 +1547,7 @@ const returnToLOS = async(req, res) =>{
                 destiny_attach_path = './app/storage/isoctrl/lde/attach/'
                 origin_cl_path = './app/storage/isoctrl/lde/transmittals/' + last.transmittal + '/' + last.issued_date + '/' + fileName
                 destiny_cl_path = './app/storage/isoctrl/lde/attach/' + newFileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
-                
-                console.log(destiny_cl_path)
-          
+
                 fs.rename(origin_path, destiny_path, function (err) {
                   if (err) throw err
                 })
@@ -1584,7 +1559,6 @@ const returnToLOS = async(req, res) =>{
                         const extension = file.substring(i+1);
                         if(String(fileName.split('.').slice(0, -1)).trim() == String(attachName).trim() && extension != "pdf"){
                           fs.rename(origin_attach_path+file, destiny_attach_path+last.isoid+'.'+extension, function (err) {
-                              console.log("moved attach to LOS")
                               if (err) throw err
               
                           })
@@ -1595,7 +1569,6 @@ const returnToLOS = async(req, res) =>{
                     if(fs.existsSync(origin_cl_path)){
                         fs.rename(origin_cl_path, destiny_cl_path, function (err) {
                             if (err) throw err
-                            console.log('Moved CL to LOS')
                         })
                     }
                       res.send({success: true}).status(200)

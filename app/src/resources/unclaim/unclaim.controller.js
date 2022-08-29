@@ -32,12 +32,10 @@ const singleUnclaim = async (req, res) => {
                                 if(req.body.role == "DesignLead" || req.body.role == "SupportsLead" || req.body.role == "StressLead"){
                                     ld = 1
                                 }
-                                console.log("created unclaim in hisoctrls");
                                 sql.query("UPDATE misoctrls SET claimed = 0, verifyDesign = ?, user = ?, role = ? WHERE filename = ?", [ld,"None", null, fileName], (err, results) =>{
                                     if (err) {
                                         console.log("error: ", err);
                                     }else{
-                                      console.log("unclaimed iso " + fileName);
                                       res.status(200).send({"unclaimed": true})
                                     }
                                 })
@@ -121,12 +119,10 @@ const singleUnclaimProc = async(req, res) =>{
                 if (err) {
                     console.log("error: ", err);
                 }else{
-                    console.log("created unclaim in hisoctrls");
                     sql.query("UPDATE misoctrls SET spoclaimed = 0, spo = 5, spouser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
                         }else{
-                            console.log("spo unclaimed iso " + fileName);
                             res.status(200).send("unclaimed")
                         }
                     })
@@ -160,13 +156,10 @@ const singleUnclaimInst = async(req, res) =>{
                     if (err) {
                         console.log("error: ", err);
                     }else{
-                        console.log("created unclaim in hisoctrls");
                         sql.query("UPDATE misoctrls SET sitclaimed = 0, sit = 5, situser = ? WHERE filename = ?", ["None", fileName], (err, results) =>{
                             if (err) {
                                 console.log("error: ", err);
                             }else{
-                            console.log("sit unclaimed iso " + fileName);
-                            res.status(200).send("unclaimed")
                             }
                         })
                         }

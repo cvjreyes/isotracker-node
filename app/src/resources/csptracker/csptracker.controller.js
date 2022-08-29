@@ -148,7 +148,6 @@ const updateDrawingDB = async(req, res) =>{
                             console.log(err)
                             res.status(401)
                         }else{
-                            console.log("Drawing updated in db")
                             sql.query("SELECT revision FROM csptracker_description_plans WHERE id = ?", [description_plans_id], (err, results)=>{
                                 if(!results[0]){
                                     res.status(401)
@@ -158,7 +157,6 @@ const updateDrawingDB = async(req, res) =>{
                                     const bakFileName = fileName.split('.').slice(0, -1) + "-" + revision + extension
                                     fs.copyFile('./app/storage/csptracker/drawings/'+ fileName, './app/storage/csptracker/drawings/bak/'+ bakFileName, (err) => {
                                         if (err) throw err;
-                                        console.log('Created drawing backup');
                                       });
 
                                     sql.query("SELECT name FROM users WHERE email = ?", [email], (err, results)=>{
@@ -821,7 +819,6 @@ const requestSP = async(req, res) =>{
                                 })
 
                             }
-                            console.log("Request sent")
                             res.send({success: 1}).status(200)
 
                         })
