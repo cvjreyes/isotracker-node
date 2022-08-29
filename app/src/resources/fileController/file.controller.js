@@ -5161,7 +5161,7 @@ module.exports = {
   answerByPass,
   exportByPass,
   isCancellable,
-  issuedFiles
+  issuedFiles,
   cancelRev,
   getFilenamesByUser,
   getDiameters,
