@@ -308,6 +308,53 @@ const estimatedPipingWeight = async(req, res) =>{
     })
 }
 
+const estimatedPipingCustomWeight = async(req, res) =>{
+    let estimated_weight = 0, modelled_weight = 0, progress = 0
+    await sql.query("SELECT diameter, calc_notes FROM estimated_custom_status_pipes LEFT JOIN `lines` on estimated_custom_status_pipes.line_reference = `lines`.tag WHERE estimated_custom_status_pipes.status = ? OR estimated_custom_status_pipes.status = ?", ["ESTIMATED", "ESTIMATED(F)"], (err, results) =>{
+        if(results[0]){
+            for(let i = 0; i < results.length; i++){
+                if(results[i].calc_notes != "NA"){
+                    estimated_weight += 10
+                  }else{
+                    if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
+                        estimated_weight += 3
+                    }else{
+                        estimated_weight += 5
+                    }
+                  }
+            }
+        }
+        sql.query("SELECT diameter, calc_notes FROM estimated_custom_status_pipes LEFT JOIN `lines` on estimated_custom_status_pipes.line_reference = `lines`.tag WHERE estimated_custom_status_pipes.status = ? OR estimated_custom_status_pipes.status = ?", ["MODELLED", "MODELLED(F)"], (err, results) =>{
+            if(results[0]){
+                for(let i = 0; i < results.length; i++){
+                    if(results[i].calc_notes != "NA"){
+                        modelled_weight += 10
+                    }else{
+                        if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
+                            modelled_weight += 3
+                        }else{
+                            modelled_weight += 5
+                        }
+                    }
+                }
+            }
+            sql.query("SELECT stage1 as weight, valves, instruments FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+                if(results[0]){
+                    let weight = 0
+                    for(let i = 0; i < results.length; i++){
+                        weight += results[i].weight
+                        if(results[i].valves || results[i].instruments){
+                            weight += 1
+                        }
+                    }
+                    progress = (weight/modelled_weight*100).toFixed(2)
+                }
+                res.send({weight: estimated_weight, modelledWeight: modelled_weight, progress: progress}).status(200)
+            })
+        })
+    })
+}
+
 const isocontrolProgress = async(req, res) =>{
     sql.query("SELECT week, progress FROM pisocontrol", (err, results) =>{
         if(err){
@@ -437,6 +484,7 @@ module.exports = {
     deletePipes,
     restorePipes,
     estimatedPipingWeight,
+    estimatedPipingCustomWeight,
     isocontrolProgress,
     isocontrolEstimated,
     isocontrolForecast,

@@ -3754,6 +3754,34 @@ const modelledEstimatedPipes = async(req, res) =>{
     })
 }
 
+const modelledEstimatedCustomPipes = async(req, res) =>{
+  sql.query("SELECT * FROM estimated_custom_status_pipes", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      for(let i = 0; i < results.length; i++){
+        if(!results[i].type){
+          if(process.env.NODE_MMDN == "0"){
+            if(results[i].diameter < 2.00){
+              results[i].type = "TL1"
+            }else{
+              results[i].type = "TL2"
+            }
+          }else{
+            if(results[i].diameter < 50){
+              results[i].type = "TL1"
+            }else{
+              results[i].type = "TL2"
+            }
+          }
+        }
+      }
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
 const getDataByRef = async(req, res) =>{
   const ref = req.params.ref
   sql.query("SELECT unit, fluid, seq, spec_code, insulation, calc_notes FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
@@ -3796,6 +3824,185 @@ const submitModelledEstimatedPipes = async(req, res) =>{
                 sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
                   if(err){
                     console.log(err)
+                  }
+                })
+              }
+            }
+          })
+        } 
+      })
+    }
+  }
+
+  for(let i = 1; i < owners.length; i++){
+    await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{
+      if(!results){
+        if(owners[i][0] == "IFC"){
+          await sql.query("UPDATE owners SET owner_ifc_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
+        }else{
+          await sql.query("UPDATE owners SET owner_iso_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+            if(err){
+              console.log(err)
+              res.status(401)
+            }
+          })
+        }
+      }else{
+        const user_id = results[0].id
+        await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
+          if(!results[0] && owners[i][1] != owners[i-1][1]){
+            if(owners[i][0] == "IFC"){
+              await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              let now = new Date()
+              await sql.query("INSERT INTO owners(owner_iso_id, tag, assignation_date) VALUES(?,?,?)", [user_id, owners[i][1], now], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }
+          }else{
+            if(owners[i][0] == "IFC"){
+              await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
+                if(err){
+                  console.log(err)
+                  res.status(401)
+                }
+              })
+            }else{
+              let now = new Date()
+              await sql.query("SELECT owner_iso_id FROM owners WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+                if(results[0]){
+                  if(results[0].owner_iso_id != user_id){
+                    await sql.query("UPDATE owners SET owner_iso_id = ?, assignation_date = ? WHERE tag = ?", [user_id, now, owners[i][1]], async(err, results) =>{
+                      if(err){
+                        console.log(err)
+                        res.status(401)
+                      }
+                    })
+                  }
+                }
+              })
+              
+            }
+          }
+        })
+      }
+      
+      
+    })
+    
+  }
+
+  res.send({success: true}).status(200)
+}
+
+const submitModelledEstimatedCustomPipes = async(req, res) =>{
+  const new_pipes = req.body.rows
+  const owners = req.body.owners
+  console.log(new_pipes)
+  for(let i = 0; i < new_pipes.length; i++){
+    if(new_pipes[i]["Line reference"] == "deleted"){
+      sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }else{
+      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+        if(!results[0]){
+          console.log("Line tag incorrecto")
+        }else{
+          const line_ref_id = results[0].id
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], (err, results) =>{
+            if(!results[0]){
+              console.log("Area incorrecta")
+            }else{
+              const area_id = results[0].id
+              if(new_pipes[i].id){
+                sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].id], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }else{
+                sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
+                  if(err){
+                    console.log(err)
+                  }
+                })
+              }
+              if(new_pipes[i]["Status"] == "MODELLED(F)"){
+                sql.query("SELECT * FROM pipectrls WHERE tag = ?", new_pipes[i]["Tag"], (err, results) =>{
+                  if(!results[0]){
+                    let initial_state = 0
+                    if(new_pipes[i]["Type"] == "TL1"){
+                      initial_state = 10
+                    }else if(new_pipes[i]["Type"] == "TL2"){
+                      initial_state = 7
+                    }else{
+                      initial_state = 1
+                    }
+                    sql.query("INSERT INTO pipectrls(tag, status_id) VALUES(?,?)", [new_pipes[i]["Tag"], initial_state], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+
+                  }
+                })
+                sql.query("SELECT * FROM custom_status_pipes WHERE tag = ?", new_pipes[i]["Tag"], (err, results) =>{
+                  if(!results[0]){
+                    sql.query("INSERT INTO custom_status_pipes(tag, custom_status) VALUES(?,?)", [new_pipes[i]["Tag"], 0], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+
+                  }else{
+                    sql.query("UPDATE custom_status_pipes SET custom_status = ? WHERE tag = ?", [0, new_pipes[i]["Tag"]], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                  }
+                })
+                
+              }else if(new_pipes[i]["Status"] == "ESTIMATED(F)"){
+                sql.query("SELECT * FROM pipectrls WHERE tag = ?", new_pipes[i]["Tag"], (err, results) =>{
+                  if(results[0]){
+                    sql.query("DELETE FROM pipectrls WHERE tag = ?", [new_pipes[i]["Tag"]], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+                  }
+                })
+                sql.query("SELECT * FROM custom_status_pipes WHERE tag = ?", new_pipes[i]["Tag"], (err, results) =>{
+                  if(!results[0]){
+                    sql.query("INSERT INTO custom_status_pipes(tag, custom_status) VALUES(?,?)", [new_pipes[i]["Tag"], 1], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
+
+                  }else{
+                    sql.query("UPDATE custom_status_pipes SET custom_status = ? WHERE tag = ?", [1, new_pipes[i]["Tag"]], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }
+                    })
                   }
                 })
               }
@@ -5168,8 +5375,10 @@ module.exports = {
   getLineRefs,
   getDesigners,
   modelledEstimatedPipes,
+  modelledEstimatedCustomPipes,
   getDataByRef,
   submitModelledEstimatedPipes,
+  submitModelledEstimatedCustomPipes,
   checkOwner,
   modelledEstimatedHolds,
   getAllHolds,
