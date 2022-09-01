@@ -589,11 +589,17 @@ const updateStatus = async(req,res) =>{
                           issuedDeleted += 1
                         }
                       }
-                      sql.query("SELECT COUNT(id) FROM dpipes", (err, results) =>{
+                      let q
+                      if(process.env.NODE_PROGRESS_DIAMETER_FILTER){
+                        q = "SELECT COUNT(dpipes.id) as totalC FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+                      }else{
+                        q = "SELECT COUNT(id) as totalC FROM dpipes"
+                      }
+                      sql.query(q, (err, results) =>{
                         if(!results[0]){
                           results = []
                         }
-                          modelCount = results[0]["COUNT(id)"]
+                          modelCount = results[0]["totalC"]
 
                           totalDeleted = designDeleted + stressDeleted + supportsDeleted + materialsDeleted + issuerDeleted + toIssueDeleted + issuedDeleted
                           designStock = designR0 + designR1 + designR2 + designHold 
