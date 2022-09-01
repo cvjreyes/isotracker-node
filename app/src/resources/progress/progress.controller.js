@@ -231,24 +231,49 @@ const currentProgress = async(req,res) =>{
         if(results[0]["SUM(realprogress)"]){
           realprogress = results[0]["SUM(realprogress)"]
         }
-        sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
-          const tp1 = results[0]["COUNT(tpipes_id)"]
-          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
-            const tp2 = results[0]["COUNT(tpipes_id)"]
-            sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
-              const tp3 = results[0]["COUNT(tpipes_id)"]
-              sql.query("SELECT weight FROM tpipes", (err, results) =>{
-                const weights = results
-                const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-                res.json({
-                  weight: maxProgress,
-                  progress: (progress/maxProgress * 100).toFixed(2),
-                  realprogress: (realprogress/maxProgress * 100).toFixed(2)
-                }).status(200)
+        if(process.env.NODE_PROGRESS_DIAMETER_FILTER){
+          let q1 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 1 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          let q2 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 2 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          let q3 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 3 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          sql.query(q1, (err, results) =>{
+            const tp1 = results[0]["COUNT(tpipes_id)"]
+            sql.query(q2, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{
+              const tp2 = results[0]["COUNT(tpipes_id)"]
+              sql.query(q3, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{
+                const tp3 = results[0]["COUNT(tpipes_id)"]
+                sql.query("SELECT weight FROM tpipes", (err, results) =>{
+                  const weights = results
+                  const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                  res.json({
+                    weight: maxProgress,
+                    progress: (progress/maxProgress * 100).toFixed(2),
+                    realprogress: (realprogress/maxProgress * 100).toFixed(2)
+                  }).status(200)
+                })
               })
             })
           })
-        })
+        }else{
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
+            const tp1 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
+              const tp2 = results[0]["COUNT(tpipes_id)"]
+              sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 3", (err, results) =>{
+                const tp3 = results[0]["COUNT(tpipes_id)"]
+                sql.query("SELECT weight FROM tpipes", (err, results) =>{
+                  const weights = results
+                  const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                  res.json({
+                    weight: maxProgress,
+                    progress: (progress/maxProgress * 100).toFixed(2),
+                    realprogress: (realprogress/maxProgress * 100).toFixed(2)
+                  }).status(200)
+                })
+              })
+            })
+          })
+        }
+        
       })
     })
   }
