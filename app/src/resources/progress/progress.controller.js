@@ -283,23 +283,47 @@ const currentProgress = async(req,res) =>{
       const progress = results[0]["SUM(progress)"]
       sql.query("SELECT SUM(realprogress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE requested is null OR requested = 1", (req, results) =>{
         const realprogress = results[0]["SUM(realprogress)"]
-        sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
-          const tp1 = results[0]["COUNT(tpipes_id)"]
-          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
-            const tp2 = results[0]["COUNT(tpipes_id)"]
-            sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
-              const tp3 = results[0]["COUNT(tpipes_id)"]
-              sql.query("SELECT weight FROM tpipes", (err, results) =>{
-                const weights = results
-                const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
-                res.json({
-                  progressISO: (progress/maxProgress * 100).toFixed(2),
-                  realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
-                }).status(200)
+        if(process.env.NODE_PROGRESS_DIAMETER_FILTER){
+          let q1 = "SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid JOIN diameters ON dpipes_view.diameter_id = diameters.id WHERE tpipes_id = 1 AND (revision = 0 OR (revision = 1 AND issued = 1)) AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          let q2 = "SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid JOIN diameters ON dpipes_view.diameter_id = diameters.id WHERE tpipes_id = 2 AND (revision = 0 OR (revision = 1 AND issued = 1)) AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          let q3 = "SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid JOIN diameters ON dpipes_view.diameter_id = diameters.id WHERE tpipes_id = 3 AND (revision = 0 OR (revision = 1 AND issued = 1)) AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
+          sql.query(q1, (err, results) =>{
+            const tp1 = results[0]["COUNT(tpipes_id)"]
+            sql.query(q2, (err, results) =>{
+              const tp2 = results[0]["COUNT(tpipes_id)"]
+              sql.query(q3, (err, results) =>{
+                const tp3 = results[0]["COUNT(tpipes_id)"]
+                sql.query("SELECT weight FROM tpipes", (err, results) =>{
+                  const weights = results
+                  const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                  res.json({
+                    progressISO: (progress/maxProgress * 100).toFixed(2),
+                    realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
+                  }).status(200)
+                })
               })
             })
           })
-        })
+        }else{
+          sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 1 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+            const tp1 = results[0]["COUNT(tpipes_id)"]
+            sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 2 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+              const tp2 = results[0]["COUNT(tpipes_id)"]
+              sql.query("SELECT COUNT(tpipes_id) FROM dpipes_view INNER JOIN misoctrls ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid WHERE tpipes_id = 3 AND (revision = 0 OR (revision = 1 AND issued = 1))", (err, results) =>{
+                const tp3 = results[0]["COUNT(tpipes_id)"]
+                sql.query("SELECT weight FROM tpipes", (err, results) =>{
+                  const weights = results
+                  const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                  res.json({
+                    progressISO: (progress/maxProgress * 100).toFixed(2),
+                    realprogressISO: (realprogress/maxProgress * 100).toFixed(2)
+                  }).status(200)
+                })
+              })
+            })
+          })
+        }
+        
       })
     })
   }
