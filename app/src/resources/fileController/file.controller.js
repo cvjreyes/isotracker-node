@@ -3754,6 +3754,36 @@ const modelledEstimatedPipes = async(req, res) =>{
     })
 }
 
+const feedPipes = async(req, res) =>{
+  sql.query("SELECT feed_pipes.*, `lines`.calc_notes, `lines`.tag as line_reference, areas.name as area, users.name as `owner` FROM iquoxe_db.feed_pipes JOIN `lines` ON feed_pipes.line_ref_id = `lines`.id JOIN areas ON area_id = areas.id JOIN users ON owner_id = users.id", (err, results)=>{
+    if(err){
+      console.log(err)
+      res.status(401)
+    }else{
+      for(let i = 0; i < results.length; i++){
+        if(!results[i].calc_notes == "NA"){
+          if(process.env.NODE_MMDN == "0"){
+            if(results[i].diameter < 2.00){
+              results[i].type = "TL1"
+            }else{
+              results[i].type = "TL2"
+            }
+          }else{
+            if(results[i].diameter < 50){
+              results[i].type = "TL1"
+            }else{
+              results[i].type = "TL2"
+            }
+          }
+        }else{
+          results[i].type = "TL3"
+        }
+      }
+      res.json({rows: results}).status(200)
+    }
+  })
+}
+
 const modelledEstimatedCustomPipes = async(req, res) =>{
   sql.query("SELECT * FROM estimated_custom_status_pipes", (err, results)=>{
     if(err){
@@ -3906,6 +3936,60 @@ const submitModelledEstimatedPipes = async(req, res) =>{
   }
 
   res.send({success: true}).status(200)
+}
+
+const submitFeedPipes = async(req, res) =>{
+  const new_pipes = req.body.rows
+  for(let i = 0; i < new_pipes.length; i++){
+    if(new_pipes[i]["Line reference"] == "deleted"){
+      sql.query("DELETE FROM feed_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }else{
+      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+        if(!results[0]){
+          console.log("Line tag incorrecto")
+        }else{
+          const line_ref_id = results[0].id
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], async(err, results) =>{
+            if(!results[0]){
+              console.log("Area incorrecta")
+            }else{
+              const area_id = results[0].id
+              await sql.query("SELECT id FROM users WHERE name = ?", new_pipes[i].Owner, async (err, results) =>{
+                if(!results[0]){
+                  console.log("User does not exist")
+                  res.status(401)
+                }else{
+                  const owner_id = results[0].id
+                  if(new_pipes[i].id){
+                    sql.query("UPDATE feed_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ?, status=?, owner_id = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id, new_pipes[i].id], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }else{
+                        res.send({success: true}).status(200)
+                      }
+                    })
+                  }else{
+                    sql.query("INSERT INTO feed_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train, status, owner_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id], (err, results) =>{
+                      if(err){
+                        console.log(err)
+                      }else{
+                        res.send({success: true}).status(200)
+                      }
+                    })
+                  }
+                }
+              })
+              
+            }
+          })
+        } 
+      })
+    }
+  }
 }
 
 const submitModelledEstimatedCustomPipes = async(req, res) =>{
@@ -5375,9 +5459,11 @@ module.exports = {
   getLineRefs,
   getDesigners,
   modelledEstimatedPipes,
+  feedPipes,
   modelledEstimatedCustomPipes,
   getDataByRef,
   submitModelledEstimatedPipes,
+  submitFeedPipes,
   submitModelledEstimatedCustomPipes,
   checkOwner,
   modelledEstimatedHolds,
