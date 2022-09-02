@@ -93,6 +93,9 @@ const equipEstimated = (req, res) =>{
         }
   
         total_progress = total_progress/results.length
+        if(!total_progress){
+          total_progress = 0
+        }
         
         res.json({
           weight: eweight,

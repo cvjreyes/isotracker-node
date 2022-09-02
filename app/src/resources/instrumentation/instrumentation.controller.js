@@ -77,7 +77,6 @@ const instSteps = (req, res) =>{
   }
   
   const instWeight = (req,res) =>{
-  
     sql.query('SELECT qty, weight FROM einsts RIGHT JOIN tinsts ON einsts.tinsts_id = tinsts.id', (err, results)=>{
       const elines = results
       let eweight = 0
@@ -95,6 +94,9 @@ const instSteps = (req, res) =>{
         }
   
         total_progress = total_progress/results.length
+        if(!total_progress){
+          total_progress = 0
+        }
         
         res.json({
           weight: eweight,
