@@ -276,7 +276,7 @@ const estimatedPipingWeight = async(req, res) =>{
     await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
         if(results[0]){
             for(let i = 0; i < results.length; i++){
-                if(results[i].calc_notes != "NA"){
+                if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
                     estimated_weight += 10
                   }else{
                     if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
@@ -313,7 +313,7 @@ const estimatedPipingCustomWeight = async(req, res) =>{
     await sql.query("SELECT diameter, calc_notes FROM estimated_custom_status_pipes LEFT JOIN `lines` on estimated_custom_status_pipes.line_reference = `lines`.tag WHERE estimated_custom_status_pipes.status = ? OR estimated_custom_status_pipes.status = ?", ["ESTIMATED", "ESTIMATED(F)"], (err, results) =>{
         if(results[0]){
             for(let i = 0; i < results.length; i++){
-                if(results[i].calc_notes != "NA"){
+                if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
                     estimated_weight += 10
                   }else{
                     if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
@@ -327,7 +327,7 @@ const estimatedPipingCustomWeight = async(req, res) =>{
         sql.query("SELECT diameter, calc_notes FROM estimated_custom_status_pipes LEFT JOIN `lines` on estimated_custom_status_pipes.line_reference = `lines`.tag WHERE estimated_custom_status_pipes.status = ? OR estimated_custom_status_pipes.status = ?", ["MODELLED", "MODELLED(F)"], (err, results) =>{
             if(results[0]){
                 for(let i = 0; i < results.length; i++){
-                    if(results[i].calc_notes != "NA"){
+                    if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
                         modelled_weight += 10
                     }else{
                         if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
@@ -422,7 +422,7 @@ cron.schedule('0 0 * * 0', async() => {
     await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
         if(results[0]){
             for(let i = 0; i < results.length; i++){
-                if(results[i].calc_notes != "NA"){
+                if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
                     estimated_weight += 10
                   }else{
                     if((process.env.NODE_MMDN == 1 && results[i].diameter < 2.00) || (process.env.NODE_MMDN == 0 && results[i].diameter < 50) ){
