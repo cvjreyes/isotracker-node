@@ -3755,7 +3755,7 @@ const modelledEstimatedPipes = async(req, res) =>{
 }
 
 const feedPipes = async(req, res) =>{
-  sql.query("SELECT feed_pipes.*, `lines`.calc_notes, `lines`.tag as line_reference, areas.name as area, users.name as `owner` FROM iquoxe_db.feed_pipes JOIN `lines` ON feed_pipes.line_ref_id = `lines`.id JOIN areas ON area_id = areas.id JOIN users ON owner_id = users.id", (err, results)=>{
+  sql.query("SELECT feed_pipes.*, `lines`.calc_notes, `lines`.tag as line_reference, areas.name as area, users.name as `owner` FROM feed_pipes JOIN `lines` ON feed_pipes.line_ref_id = `lines`.id JOIN areas ON area_id = areas.id JOIN users ON owner_id = users.id", (err, results)=>{
     if(err){
       console.log(err)
       res.status(401)
@@ -5369,7 +5369,7 @@ const getWeightByUserWeek = async(req, res) =>{
 }
 
 const trayCount = async(req, res) =>{
-  sql.query("SELECT * FROM iquoxe_db.tray_count_view", (err, results) =>{
+  sql.query("SELECT * FROM tray_count_view", (err, results) =>{
     if(!results[0]){
       res.send({isoCount: [{Design: 0, DesignLead: 0, Stress: 0, StressLead: 0, Supports:0, SupportsLead: 0, Materials: 0, Issuer: 0}]}).status(200)
     }else{

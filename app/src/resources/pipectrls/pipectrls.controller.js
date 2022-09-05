@@ -291,7 +291,7 @@ const estimatedPipingWeight = async(req, res) =>{
             if(results[0]){
                 modelled_weight = results[0].weight
             }
-            sql.query("SELECT stage1 as weight, valves, instruments FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+            sql.query("SELECT stage1 as weight, valves, instruments FROM pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
                 if(results[0]){
                     let weight = 0
                     for(let i = 0; i < results.length; i++){
@@ -338,7 +338,7 @@ const estimatedPipingCustomWeight = async(req, res) =>{
                     }
                 }
             }
-            sql.query("SELECT stage1 as weight, valves, instruments FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+            sql.query("SELECT stage1 as weight, valves, instruments FROM pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
                 if(results[0]){
                     let weight = 0
                     for(let i = 0; i < results.length; i++){
@@ -437,7 +437,7 @@ cron.schedule('0 0 * * 0', async() => {
             if(results[0]){
                 modelled_weight = results[0].weight
             }
-            sql.query("SELECT stage1 as weight, valves, instruments FROM iquoxe_db.pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
+            sql.query("SELECT stage1 as weight, valves, instruments FROM pipectrls LEFT JOIN pestpipes ON status_id = pestpipes.id", (err, results) =>{
                 if(results[0]){
                     let weight = 0
                     for(let i = 0; i < results.length; i++){
