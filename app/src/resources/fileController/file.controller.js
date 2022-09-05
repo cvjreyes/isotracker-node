@@ -3761,7 +3761,7 @@ const feedPipes = async(req, res) =>{
       res.status(401)
     }else{
       for(let i = 0; i < results.length; i++){
-        if(!results[i].calc_notes == "NA" && !results[i].calc_notes == "unset"){
+        if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
           if(process.env.NODE_MMDN == "0"){
             if(results[i].diameter < 2.00){
               results[i].type = "TL1"
