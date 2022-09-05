@@ -3959,11 +3959,10 @@ const submitFeedPipes = async(req, res) =>{
             }else{
               const area_id = results[0].id
               await sql.query("SELECT id FROM users WHERE name = ?", new_pipes[i].Owner, async (err, results) =>{
-                if(!results[0]){
-                  console.log("User does not exist")
-                  res.status(401)
-                }else{
-                  const owner_id = results[0].id
+                let owner_id = null
+                if(results[0]){
+                  owner_id = results[0].id
+                }
                   if(new_pipes[i].id){
                     sql.query("UPDATE feed_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ?, status=?, owner_id = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id, new_pipes[i].id], (err, results) =>{
                       if(err){
@@ -3981,7 +3980,7 @@ const submitFeedPipes = async(req, res) =>{
                       }
                     })
                   }
-                }
+                
               })
               
             }
