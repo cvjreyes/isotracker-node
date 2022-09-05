@@ -128,6 +128,8 @@ let routes = (app) => {
   router.get("/isCancellable/:filename", controller.isCancellable)
   router.post("/cancelRev", controller.cancelRev)
   router.get("/issuedFiles", controller.issuedFiles)
+  router.get("/getFeedProgress", controller.getFeedProgress)
+  router.get("/gfeed", controller.gFeed)
   app.use(router);
 };
 

@@ -1897,20 +1897,6 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 
-cron.schedule('0 */7 * * * *', async () => {
-  /*
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
-    await uploadReportPeriod()
-    if(process.env.NODE_ISSUER == "1"){
-      const timeoutObj = setTimeout(() => {
-        downloadIssuedTo3D()
-      }, 15000)
-      
-    }
-  }
-  */
-})
-
 async function uploadReportPeriod(){
 
   await csv()
@@ -5380,6 +5366,66 @@ const trayCount = async(req, res) =>{
   })
 }
 
+const getFeedProgress = async(req, res) =>{
+  sql.query("SELECT status FROM feed_pipes", (err, results) =>{
+    if(!results[0]){
+      res.send({progress: 0})
+    }else{
+      let progress = 0
+      for(let i = 0; i < results.length; i++){
+        if(results[i].status == "MODELLING"){
+          progress += 50
+        }else if(results[i].status == "MODELLED"){
+          progress += 100
+        }
+        
+      }
+
+      progress = (progress / results.length).toFixed(2)
+      res.send({progress: progress}).status(200)
+    }
+  })
+}
+
+cron.schedule('0 1 * * *', async () => {
+  saveFeedWeight()
+})
+
+async function saveFeedWeight(){
+  sql.query("SELECT status FROM feed_pipes", (err, results) =>{
+    if(!results[0]){
+      res.send({progress: 0})
+    }else{
+      let max_progress = results.length*100
+      let progress = 0
+      for(let i = 0; i < results.length; i++){
+        if(results[i].status == "MODELLING"){
+          progress += 50
+        }else if(results[i].status == "MODELLED"){
+          progress += 100
+        }
+        
+      }
+      sql.query("INSERT INTO gfeed(progress, max_progress) VALUES(?,?)", [progress, max_progress], (err, results) =>{
+        if(err){
+          console.log(err)
+        }
+      })
+    }
+  })
+}
+
+
+const gFeed = async(req, res) =>{
+  sql.query("SELECT * FROM gfeed", (err, results)=>{
+    if(!results[0]){
+      res.status(200)
+    }else{
+      res.send({rows: results}).status(200)
+    }
+  })
+}
+
 module.exports = {
   upload,
   update,
@@ -5490,5 +5536,7 @@ module.exports = {
   getWeightByUserWeekDesign,
   getIsosByUserWeek,
   getWeightByUserWeek,
-  trayCount
+  trayCount,
+  getFeedProgress,
+  gFeed,
 };
