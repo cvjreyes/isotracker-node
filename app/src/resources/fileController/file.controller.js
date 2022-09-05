@@ -3755,7 +3755,7 @@ const modelledEstimatedPipes = async(req, res) =>{
 }
 
 const feedPipes = async(req, res) =>{
-  sql.query("SELECT feed_pipes.*, `lines`.calc_notes, `lines`.tag as line_reference, areas.name as area, users.name as `owner` FROM feed_pipes JOIN `lines` ON feed_pipes.line_ref_id = `lines`.id JOIN areas ON area_id = areas.id JOIN users ON owner_id = users.id", (err, results)=>{
+  sql.query("SELECT feed_pipes.*, `lines`.calc_notes, `lines`.tag as line_reference, areas.name as area, users.name as `owner` FROM feed_pipes JOIN `lines` ON feed_pipes.line_ref_id = `lines`.id JOIN areas ON area_id = areas.id LEFT JOIN users ON owner_id = users.id", (err, results)=>{
     if(err){
       console.log(err)
       res.status(401)
@@ -3963,6 +3963,9 @@ const submitFeedPipes = async(req, res) =>{
                 if(results[0]){
                   owner_id = results[0].id
                 }
+                if(!new_pipes[i].Status){
+                  new_pipes[i].Status = "ESTIMATED"
+                }
                   if(new_pipes[i].id){
                     sql.query("UPDATE feed_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ?, status=?, owner_id = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id, new_pipes[i].id], (err, results) =>{
                       if(err){
@@ -3972,7 +3975,7 @@ const submitFeedPipes = async(req, res) =>{
                       }
                     })
                   }else{
-                    sql.query("INSERT INTO feed_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train, status, owner_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id], (err, results) =>{
+                    sql.query("INSERT INTO feed_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train, status, owner_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train,  new_pipes[i].Status, owner_id], (err, results) =>{
                       if(err){
                         console.log(err)
                       }else{
