@@ -3693,7 +3693,7 @@ const issuedFiles = async(req, res) =>{
 }
 
 const getDiameters = (req, res) =>{
-  if(process.env.NODE_MMDN == "0"){
+  if(process.env.NODE_MMDN == "1"){
     sql.query("SELECT dn as diameter FROM diameters", (err, results) =>{
       res.json({diameters: results}).status(200)
     })
