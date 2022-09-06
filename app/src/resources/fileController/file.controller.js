@@ -3946,7 +3946,7 @@ const submitFeedPipes = async(req, res) =>{
               const area_id = results[0].id
               await sql.query("SELECT id FROM users WHERE name = ?", new_pipes[i].Owner, async (err, results) =>{
                 let owner_id = null
-                if(results[0]){
+                if(results){
                   owner_id = results[0].id
                 }
                 if(!new_pipes[i].Status){
