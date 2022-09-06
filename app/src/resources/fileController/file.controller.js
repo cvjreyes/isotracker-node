@@ -5373,9 +5373,9 @@ const getFeedProgress = async(req, res) =>{
     }else{
       let progress = 0
       for(let i = 0; i < results.length; i++){
-        if(results[i].status == "MODELLING"){
+        if(results[i].status == "MODELLING(50%)"){
           progress += 50
-        }else if(results[i].status == "MODELLED"){
+        }else if(results[i].status == "MODELLED(100%)"){
           progress += 100
         }
         
