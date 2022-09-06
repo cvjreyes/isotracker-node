@@ -3956,16 +3956,12 @@ const submitFeedPipes = async(req, res) =>{
                     sql.query("UPDATE feed_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ?, status=?, owner_id = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].Status, owner_id, new_pipes[i].id], (err, results) =>{
                       if(err){
                         console.log(err)
-                      }else{
-                        res.send({success: true}).status(200)
                       }
                     })
                   }else{
                     sql.query("INSERT INTO feed_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train, status, owner_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train,  new_pipes[i].Status, owner_id], (err, results) =>{
                       if(err){
                         console.log(err)
-                      }else{
-                        res.send({success: true}).status(200)
                       }
                     })
                   }
@@ -3978,6 +3974,7 @@ const submitFeedPipes = async(req, res) =>{
       })
     }
   }
+  res.send({success: true}).status(200)
 }
 
 const submitModelledEstimatedCustomPipes = async(req, res) =>{
