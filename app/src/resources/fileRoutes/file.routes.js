@@ -130,6 +130,8 @@ let routes = (app) => {
   router.get("/issuedFiles", controller.issuedFiles)
   router.get("/getFeedProgress", controller.getFeedProgress)
   router.get("/gfeed", controller.gFeed)
+  router.get("/getFeedForecast", controller.getFeedForecast)
+  router.post("/submitFeedForecast", controller.submitFeedForecast)
   app.use(router);
 };
 

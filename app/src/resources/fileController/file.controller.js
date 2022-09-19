@@ -3926,6 +3926,7 @@ const submitModelledEstimatedPipes = async(req, res) =>{
 
 const submitFeedPipes = async(req, res) =>{
   const new_pipes = req.body.rows
+  
   for(let i = 0; i < new_pipes.length; i++){
     if(new_pipes[i]["Line reference"] == "deleted"){
       sql.query("DELETE FROM feed_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
@@ -5414,13 +5415,46 @@ async function saveFeedWeight(){
 
 
 const gFeed = async(req, res) =>{
-  sql.query("SELECT * FROM gfeed", (err, results)=>{
+  sql.query("SELECT gfeed.*, feed_forecast.estimated FROM gfeed JOIN feed_forecast ON gfeed.id = feed_forecast.`day`", (err, results)=>{
     if(!results[0]){
       res.status(200)
     }else{
       res.send({rows: results}).status(200)
     }
   })
+}
+
+const getFeedForecast = async(req, res) =>{
+  sql.query("SELECT id, day, estimated FROM feed_forecast", (err, results) =>{
+    if(!results[0]){
+      res.send({forecast: []}).status(200)
+    }else{
+      res.send({forecast: results}).status(200) 
+    }
+  })
+}
+
+const submitFeedForecast = async(req, res) =>{
+  const forecast = req.body.forecast
+  Object.keys(forecast).map(function(key, index) {
+    sql.query("SELECT * FROM feed_forecast WHERE day = ?", [parseInt(key.substring(1))], (err, results) =>{
+      if(!results[0]){
+        sql.query("INSERT INTO feed_forecast(day, estimated) VALUES(?,?)", [parseInt(key.substring(1)), forecast[key]], (err, results) =>{
+          if(err){
+            console.log(err)
+          }
+        })
+      }else{
+        sql.query("UPDATE feed_forecast SET estimated = ? WHERE day = ?", [forecast[key], parseInt(key.substring(1))], (err, results) =>{
+          if(err){
+            console.log(err)
+          }
+        })
+      }
+    })
+    
+  });
+  res.send({success:true}).status(200)
 }
 
 module.exports = {
@@ -5536,4 +5570,6 @@ module.exports = {
   trayCount,
   getFeedProgress,
   gFeed,
+  getFeedForecast,
+  submitFeedForecast
 };
