@@ -206,13 +206,15 @@ const returnPipes = async(req, res) =>{
                 let next_id = null
                 switch(results[0].code){
                     case "TL1":
-                        next_id = 10
+                        if(results[0].status_id == 11){
+                            next_id = 10
+                        }
                         break;
                     case "TL2":
-                        if(results[0].status_id == 8){
-                            next_id = 7
-                        }else{
+                        if(results[0].status_id == 9){
                             next_id = 8
+                        }else if(results[0].status_id == 8){
+                            next_id = 7
                         }
                         break;
                     case "TL3":
@@ -419,7 +421,7 @@ const submitEstimatedForecastIFD = async(req, res) =>{
 
 cron.schedule('0 0 * * 0', async() => {
     let estimated_weight = 0, modelled_weight = 0, progress = 0
-    await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_ref_id = `lines`.id", (err, results) =>{
+    await sql.query("SELECT diameter, calc_notes FROM estimated_pipes LEFT JOIN `lines` on estimated_pipes.line_refno = `lines`.refno", (err, results) =>{
         if(results[0]){
             for(let i = 0; i < results.length; i++){
                 if(results[i].calc_notes != "NA" && results[i].calc_notes != "unset"){
