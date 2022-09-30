@@ -1,3 +1,4 @@
+//No se utiliza
 module.exports = app => {
     const dPipes = require("./dpipe.controller.js");
   

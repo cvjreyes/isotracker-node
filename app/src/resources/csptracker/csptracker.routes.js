@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../csptracker/csptracker.controller");
 
+//Todo lo referente a csptracker lo explicare en pitrequest ya que aqui dejara de utilizarse
 let routes = (app) => {
   router.get("/csptracker", controller.csptracker);
   router.post("/readye3d", controller.readye3d);
