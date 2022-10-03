@@ -9,17 +9,18 @@ exports.getFilesByTray = async(req, res) => {
     let user = body.currentUser;
 
     var username = "";
-    sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{ //Cogemos el usuario
       if (!results[0]){
         res.status(401).send("Username or password incorrect");
       }else{   
         username  = results[0].name
-        sql.query('SELECT num FROM roles WHERE name = ?', [role], async (err, results) => {
+        sql.query('SELECT num FROM roles WHERE name = ?', [role], async (err, results) => { //Cogemos el rol que esta utilizando el usuario actualmente
           if (!results[0]){
             res.status(401).send("Username or password incorrect");
           }else{   
             var folder = '';
             folderNum = results[0].num;
+            //Obtenemos el nombre de la bandeja a partir del rol
             switch(folderNum){
               case 1:
                 folder = "design";
@@ -42,8 +43,9 @@ exports.getFilesByTray = async(req, res) => {
             }
             
           }
-          if(process.env.NODE_PROGRESS === "1"){
-            if(role == "Process"){
+          if(process.env.NODE_PROGRESS === "1"){ //Si hay progreso
+            //Select de los datos en funcion del rol y la bandeja desde misoctrls y dpipes
+            if(role == "Process"){ 
               sql.query('SELECT misoctrls.id as iso_id, misoctrls.*, dpipes_view.*, tpipes.name, tpipes.weight, tpipes.code FROM misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE spouser = ? AND spoclaimed = 1 GROUP BY misoctrls.isoid', [username], async (err, results) => { 
                 res.json({
                   rows: results
@@ -62,7 +64,8 @@ exports.getFilesByTray = async(req, res) => {
                 }).status(200)
               })
             }
-          }else{
+          }else{ //Si no hay progreso
+            //Select de los datos en funcion del rol y la bandeja desde misoctrls
             if(role == "Process"){
               sql.query('SELECT * FROM misoctrls WHERE spouser = ? AND spoclaimed = 1', [username], async (err, results) => { 
                 res.json({

@@ -44,6 +44,7 @@ require("./resources/civils/civils.routes.js")(app);
 require("./resources/electrical/electrical.routes.js")(app);
 require("./resources/piping/piping.routes.js")(app);
 require("./resources/isocontrol/isocontrol.routes.js")(app);
+//Añadir archivo de rutas nuevo para cada cosa
 
 // set port, listen for requests
 app.listen(process.env.NODE_DB_PORT, () => {

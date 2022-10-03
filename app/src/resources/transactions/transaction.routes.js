@@ -1,12 +1,11 @@
 module.exports = app => {
     const transaction = require("./transaction.controller.js");
   
-    // Create a new user
-    app.post("/api/transaction", transaction.transaction);
-    app.post("/api/returnLead", transaction.returnLead);
-    app.post("/api/returnLeadStress", transaction.returnLeadStress);
-    app.post("/returnIso", transaction.returnIso);
-    app.post("/returnToLOS", transaction.returnToLOS);
+    app.post("/api/transaction", transaction.transaction); //Nueva transaccion
+    app.post("/api/returnLead", transaction.returnLead); //Retorno a un lider
+    app.post("/api/returnLeadStress", transaction.returnLeadStress); //retorno del lider de soporte al lider de stress
+    app.post("/returnIso", transaction.returnIso); //Retorno de una iso
+    app.post("/returnToLOS", transaction.returnToLOS); //Retorno de emitida a LOS
     
   };
   

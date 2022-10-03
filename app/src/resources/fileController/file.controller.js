@@ -11,14 +11,16 @@ const { Console } = require("console");
 
 const upload = async (req, res) => {
   try {
-    await uploadFile.uploadFileMiddleware(req, res);
+    await uploadFile.uploadFileMiddleware(req, res); //Envia el archivo al middleware
 
     if (req.file == undefined) {
-      return res.status(400).send({ message: "Please upload a file!" });
+      return res.status(400).send({ message: "Please upload a file!" }); //Si se ha hecho un upload vacio
     }
     res.status(200).send({
-      message: "Uploaded the file successfully: " + req.file.originalname,
+      message: "Uploaded the file successfully: " + req.file.originalname, //Se ha subido correctamente
     });
+
+    //esta parte ya no se usa(creo)
     var i = req.file.originalname.lastIndexOf('.');
     let cl = false
     let extension = ""
@@ -38,11 +40,11 @@ const upload = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    await uploadFile.updateFileMiddleware(req, res);
+    await uploadFile.updateFileMiddleware(req, res);//Se envia el archivo al middleware
 
     if (req.file == undefined) {
       console.log("undef")
-      return res.status(400).send({ message: "Please upload a file!" });
+      return res.status(401).send({ message: "Please upload a file!" }); //No se envia archivo
     }
 
     var extension = "";
@@ -50,15 +52,15 @@ const update = async (req, res) => {
     var i = req.file.originalname.lastIndexOf('.');
     if (i > 0) {
       extension = req.file.originalname.substring(i+1);
-      if (req.file.originalname.substring(i-2) == 'CL.pdf'){
+      if (req.file.originalname.substring(i-2) == 'CL.pdf'){ //Se comprueba si el archivo subido es el clean de la iso (acaba en -CL)
         cl = true
       }
     }
-    if(extension == 'pdf' && !cl){
+    if(extension == 'pdf' && !cl){ //Si es un pdf pero no es el clean(por lo tanto es el master)
 
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports'];
-      for(let i = 0; i < folders.length; i++){
+      for(let i = 0; i < folders.length; i++){//Buscas donde esta el master en el storage
         let path = null
         if (cl){
           path = folders[i] + '/' + req.file.originalname.split('.').slice(0, -1);
@@ -73,10 +75,11 @@ const update = async (req, res) => {
         }
       }
 
-      if (!fs.existsSync(where +'/bak/')){
+      if (!fs.existsSync(where +'/bak/')){ //Se guarda el anteior master en el bak
         fs.mkdirSync(where +'/bak/');
       }
       
+      //Se guarda el nuevo master
       let currentDate = new Date();
       currentDate = currentDate.getDate() + "-" + (currentDate.getMonth()+1)  + "-" + currentDate.getFullYear() + "_" +
                     currentDate.getHours() + "-" + currentDate.getMinutes() + "-" + currentDate.getSeconds();
@@ -99,7 +102,7 @@ const update = async (req, res) => {
 
 const getListFiles = (req, res) => {
   const tab = req.body.currentTab
-  if(process.env.NODE_PROGRESS === "1"){
+  if(process.env.NODE_PROGRESS === "1"){ //Si el proyecto va con progreso los datos de las isos se sacan de misoctrls y dpipes
     sql.query('SELECT misoctrls.*, dpipes_view.*, tpipes.`name`, tpipes.weight, tpipes.`code` FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid LEFT JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id WHERE misoctrls.`to` = ? AND (onhold != 1 || onhold IS NULL)', [tab], (err, results) =>{
       
       res.json({
@@ -107,8 +110,8 @@ const getListFiles = (req, res) => {
       })
     
   })
-  }else{
-    if(tab === "On hold"){
+  }else{ //Si no se saca solo de misoctrls
+    if(tab === "On hold"){//Si el ususario esta en la tabla de holds se devuelve solo las holds
       sql.query('SELECT * FROM misoctrls WHERE onhold = 1', [tab], (err, results) =>{
       
         res.json({
@@ -117,7 +120,7 @@ const getListFiles = (req, res) => {
       
       })
       
-    }else{
+    }else{//Si esta en cualquier otra bandeja se devuevlen todas las isos que no estan en holds
       sql.query('SELECT * FROM misoctrls WHERE misoctrls.to = ?', [tab], (err, results) =>{
       
         res.json({
@@ -150,7 +153,7 @@ s
   */
 };
 
-const piStatus = (req, res) =>{
+const piStatus = (req, res) =>{ //Se obtiene el status de procesos e instrumentacion
   const fileName = req.params.fileName
   sql.query("SELECT spo, sit FROM misoctrls WHERE filename = ?", fileName, (err, results) =>{
     if(!results[0]){
@@ -164,7 +167,7 @@ const piStatus = (req, res) =>{
   })
 }
 
-const download = (req, res) => {
+const download = (req, res) => { //Descarga de todos los archivos correspondientes a una iso
   const fileName = req.params.fileName;
   let master = fileName.split('.').slice(0, -1)[0]
   let issued = false
@@ -189,11 +192,11 @@ const download = (req, res) => {
     }else{
       let fileName_noext = results[0].isoid
       let where, path = null
-  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE filename = ?", master, (err, results)=>{
+  sql.query("SELECT issued, transmittal, issued_date FROM misoctrls WHERE filename = ?", master, (err, results)=>{//Seleccionas el transmittal y fecha de emision para acceder a esa carpeta en el storage en caso de estar emitida
     if(!results[0]){
       res.status(401)
     }else{
-      if(results[0].issued != 1){
+      if(results[0].issued != 1){ //Si no esta emitida
         const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
         './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
         './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
@@ -202,14 +205,14 @@ const download = (req, res) => {
         './app/storage/isoctrl/materials/HOLD', './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD','./app/storage/isoctrl/design/HOLD/hattach', './app/storage/isoctrl/issuer/HOLD/hattach', './app/storage/isoctrl/lde/HOLD/hattach', 
         './app/storage/isoctrl/materials/HOLD/hattach', './app/storage/isoctrl/stress/HOLD/hattach','./app/storage/isoctrl/supports/HOLD/hattach'];
 
-        for(let i = 0; i < folders.length; i++){
+        for(let i = 0; i < folders.length; i++){//Buscas los archivos en el storage
           path = folders[i] + '/' + req.params.fileName
           if (fs.existsSync(path)) {
             exists = true;
             where = folders[i]
           }
         }
-        res.download(where + '/' + fileName, fileName, (err) => {
+        res.download(where + '/' + fileName, fileName, (err) => {//Los descargas
           if (err) {
             res.status(500).send({
               message: "Could not download the file. " + err,
@@ -218,10 +221,10 @@ const download = (req, res) => {
             res.status(200)
           }
         });
-      }else{  
+      }else{ //Si esta emitida
         const trn = results[0].transmittal
         const date = results[0].issued_date
-        res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => {
+        res.download('./app/storage/isoctrl/lde/transmittals/' + trn + '/' + date + '/' + fileName, fileName, (err) => { //Descargas todos los archivos que haya en el transmittal correspondiente
           if (err) {
             console.log("error")
             res.status(500).send({
@@ -246,7 +249,7 @@ const getAttach = (req,res) =>{
   let folders = null
 
   sql.query("SELECT transmittal, issued_date FROM misoctrls WHERE filename = ?", fileName, (err, results)=>{
-    if(!results[0].transmittal){
+    if(!results[0].transmittal){//Si no esta emitida
       const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
         './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/attach', './app/storage/isoctrl/issuer/attach', './app/storage/isoctrl/lde/attach', 
         './app/storage/isoctrl/materials/attach', './app/storage/isoctrl/stress/attach','./app/storage/isoctrl/supports/attach','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', 
@@ -264,7 +267,7 @@ const getAttach = (req,res) =>{
       let masterName = fileName.split('.').slice(0, -1)
       let origin_attach_path, origin_cl_path, origin_proc_path, origin_inst_path
 
-      if(where.includes("TRASH")){
+      if(where.includes("TRASH")){//Sacas los paths de todos los archivos que hay en el storage
         origin_attach_path = where + "/tattach/"
         origin_cl_path = where + "/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-CL.pdf'
         origin_proc_path = where + "/tattach/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
@@ -282,7 +285,7 @@ const getAttach = (req,res) =>{
       }
 
 
-      fs.readdir(origin_attach_path, (err, files) => {
+      fs.readdir(origin_attach_path, (err, files) => { //Guardas los filenames de los archivos
         if(files){
           files.forEach(file => {                          
             let attachName = file.split('.').slice(0, -1)
@@ -303,12 +306,12 @@ const getAttach = (req,res) =>{
           }
         }
         
-        res.status(200).json(allFiles)
+        res.status(200).json(allFiles) //Devuelve los nombres
       });
-    }else{
+    }else{//Si esta emitida
       folders = ['./app/storage/isoctrl/lde/transmittals/' + results[0].transmittal + "/" + results[0].issued_date];
   
-      for(let i = 0; i < folders.length; i++){
+      for(let i = 0; i < folders.length; i++){ //Sacas los archivos que hay en el transmittal
         path = folders[i] + '/' + req.params.fileName
         if (fs.existsSync(path)) {
           exists = true;
@@ -322,7 +325,7 @@ const getAttach = (req,res) =>{
       let origin_proc_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-PROC.pdf'
       let origin_inst_path = where + "/" + fileName.split('.').slice(0, -1).join('.') + '-INST.pdf'
 
-      fs.readdir(origin_attach_path, (err, files) => {
+      fs.readdir(origin_attach_path, (err, files) => { //Obtienes los filenames
         files.forEach(file => {                          
           let attachName = file.split('.').slice(0, -1)
           if(String(masterName).trim() == String(attachName).trim()){
@@ -341,7 +344,7 @@ const getAttach = (req,res) =>{
           allFiles.push(fileName.split('.').slice(0, -1).join('.') + '-INST.pdf')
         }
         
-        res.status(200).json(allFiles)
+        res.status(200).json(allFiles)//Los devuelves
       });
     }
   })
@@ -352,19 +355,21 @@ const getAttach = (req,res) =>{
 
 const uploadHis = async (req, res) => {
   var username = "";
-  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Coges los datos el usuario que ha hecho el upload
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
-      username  = results[0].name
+      username  = results[0].name //Guardas el nombre
       sql.query("INSERT INTO hisoctrls (filename, revision, claimed, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
-      [req.body.fileName, 0, 1, 0, 0, "Design","Design", "Uploaded", username, "Design"], (err, results) => {
+      [req.body.fileName, 0, 1, 0, 0, "Design","Design", "Uploaded", username, "Design"], (err, results) => { //Guardas en el historial los datos de la transaccion
         if (err) {
           console.log("error: ", err);
           res.status(401)
-        }else{
-          if(process.env.NODE_PROGRESS == "1"){
+        }else{ 
+          if(process.env.NODE_PROGRESS == "1"){//Si el proyecto tiene progreso
             let type = ""
+
+            //A partir de aqui obtienes cual es el progreso actual de la iso en funcion el tipo de proyecto (IDF/IFC) y el tipo de linea (TL1, TL2, TL3) 
             if(process.env.NODE_IFC == "0"){
               type = "value_ifd"
             }else{
@@ -381,12 +386,13 @@ const uploadHis = async (req, res) => {
                     res.status(401)
                   }else{
                     let progress = null
+                    //Obtienes el progreso
                     if(type == "value_ifc"){
                       progress = results[0].value_ifc
                     }else{
                       progress = results[0].value_ifd
                     }
-                    
+                    //Guardas los datos en misoctrls
                     sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress, realprogress, max_tray) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
                     [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", progress, progress, "Design"], (err, results) => {
                       if (err) {
@@ -401,7 +407,7 @@ const uploadHis = async (req, res) => {
                 })
               }
             })
-          }else{
+          }else{//Si el proyecto no tiene progreso guardas los datos en misoctrls directamete ya que el progreso no importa
             sql.query("INSERT INTO misoctrls (filename, isoid, revision, claimed, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
             [req.body.fileName, req.body.fileName.split('.').slice(0, -1).join('.'), 0, 1, 0, 0, " ","Design", "Uploaded", username, "Design", null], (err, results) => {
               if (err) {
@@ -441,7 +447,7 @@ const updateHis = async (req, res) => {
           }
     
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)",
-          [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => {
+          [fileName, last.revision, last.spo, last.sit, "Updated", last.from, "Updated", username, req.body.role], (err, results) => { //Actualizas el historial con la informacion de la transaccion
             if (err) {
               console.log("error: ", err);
               res.send({success:1}).status(200)
@@ -462,7 +468,7 @@ const getMaster = async(req, res) =>{
   './app/storage/isoctrl/stress','./app/storage/isoctrl/supports','./app/storage/isoctrl/design/TRASH', './app/storage/isoctrl/issuer/TRASH', './app/storage/isoctrl/lde/TRASH', './app/storage/isoctrl/materials/TRASH',
   './app/storage/isoctrl/stress/TRASH','./app/storage/isoctrl/supports/TRASH','./app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
   './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
-  for(let i = 0; i < folders.length; i++){
+  for(let i = 0; i < folders.length; i++){ //Buscas el master de la iso requerida y lo descargas 
     let path = folders[i] + '/' + fileName;
     if (fs.existsSync(path)) {
       var file = fs.createReadStream(path);
@@ -474,11 +480,14 @@ const getMaster = async(req, res) =>{
 
 
 const updateStatus = async(req,res) =>{
+  //Contadores para cada bandeja en cada revision
   let designR0 = 0, designR1 = 0, designR2 = 0, designHold = 0, designDeleted = 0, designStock = 0, stressR0 = 0, stressR1 = 0, stressR2 = 0, stressHold = 0, stressDeleted = 0, stressStock = 0, supportsR0 = 0, supportsR1 = 0, supportsR2 = 0, supportsHold = 0, supportsDeleted = 0, supportsStock = 0, materialsR0 = 0, materialsR1 = 0, materialsR2 = 0, materialsHold = 0, materialsDeleted = 0, materialsStock = 0, issuerR0 = 0, issuerR1 = 0, issuerR2 = 0, issuerHold = 0, issuerDeleted = 0, issuerStock = 0, toIssueR0 = 0, toIssueR1 = 0, toIssueR2 = 0, toIssueHold = 0, toIssueDeleted = 0, toIssueStock = 0, issuedR0 = 0, issuedR1 = 0, issuedR2 = 0, issuedDeleted = 0, issuedStock = 0, totalR0 = 0, totalR1 = 0, totalR2 = 0, totalHold = 0, totalDeleted = 0, totalStock = 0, modelCount = 0
-  sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE (revision = 0 OR revision = 1) AND (onhold != 1 || onhold IS NULL)", (err, results) =>{
+  //Obtenemos la bandeja en la que esta cada iso, si esta emitida para r0
+  sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE (revision = 0 OR revision = 1) AND (onhold != 1 || onhold IS NULL)", (err, results) =>{ 
     if(!results[0]){
       results = []
     }
+      //Recuento por bandeja
       for(let i = 0; i < results.length; i++){
         if(results[i].to == "Design" && results[i].revision == 0){
           designR0 = designR0 + 1
@@ -499,11 +508,12 @@ const updateStatus = async(req,res) =>{
 
 
       totalR0 = designR0 + stressR0 + supportsR0 + materialsR0 + issuerR0 + toIssueR0 + issuedR0
+      //Obtenemos la bandeja en la que esta cada iso, si esta emitida para r1
       sql.query("SELECT `to`,issued, revision FROM misoctrls WHERE (revision = 1 OR revision = 2) AND (onhold != 1 || onhold IS NULL)", (err, results) =>{
         if(!results[0]){
           results = []
         }
-          for(let i = 0; i < results.length; i++){
+          for(let i = 0; i < results.length; i++){//Recuento por bandeja
             if(results[i].to == "Design" && results[i].revision == 1){
               designR1 += 1
             }else if((results[i].to == "Stress" || results[i].to == "stress") && results[i].revision == 1){
@@ -523,11 +533,12 @@ const updateStatus = async(req,res) =>{
     
           totalR1 = designR1 + stressR1 + supportsR1 + materialsR1 + issuerR1 + toIssueR1 + issuedR1
     
-        
+          //Obtenemos la bandeja en la que esta cada iso, si esta emitida para r2
           sql.query("SELECT `to`, issued, revision FROM misoctrls WHERE (revision = 2 OR revision = 3) AND (onhold != 1 || onhold IS NULL)", (err, results) =>{
             if(!results[0]){
               results = []
             }
+              //Recuento por bandeja
               for(let i = 0; i < results.length; i++){
                 if(results[i].to == "Design" && results[i].revision == 2){
                   designR2 += 1
@@ -547,6 +558,7 @@ const updateStatus = async(req,res) =>{
               }
         
               totalR2 = designR2 + stressR2 + supportsR2 + materialsR2 + issuerR2 + toIssueR2 + issuedR2
+              //Obtenemos las isos en hold
               sql.query("SELECT `to` FROM misoctrls WHERE onhold = 1", (err, results) =>{
                 if(!results[0]){
                   results = []
@@ -590,6 +602,7 @@ const updateStatus = async(req,res) =>{
                         }
                       }
                       let q
+                      //Las isos con un diametro inferior al umbral no cuentan
                       if(process.env.NODE_PROGRESS_DIAMETER_FILTER){
                         q = "SELECT COUNT(dpipes.id) as totalC FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
                       }else{
@@ -680,12 +693,12 @@ const updateStatus = async(req,res) =>{
 const restore = async(req,res) =>{
   const fileName = req.body.fileName
   const role = req.body.role
-  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{//Cogemos el usuario
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
-      username  = results[0].name
-      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+      username  = results[0].name //Guardamos el nombre
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{ //Cogemos la iso a restaurar
       if(!results[0]){
           res.status(401).send("No files found");
       }else if((results[0].deleted == 0 || results[0].deleted == null) && (results[0].onhold == 0 || results[0].onhold == null)){   
@@ -694,19 +707,20 @@ const restore = async(req,res) =>{
           let destiny = results[0].from
           let origin = results[0].to
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
-          [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", username, role], (err, results) => {
+          [fileName, results[0].revision, results[0].spo, results[0].sit, 0, 0, origin, destiny, "Restored", username, role], (err, results) => { //Guardamos la transaccion en el hisorial
             if (err) {
               console.log("error: ", err);
             }else{
               sql.query("UPDATE misoctrls SET deleted = 0, onhold = 0, `from` = ?, `to` = ?, `comments` = ?, role = ? WHERE filename = ?", 
-              [origin, destiny, "Restored", role, fileName], (err, results) => {
+              [origin, destiny, "Restored", role, fileName], (err, results) => { //Devolvemos la iso a la bandeja original desde donde se elimino
                 if (err) {
                   console.log("error: ", err);
                 }else{
                   if(destiny == "LDE/Isocontrol"){
                     destiny = "lde"
                   }
-
+                  
+                  //Movemos los archivos del storage de vuelta a la bandeja
                   let masterName = req.body.fileName.split('.').slice(0, -1)
                   let origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path, origin_proc_path, origin_inst_path, destiny_proc_path, destiny_inst_path = ""
 
@@ -781,7 +795,8 @@ const restore = async(req,res) =>{
 }
 
 const statusFiles = (req,res) =>{
-  if(process.env.NODE_PROGRESS == "1"){
+  if(process.env.NODE_PROGRESS == "1"){ //Si el proyecto tiene progreso
+    //Leemos los datos de misoctls y dpipes
     sql.query('SELECT * FROM misoctrls LEFT JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id', (err, results) =>{
       if(!results[0]){
         console.log("No files found");
@@ -790,7 +805,7 @@ const statusFiles = (req,res) =>{
         })
       }else{
         for(let i = 0; i < results.length; i++){
-          
+          //Ajustes de los nombres de las bandejas en funcion de si estan en los lideres o no
           if(results[i].to == "LDE/Isocontrol"){
             results[i].to = "LOS/Isocontrol"
           }
@@ -812,7 +827,7 @@ const statusFiles = (req,res) =>{
               results[i].to = "Supports lead"
             }
           }
-
+          //recuento de holds
           if(results[i].onhold == 1){
             results[i].from = results[i].to
             results[i].to = "On hold"
@@ -825,7 +840,7 @@ const statusFiles = (req,res) =>{
       }
     })
   }else{
-    sql.query('SELECT * FROM misoctrls', (err, results) =>{
+    sql.query('SELECT * FROM misoctrls', (err, results) =>{ //Cogemos las isos de misoctrls
       if(!results[0]){
         console.log("No files found");
         res.status(200).send({
@@ -834,7 +849,7 @@ const statusFiles = (req,res) =>{
       }else{
 
         for(let i = 0; i < results.length; i++){
-          
+          //Ajustes de los nombres de las bandejas en funcion de si estan en los lideres o no
           if(results[i].to == "LDE/Isocontrol"){
             results[i].to = "LOS/Isocontrol"
           }
@@ -866,7 +881,7 @@ const statusFiles = (req,res) =>{
 }
 
 const historyFiles = (req,res) =>{
-  sql.query('SELECT * FROM hisoctrls ORDER BY created_at DESC', (err, results) =>{
+  sql.query('SELECT * FROM hisoctrls ORDER BY created_at DESC', (err, results) =>{ //Get del historial ordenado por tiempo
     if(!results[0]){
       res.status(401).send("No files found");
     }else{
@@ -877,7 +892,7 @@ const historyFiles = (req,res) =>{
   })
 }
 
-const modelled = (req,res) =>{
+const modelled = (req,res) =>{ //Select de todas las modeladas
   sql.query('SELECT tag, dpipes_view.isoid, code, blocked FROM dpipes_view RIGHT JOIN tpipes ON tpipes.id = dpipes_view.tpipes_id LEFT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid group by dpipes_view.isoid, blocked', (err, results)=>{
     if(!results[0]){
       res.status(401)
@@ -892,13 +907,13 @@ const modelled = (req,res) =>{
 const toProcess = (req,res) =>{
   let action = req.body.action
   let fileName = req.body.file
-  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+  sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Cogemos el usuario que ha hecho la transaccion
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
       let spoclaimed = 0
-      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', fileName, (err, results) =>{ //Cogemos la iso
         if(err){
           res.status(401).send("No files found")
         }else{
@@ -907,7 +922,8 @@ const toProcess = (req,res) =>{
           let nextProcess = 0
           let from = file.to
           let to = "Process"
-          if (action === "accept"){
+          //Establecemos el siguiente estado
+          if (action === "accept"){//
             nextProcess = 2
             from = "Accepted Proc"
             to = file.to
@@ -920,12 +936,13 @@ const toProcess = (req,res) =>{
           }else{
             nextProcess = 5
           }
-          
+          //Guardamos la transaccion en el historial
           sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
           [fileName, file.revision, nextProcess, file.sit, file.deleted, file.onhold, spoclaimed, from, to, "Process", req.body.role, username], (err, results) => {
             if (err) {
               console.log("error: ", err);
             }else{
+              //Aplicamos los cambios a la iso
               sql.query('UPDATE misoctrls SET spoclaimed = ?, spo = ?, spouser = ? WHERE filename = ?', [spoclaimed, nextProcess, username, fileName], (err, results) =>{
                 if (err) {
                   console.log("error: ", err);
@@ -941,7 +958,7 @@ const toProcess = (req,res) =>{
   })
 }
 
-const instrument = (req,res) =>{
+const instrument = (req,res) =>{ //Lo mismo que toProcess pero con instruments
   let action = req.body.action
   let fileName = req.body.file
   sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
@@ -996,7 +1013,7 @@ const instrument = (req,res) =>{
 const cancelProc = (req, res) =>{
   const fileName = req.body.file
   let prev = 0
-  sql.query('SELECT `from`,`to`, id, user, role FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Process"], (err, results) =>{
+  sql.query('SELECT `from`,`to`, id, user, role FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Process"], (err, results) =>{ //Obtenemos el estado actual de la peticion a procesos
     if(!results[0]){
       prev = 0
     }else if(results[0].from == "Accepted Proc"){
@@ -1006,14 +1023,14 @@ const cancelProc = (req, res) =>{
     }else{
       prev = 0
     }
-    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Cogemos el usuario
       if (!results[0]){
         res.status(401).send("Username or password incorrect");
       }else{   
         username  = results[0].name
     
         sql.query("INSERT INTO hisoctrls (filename, spo, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?)",
-        [fileName, prev, "Cancelled PRO", "Process", "Cancelled PRO", req.body.role, username], (err, results)=>{
+        [fileName, prev, "Cancelled PRO", "Process", "Cancelled PRO", req.body.role, username], (err, results)=>{ //Guardamos la transaccion en el historial
           if(err){
             res.status(401)
           }
@@ -1021,7 +1038,7 @@ const cancelProc = (req, res) =>{
       }
     })
     
-    sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [prev, fileName], (err, results) =>{
+    sql.query('UPDATE misoctrls SET spo = ? WHERE filename = ?', [prev, fileName], (err, results) =>{ //Actualizamos los datos de misoctrls
       if(err){
         res.status(401)
       }else{
@@ -1031,7 +1048,7 @@ const cancelProc = (req, res) =>{
   })
 }
 
-const cancelInst = (req,res) =>{
+const cancelInst = (req,res) =>{ //Lo mismo que cancelProc pero con instrumentos
   const fileName = req.body.file
   let prev = 0
   sql.query('SELECT `from` FROM hisoctrls WHERE filename = ? AND role = ? ORDER BY id DESC LIMIT 1', [fileName, "Instrument"], (err, results) =>{
@@ -1072,7 +1089,7 @@ const cancelInst = (req,res) =>{
 
 const filesProcInst = (req,res) =>{
   let type = req.body.type
-  if(type == "Process"){
+  if(type == "Process"){//Cogemos todas las isos en procesos
     sql.query('SELECT * FROM misoctrls WHERE spo = 1 OR spo = 4 or spo = 5', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
@@ -1082,7 +1099,7 @@ const filesProcInst = (req,res) =>{
         })
       }
     })
-  }else{
+  }else{//Cogemos todas las isos en instrumentacion
     sql.query('SELECT * FROM misoctrls WHERE sit = 1 OR sit = 4 or sit = 5', (err, results) =>{
       if(err){
         res.status(401).send("No files found")
@@ -1097,37 +1114,35 @@ const filesProcInst = (req,res) =>{
 
 const uploadProc = async(req, res) =>{
 
-  await uploadFile.uploadFileProcMiddleware(req, res);
+  await uploadFile.uploadFileProcMiddleware(req, res); //Se envia el archivo al middleware
   if (req.file == undefined) {
-    return res.status(400).send({ message: "Please upload a file!" });
+    return res.status(400).send({ message: "Please upload a file!" }); //Si no hay archivo da error
   }else{
     const folders = ['./app/storage/isoctrl/design', './app/storage/isoctrl/issuer', './app/storage/isoctrl/lde', './app/storage/isoctrl/materials',
       './app/storage/isoctrl/stress','./app/storage/isoctrl/supports', './app/storage/isoctrl/design/HOLD', './app/storage/isoctrl/issuer/HOLD', './app/storage/isoctrl/lde/HOLD', './app/storage/isoctrl/materials/HOLD',
       './app/storage/isoctrl/stress/HOLD','./app/storage/isoctrl/supports/HOLD'];
-      for(let i = 0; i < folders.length; i++){
+      for(let i = 0; i < folders.length; i++){ //Se obtiene el path del archivo original
         const path = folders[i] + '/' + req.file.originalname;
         if (fs.existsSync(path)) {
           exists = true;
           where = folders[i]
         }
       }
-      if(where.includes("HOLD")){
+      if(where.includes("HOLD")){ //Si estaba en hold se reemplaza en la carpeta hold
         fs.rename(where + '/hattach/' + req.file.originalname, where + '/hattach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
           if ( err ) console.log('ERROR: ' + err);
         });
-      }else{
+      }else{ //Si no esta en hold se reemplaza en la carpeta correspondiente
         fs.rename(where + '/attach/' + req.file.originalname, where + '/attach/' +  req.file.originalname.split('.').slice(0, -1).join('.') + '-PROC.pdf', function(err) {
           if ( err ) console.log('ERROR: ' + err);
         });
       }
-    
-    
     res.status(200).send("File uploaded")
   }
 
 }
 
-const uploadInst = async(req, res) =>{
+const uploadInst = async(req, res) =>{ //Lo mismo que uploadProc pero con instrumentos
   await uploadFile.uploadFileInstMiddleware(req, res);
   if (req.file == undefined) {
     return res.status(400).send({ message: "Please upload a file!" });
@@ -1158,29 +1173,31 @@ const uploadInst = async(req, res) =>{
 }
 
 const uploadReport = async(req,res) =>{
+
+  //Indices de los atributos dentro del csv de dpipes para acceder a ellos mas tarde
   const area_index = req.body[0].indexOf("area")
   const tag_index = req.body[0].indexOf("tag")
   const diameter_index = req.body[0].indexOf("diameter")
   const calc_index = req.body[0].indexOf("calc_notes")
  
-  if(area_index == -1 || tag_index == -1 || diameter_index == -1 || calc_index == -1){
+  if(area_index == -1 || tag_index == -1 || diameter_index == -1 || calc_index == -1){ //Si en alguna de las lineas faltan datos
     console.log("error",area_index,tag_index,diameter_index,calc_index)
     res.status(401).send("Missing columns!")
   }else{
-    sql.query("TRUNCATE dpipes", (err, results)=>{
+    sql.query("TRUNCATE dpipes", (err, results)=>{ //Se elimina la informacion de dpipes
       if(err){
         console.log(err)
       }
     })
-    for(let i = 1; i < req.body.length; i++){
+    for(let i = 1; i < req.body.length; i++){ //Por cada fila del csv
       if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
-        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{ //Obtenemos el id del area a partir del nombre
           let areaid = null
           if(results[0]){
             areaid = results[0].id
           }
-          if(process.env.NODE_MMDN == 1){
-            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{
+          if(process.env.NODE_MMDN == 1){ //Si el proyecto esta en pulgadas
+            sql.query("SELECT id FROM diameters WHERE nps = ?", [req.body[i][diameter_index]], (err, results) =>{ //Obtenemos el id del diametro a partir del valor
               if(!results[0]){
                 console.log("ivalid diameter")
               }else{
@@ -1191,7 +1208,7 @@ const uploadReport = async(req,res) =>{
                 }
     
                 let tl = 0
-    
+                //Obtenemos el tipo de linea en funcion del CN y del diametro
                 if(calc_notes == 1){
                   tl = 3
                 }else{
@@ -1201,6 +1218,8 @@ const uploadReport = async(req,res) =>{
                     tl = 2
                   }
                 }
+
+                //Insertamos la linea en dpipes
                 sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
                   if(err){
                     console.log(err)
@@ -1208,7 +1227,7 @@ const uploadReport = async(req,res) =>{
                 })
               }
             })
-          }else{
+          }else{ //Si el proyecto esta en milimetros
             sql.query("SELECT id FROM diameters WHERE dn = ?", [req.body[i][diameter_index]], (err, results) =>{
               if(!results[0]){
                 console.log("ivalid diameter")
@@ -1221,7 +1240,7 @@ const uploadReport = async(req,res) =>{
                 }
     
                 let tl = 0
-    
+                //Obtenemos el tipo de linea en funcion del CN y del diametro
                 if(calc_notes == 0){
                   tl = 3
                 }else{
@@ -1231,6 +1250,7 @@ const uploadReport = async(req,res) =>{
                     tl = 2
                   }
                 }
+                //Insertamos la linea en dpipes
                 sql.query("INSERT INTO dpipes(area_id, tag, diameter_id, calc_notes, tpipes_id) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], diameterid, calc_notes, tl], (err, results)=>{
                   if(err){
                     console.log(err)
@@ -1254,7 +1274,7 @@ const checkPipe = async(req,res) =>{
   if(fileName.toString().includes("-CL")){
      fileName = fileName.toString().split('-').slice(0, -1)
   }
-  sql.query("SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName], (err, results) =>{
+  sql.query("SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?", [fileName], (err, results) =>{ //Comprobamos si la linea esta en dpipes
     if(!results[0]){
       res.json({
         exists: false
@@ -1275,14 +1295,14 @@ const toIssue = async(req,res) =>{
   const role = req.body.role
 
 
-  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{
+  sql.query('SELECT * FROM dpipes_view WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [fileName.split('.').slice(0, -1)], (err, results)=>{ //Comprobamos que la linea es correcta
     if(!results[0] && process.env.NODE_PROGRESS == "1"){
       sql.query('UPDATE misoctrls SET blocked = 1 WHERE filename = ?', [fileName], (err, results)=>{
         res.status(200).send({blocked:"1"})
         
       })
     }else{
-      sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+      sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{ //Cogemos los datos de la linea
         if(!results[0]){
           res.status(401).send("File not found")
         }else{
@@ -1291,12 +1311,14 @@ const toIssue = async(req,res) =>{
           const isoid = results[0].isoid
           let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path
     
+          //Si el transmittal con esa fecha no existe se crea
           if (!fs.existsSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date)){
             fs.mkdirSync('./app/storage/isoctrl/lde/transmittals/' + transmittal + '/' + date);
           }
     
-          masterName = fileName.split('.').slice(0, -1)
+          masterName = fileName.split('.').slice(0, -1) 
     
+          //Paths de los posibles archivos
           origin_path = './app/storage/isoctrl/lde/' + fileName
           destiny_path = './app/storage/isoctrl/lde/' + newFileName
           origin_attach_path = './app/storage/isoctrl/lde/attach/'
@@ -1308,7 +1330,7 @@ const toIssue = async(req,res) =>{
             if (err) throw err
           })
     
-          fs.readdir(origin_attach_path, (err, files) => {
+          fs.readdir(origin_attach_path, (err, files) => { //Buscamos los adjuntos y los movemos al transmittal
             files.forEach(file => {                          
               let attachName = file.split('.').slice(0, -1)
               const i = file.lastIndexOf('.');
@@ -1323,7 +1345,7 @@ const toIssue = async(req,res) =>{
             });
           });
     
-        if(fs.existsSync(origin_cl_path)){
+        if(fs.existsSync(origin_cl_path)){ //Movemos el clean al transmittal
             fs.rename(origin_cl_path, destiny_cl_path, function (err) {
                 if (err) throw err
                 console.log('Moved CL to transmittal')
@@ -1332,7 +1354,7 @@ const toIssue = async(req,res) =>{
     
     
     
-          sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+          sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{ //Cogemos el usuario
             if (!results[0]){
               res.status(401).send("Username or password incorrect");
             }else{   
@@ -1347,6 +1369,7 @@ const toIssue = async(req,res) =>{
                             last = results[i]
                         }
                     }
+                    //Guardamos la transaccion en el historial
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, issued, transmittal, issued_date, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
                     [fileName, revision, last.spo, last.sit, 1, transmittal, date, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Issued", "Issued", role, username], (err, results) => {
                       if (err) {
@@ -1356,7 +1379,8 @@ const toIssue = async(req,res) =>{
                           if (err) {
                             console.log("error: ", err);
                           }else{
-                            if(process.env.NODE_PROGRESS == "0"){
+                            if(process.env.NODE_PROGRESS == "0"){//Si el proyecto no tiene progreso
+                              //Actualizamos misoctrls con la emsision
                               sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, transmittal = ?, issued_date = ?, user = ?, role = ? WHERE filename = ?", [revision + 1, transmittal, date, "None", null, newFileName], (err, results)=>{
                                 if (err) {
                                   console.log("error: ", err);
@@ -1364,7 +1388,8 @@ const toIssue = async(req,res) =>{
                                   res.status(200).send({issued: "issued"})
                                 }
                               })
-                            }else{
+                            }else{//Si tiene progeso
+                                //Obtenemos el progreso de la iso que se va a emitir
                                 let type = ""
                                 if(process.env.NODE_IFC == "0"){
                                   type = "value_ifd"
@@ -1388,10 +1413,12 @@ const toIssue = async(req,res) =>{
                                         }else{
                                           newprogress = results[0].value_ifd
                                         }
+                                          //Actualizamos misoctrls con la emision
                                           sql.query("UPDATE misoctrls SET revision = ?, claimed = 0, issued = 1, user = ?, role = ?, progress = ?, realprogress = ?, transmittal = ?, issued_date = ?, max_tray = ? WHERE filename = ?", [revision + 1, "None", null, newprogress, newprogress, transmittal, date, "Transmittal",newFileName], (err, results)=>{
                                             if (err) {
                                               console.log("error: ", err);
                                             }else{
+                                              //Cerramos lo bypass de la iso 
                                               sql.query("SELECT bypass.id, bstatus_id FROM bypass LEFT JOIN misoctrls ON bypass.misoctrls_id = misoctrls.id WHERE misoctrls.isoid COLLATE utf8mb4_unicode_ci = ?", [isoid], (err, results) =>{
                                                 if(!results[0]){
                                                   res.status(200).send({revision: "newRev"})
@@ -1446,12 +1473,12 @@ const request = (req,res) =>{
   const user = req.body.user
   const role = req.body.role
 
-  sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{
+  sql.query('SELECT * FROM users WHERE email = ?', [user], (err, results) =>{ //Cogemos el usuario
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{   
       username  = results[0].name
-      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{
+      sql.query('SELECT * FROM misoctrls WHERE filename = ?', [fileName], (err, results) =>{ //Cogemos los datos de la iso
         if(!results[0]){
             res.status(401).send("No files found");
         }else{
@@ -1461,17 +1488,19 @@ const request = (req,res) =>{
                     last = results[i]
                 }
             }
+
+            //Guardamos la transaccion en el historico
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, deleted, onhold, spoclaimed, `from`, `to`, comments, role, user) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
             [fileName, last.revision, last.spo, last.sit, last.deleted, last.onhold, last.spoclaimed, "LDE/IsoControl", "Requested", "Requested", role, username], (err, results) => {
               if (err) {
                 console.log("error: ", err);
               }else{
                 
-                sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{
+                sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results)=>{//Comprobamos que la request sobre esa iso no existia 
                   if(results[0].requested !== null){
                     res.status(401).send("Isometric already requested")
                   }else{
-                    sql.query("UPDATE misoctrls SET requested = 1  WHERE filename = ?", [fileName], (err, results)=>{
+                    sql.query("UPDATE misoctrls SET requested = 1  WHERE filename = ?", [fileName], (err, results)=>{//Actualizamos la iso con la request
                       if (err) {
                         console.log("error: ", err);
                       }else{
@@ -1506,39 +1535,40 @@ const newRev = (req, res) =>{
         res.status(200).send({blocked:"1"})
       })
     }else{
-      sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+      sql.query("SELECT requested FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{ //Comprobamso que no exisita ya una nueva revision
         if(!results[0]){
           res.status(401).send("file not found")
         }else{
           if(results[0].requested == 2){
             res.status(401).send({already: "Already sent for revision"})
           }else{
-            fs.copyFile(origin_path, destiny_path, (err) => {
+            fs.copyFile(origin_path, destiny_path, (err) => { //Copiamos el master de la bandela LOS a diseño para empezar la nueva revision
               if (err) throw err;
             });
-            sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+            sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Cogemos el usuario
               if (!results[0]){
                 res.status(401).send("Username or password incorrect");
               }else{   
                 username  = results[0].name
-                sql.query("SELECT id, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{
+                sql.query("SELECT id, revision FROM misoctrls WHERE filename = ?", [fileName], (err, results) =>{ //Cogemos la revision actual
                   if(!results[0]){
                     res.status(401).send("File not found")
                   }else{
                     const iso_id = results[0].id
                     const revision = results[0].revision
-                    if(process.env.NODE_PROGRESS == "0"){
+                    if(process.env.NODE_PROGRESS == "0"){ //Si no hay progreso
                       sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-                      [newFileName, revision+1, 0, 0, "Issued","Design", comments, username, "SpecialityLead"], (err, results) => {
+                      [newFileName, revision+1, 0, 0, "Issued","Design", comments, username, "SpecialityLead"], (err, results) => { //Guardamos la transaccion en el historico
                         if (err) {
                           console.log("error: ", err);
                         }else{
+                          //Creamos en misoctrls el registro de la nueva revision
                           sql.query("INSERT INTO misoctrls (filename, isoid, revision, spo, sit, `from`, `to`, comments, user, role, progress) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
                           [newFileName, newFileName.split('.').slice(0, -1).join('.'), revision, 0, 0, "Issued","Design", comments, username, "SpecialityLead", null], (err, results) => {
                             if (err) {
                               console.log("error: ", err);
                             }else{
-                              sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{
+                              sql.query("UPDATE misoctrls SET requested = 2 WHERE filename = ?", [fileName], (err, results) =>{ //Actualizamos la revision anterior para indicar que ya se ha hecho una nueva
                                 if(err){
                                   res.status(401).send(err)
                                 }else{
@@ -1550,7 +1580,7 @@ const newRev = (req, res) =>{
             
                         }
                       })
-                    }else{
+                    }else{ //Si hay progreso se hace lo mismo pero incluyendo el valor del progreso
                       let type = ""
                       if(process.env.NODE_IFC == "0"){
                         type = "value_ifd"
@@ -1635,21 +1665,23 @@ const newRev = (req, res) =>{
               }
           }
 
-          sql.query('SELECT `to` FROM misoctrls WHERE filename = ?', [oldName], (err, results)=>{
+          sql.query('SELECT `to` FROM misoctrls WHERE filename = ?', [oldName], (err, results)=>{ //Cogemos los datos de la iso
             if(!results[0]){
               res.status(401)
             }else{
               let local_from = results[0].to
               sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?)", 
-              [newName, last.revision, last.spo, last.sit, last.from, last.to, "Rename", last.user, last.role], (err, results) => {
+              [newName, last.revision, last.spo, last.sit, last.from, last.to, "Rename", last.user, last.role], (err, results) => { //Guardamos la transaccion en el historial
                 if (err) {
                   console.log("error: ", err);
                 }else{
+                  //Actualizamos en misoctrls el nombre de la isometrica
                   sql.query('UPDATE misoctrls SET filename = ?, isoid COLLATE utf8mb4_unicode_ci = ? WHERE filename = ?', [newName, newName.split('.').slice(0, -1), oldName], (err, results)=>{
                     if(err){
                       res.status(401)
                     }else{
 
+                      //Hacemos los cambios del nombre en todos los archivos correspondientes a la iso en el storage
                       let masterName, origin_path, destiny_path, origin_attach_path, destiny_attach_path, origin_cl_path, destiny_cl_path,origin_proc_path,destiny_proc_path, origin_inst_path, destiny_inst_path = ""
                       masterName = oldName.split('.').slice(0, -1)
                       
@@ -1731,7 +1763,7 @@ const newRev = (req, res) =>{
 
   const unlock = (req, res) =>{
     isoid = req.body.isoid
-    sql.query('UPDATE misoctrls SET blocked = 0 WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [isoid],(err, results)=>{
+    sql.query('UPDATE misoctrls SET blocked = 0 WHERE isoid COLLATE utf8mb4_unicode_ci = ?', [isoid],(err, results)=>{//Desbloqueo de una iso
       if(err){
         res.status(401)
       }else{
@@ -1741,7 +1773,7 @@ const newRev = (req, res) =>{
   }
 
   const unlockAll = (req, res) =>{
-    sql.query('UPDATE misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid SET blocked = 0', (err, results)=>{
+    sql.query('UPDATE misoctrls JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid SET blocked = 0', (err, results)=>{//Desbloqueo de todas las isos bloqueadas
       if(err){
         console.log(err)
         res.status(401)
@@ -1752,14 +1784,15 @@ const newRev = (req, res) =>{
   }
 
   
-cron.schedule('0 */10 * * * *', () => {
+cron.schedule('0 */10 * * * *', () => { //Actualzacion periodica del .mac que se comunica con el E3D
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
-    downloadStatus3DPeriod()
+    downloadStatus3DPeriod() 
   }
   
 })
 
 function downloadStatus3DPeriod(){
+  //Cogemos los datos de dpipes y misoctrls
   sql.query('SELECT tag, tpipes_id, `to`, `from`, claimed, issued FROM dpipes_view RIGHT JOIN misoctrls ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid ORDER BY misoctrls.id DESC', (err, results) =>{
     
     let log = []
@@ -1771,6 +1804,8 @@ function downloadStatus3DPeriod(){
     }else{
       ifc_ifd = "IFC"
     }
+
+    //Se guarda en un array cada linea resultado de la informacion obtenida
     log.push("DESIGN")
     log.push("\n")
     log.push("ONERROR CONTINUE")
@@ -1803,12 +1838,12 @@ function downloadStatus3DPeriod(){
     log.push("UNCLAIM ALL")
     log.push("FINISH")
     logToText = ""
-    for(let i = 0; i < log.length; i++){
+    for(let i = 0; i < log.length; i++){ //Pasamos el array a string
       logToText += log[i]+"\n"
     }
-    fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) {
+    fs.writeFile("fromIsoTrackerTo3d.mac", logToText, function (err) { //Escribimos el string en el .mac
       if (err) return console.log(err);
-      fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => {
+      fs.copyFile('./fromIsoTrackerTo3d.mac', process.env.NODE_STATUS_ROUTE, (err) => { //Guardamos el resultado en la ruta especificada
         if (err) throw err;
       });
     });
@@ -1817,7 +1852,7 @@ function downloadStatus3DPeriod(){
   console.log("Generated 3d report")
 }
 
-cron.schedule('0 */7 * * * *', async () => {
+cron.schedule('0 */7 * * * *', async () => { //De esta parte se encarga ahora node-controller
   /*
   if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS == "1"){
     await uploadReportPeriod()
@@ -2020,40 +2055,43 @@ async function refreshProgress(){
 }
 
 
+//El proceso explicado en este metodo es el mismo para todos los siguientes que consistan en subir un archivo a la bd
+const uploadEquisModelledReport = (req, res) =>{ 
 
-const uploadEquisModelledReport = (req, res) =>{
+  //Se obtienen los indices de los atributos
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")  
   const tag_index = req.body[0].indexOf("TAG")
   const progress_index = req.body[0].indexOf("PROGRESS")
   const elements_index = req.body[0].indexOf("ELEMENTS")
  
-  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1 || elements_index == -1){
+  if(area_index == -1 || tag_index == -1 || type_index == -1 || progress_index == -1 || elements_index == -1){ //Se comprueba que no falte info
     console.log("error",area_index,tag_index,type_index,progress_index)
     res.status(401).send("Missing columns!")
   }else{
-    sql.query("TRUNCATE dequis", (err, results)=>{
+    sql.query("TRUNCATE dequis", (err, results)=>{ //Borramos la tabla de los equipos modelados
       if(err){
         console.log(err)
       }
     })
-    for(let i = 1; i < req.body.length; i++){
+    for(let i = 1; i < req.body.length; i++){ //Por cada fila
       if(req.body[i] != '' && req.body[i][0] != null && req.body[i][1] != null && req.body[i][1] != '' && !req.body[i][1].includes("/") && !req.body[i][1].includes("=") && !req.body[i][2] != null){
-        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{
+        sql.query("SELECT id FROM areas WHERE name = ?", [req.body[i][area_index]], (err, results) =>{ //Obtenemos el id del area a partir del nombre
           const areaid = results[0].id
-            sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{
+            sql.query("SELECT id FROM tequis WHERE code = ?", [req.body[i][type_index]], (err, results) =>{//Obtenemos el id del tipo a partir del nombre
               if(!results[0]){
                 res.json({invalid: i}).status(401)
                 return;
               }else{
                 const typeid = results[0].id
-                sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{
+                sql.query("SELECT id FROM pequis WHERE percentage = ?", [req.body[i][progress_index]], (err, results) =>{ //Obtenemos el id del progreso a partir del porcentage
                   if(!results[0]){
                     res.json({invalid: i}).status(401)
                     return;
                   }else{
                     const percentageid = results[0].id
                     
+                    //Guardamos la linea en dequis con esta informacion
                     sql.query("INSERT INTO dequis(areas_id, tag, pequis_id, tequis_id, elements) VALUES (?,?,?,?,?)", [areaid, req.body[i][tag_index], percentageid, typeid, req.body[i][elements_index]], (err, results)=>{
                       if(err){
                         console.log(err)
@@ -2073,6 +2111,7 @@ const uploadEquisModelledReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadEquisEstimatedReport = (req,res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2113,6 +2152,7 @@ const uploadEquisEstimatedReport = (req,res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadInstModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2165,6 +2205,7 @@ const uploadInstModelledReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadInstEstimatedReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2205,6 +2246,7 @@ const uploadInstEstimatedReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadCivModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2257,6 +2299,7 @@ const uploadCivModelledReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadCivEstimatedReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2297,6 +2340,7 @@ const uploadCivEstimatedReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadElecModelledReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2348,6 +2392,7 @@ const uploadElecModelledReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadElecEstimatedReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2388,6 +2433,7 @@ const uploadElecEstimatedReport = (req, res) =>{
   }
 }
 
+//Ver uploadEquisModelledReport
 const uploadPipesEstimatedReport = (req, res) =>{
   const area_index = req.body[0].indexOf("AREA")
   const type_index = req.body[0].indexOf("TYPE")
@@ -2429,14 +2475,14 @@ const uploadPipesEstimatedReport = (req, res) =>{
 }
 
 const downloadInstrumentationModelled = (req, res) =>{
-  sql.query('SELECT area, tag, type_inst, weight, status, progress FROM dinstsfull_view', (err, results) =>{
+  sql.query('SELECT area, tag, type_inst, weight, status, progress FROM dinstsfull_view', (err, results) =>{ //Obtenemos los datos de los instrumentos modelados
     if(!results[0]){
       res.status(401).send("El historial esta vacio")
     }else{
       let rows = []
       for(let i = 0; i < results.length;i++){
 
-        if(results[i].progress != 100){
+        if(results[i].progress != 100){ //Calculamos los progresos
           results[i].progress = 70
         }
         
@@ -2503,7 +2549,7 @@ const downloadElectricalModelled = (req, res) =>{
 }
 
 const navis = (req, res) =>{
-  sql.query('SELECT object, value FROM navis', (err, results) =>{
+  sql.query('SELECT object, value FROM navis', (err, results) =>{ //Datos de navis
     if(!results[0]){
       res.status(401).send("El historial esta vacio")
     }else{
@@ -2519,7 +2565,7 @@ const navis = (req, res) =>{
 const updateBom = async(req, res) =>{
 
   try {
-    await uploadBom.uploadFileMiddleware(req, res);
+    await uploadBom.uploadFileMiddleware(req, res); //Se envia al middleware el nuevo archivo de la bom table
 
     if (req.file == undefined) {
       return res.status(400).send({ message: "Please upload a file!" });
@@ -2533,12 +2579,12 @@ const updateBom = async(req, res) =>{
   }
     
 
-  readXlsxFile(process.env.NODE_BOM_ROUTE).then((rows) => {
-    sql.query("TRUNCATE bomtbl", (err, results) =>{
+  readXlsxFile(process.env.NODE_BOM_ROUTE).then((rows) => { //Leemos el archivo que se acaba de guardar
+    sql.query("TRUNCATE bomtbl", (err, results) =>{ //Borramos la tabla de la bd 
       if(err){
         console.log(err)
       }else{
-        for(let i = 9; i < rows.length; i++){    
+        for(let i = 9; i < rows.length; i++){    //Por cada linea del archivo añadimos un registro
           sql.query("INSERT INTO bomtbl (unit, area, line, train, spec_code, weight) VALUES(?,?,?,?,?,?)", [rows[i][1], rows[i][2], rows[i][3], rows[i][4], rows[i][6], rows[i][21]], (err, results)=>{
             if(err){
               console.log(err)
@@ -2553,13 +2599,13 @@ const updateBom = async(req, res) =>{
 }
 
 cron.schedule("0 */4 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_PROGRESS === "1"){ //Actualizamos las holds del proyecto
     updateHolds()
   }
 })
 
 cron.schedule("0 */30 * * * *", () => {
-  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){
+  if(process.env.NODE_CRON == "1" && process.env.NODE_ISOCONTROL === "1"){ //Actualizamos las lineas del proyecto
 	updateLines()
 	const timeoutObj = setTimeout(() => {
         updateIsocontrolModelled()
@@ -2568,7 +2614,7 @@ cron.schedule("0 */30 * * * *", () => {
   }
 })
 
-async function updateIsocontrolNotModelled(){
+async function updateIsocontrolNotModelled(){ //Creamos la tabla de no modeladas de isocontrol a partir de una vista de la bd
   sql.query("DROP TABLE IF EXISTS isocontrol_not_modelled") 
   sql.query("CREATE TABLE isocontrol_not_modelled AS (SELECT * FROM isocontrol_not_modelled_def_view)", (err, results)=>{
     if(err){
@@ -2579,7 +2625,7 @@ async function updateIsocontrolNotModelled(){
   })       
 }
 
-async function updateIsocontrolModelled(){
+async function updateIsocontrolModelled(){ //Creamos la tabla de modeladas de isocontrol a partir de una vista de la bd
     sql.query("DROP TABLE IF EXISTS isocontrol_modelled") 
 
 sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_view)", (err, results)=>{
@@ -2593,18 +2639,18 @@ sql.query("CREATE TABLE isocontrol_modelled AS ( SELECT * FROM isocontrolfull_vi
 
 async function updateLines(){
 
-  sql.query("TRUNCATE `lines`", (err, results) =>{
+  sql.query("TRUNCATE `lines`", (err, results) =>{ //Borramos la tabla de lineas
     if(err){
       console.log(err)
     }
   })
 
   await csv()
-  .fromFile(process.env.NODE_LINES_ROUTE)
+  .fromFile(process.env.NODE_LINES_ROUTE) //Leemos el csv de lineas
   .then((jsonObj)=>{
     const csv = jsonObj
     for(let i = 0; i < csv.length; i++){    
-      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq).includes("unset")){
+      if(!(csv[i].tag + csv[i].unit + csv[i].fluid + csv[i].seq).includes("unset")){ //Por cada linea creamos un registro en la tabla de la bd
         sql.query("INSERT INTO `lines`(tag, unit, fluid, seq, spec_code, pid, stress_level, calc_notes, insulation) VALUES(?,?,?,?,?,?,?,?,?)", [csv[i].tag, csv[i].unit, csv[i].fluid, csv[i].seq, csv[i].spec, csv[i].pid, csv[i].strlvl, csv[i].cnote, csv[i].insulation], (err, results)=>{
           if(err){
             console.log(err)
@@ -2617,7 +2663,7 @@ async function updateLines(){
   })
 }
 
-const exportModelled = async(req, res) =>{
+const exportModelled = async(req, res) =>{ 
   sql.query("SELECT unit, area, line, train, fluid, seq, unit as line_id, unit as iso_id, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight FROM isocontrol_modelled", (err, results) =>{
     if(err){
       console.log(err)
@@ -2645,7 +2691,7 @@ const exportNotModelled = async(req, res) =>{
           console.log(err)
           res.status(401)
         }else{
-          for(let i = 0; i < rows.length; i++){ 
+          for(let i = 0; i < rows.length; i++){ //Por cada linea hay que cambiar algunos nombres de las variables para que coincidan con el nombre de las modeladas y asi poder leerlo en el front
             if(!rows[i].unit){
               rows[i].unit = results[i].ldl_unit
             }
@@ -2693,17 +2739,17 @@ async function updateHolds(){
 
   let data = null
   await csv()
-  .fromFile(process.env.NODE_HOLDS_ROUTE)
+  .fromFile(process.env.NODE_HOLDS_ROUTE) //Leemos el csv de holds
   .then((jsonObj)=>{
     data = jsonObj
   })
 
   const timeoutObj = setTimeout(() => {
-    sql.query("TRUNCATE holds", (err, results) =>{
+    sql.query("TRUNCATE holds", (err, results) =>{ //Borramos la tabla de holds
       if(err){
         console.log(err)
       }else{
-        sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1",  (err, results)=>{
+        sql.query("UPDATE misoctrls SET onhold = 0 WHERE misoctrls.onhold = 1",  (err, results)=>{ //En misoctrls ponemos que ninguna iso esta en hold
           if(err){
             console.log(err)
             res.status(401)
@@ -2711,11 +2757,12 @@ async function updateHolds(){
             for(let i = 0; i < data.length; i++){    
               let has_holds = data[i].hold1 + data[i].hold2 + data[i].hold3 + data[i].hold4 + data[i].hold5 + data[i].hold6 + data[i].hold7 + data[i].hold8 + data[i].hold9 + data[i].hold10
               if(data[i].tag && has_holds && has_holds != ""){
+                //Hacemos el insert a la tabla de holds por cada linea del csv
                 sql.query("INSERT INTO holds (tag, hold1, description1, hold2, description2, hold3, description3, hold4, description4, hold5, description5, hold6, description6, hold7, description7, hold8, description8, hold9, description9, hold10, description10) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [data[i].tag, data[i].hold1, data[i].description1, data[i].hold2, data[i].description2, data[i].hold3, data[i].description3, data[i].hold4, data[i].description4, data[i].hold5, data[i].description5, data[i].hold6, data[i].description6, data[i].hold7, data[i].description7, data[i].hold8, data[i].description8, data[i].hold9, data[i].description9, data[i].hold10, data[i].description10], (err, results)=>{
                   if(err){
                     console.log(err)
                   }else{
-                    if(has_holds){
+                    if(has_holds){ //Actualizamos misoctrls indicando los nuevos holds
                       sql.query("UPDATE misoctrls JOIN dpipes_view ON dpipes_view.isoid COLLATE utf8mb4_unicode_ci = misoctrls.isoid SET misoctrls.onhold = 1 WHERE dpipes_view.tag = ? AND onhold != 2", [data[i].tag], (err, results)=>{                  
                         if(err){
                           console.log(err)
@@ -2774,7 +2821,7 @@ const lastUser = async(req, res) =>{
   })
 }
 
-const exportFull = async(req, res) =>{
+const exportFull = async(req, res) =>{ //EXport de todo isocontrol
   sql.query("SELECT unit as line_id, unit, area, unit as line, train, fluid, seq, spec_code, diameter, pid, stress_level, calc_notes, insulation, total_weight, diameter as modelled, tray, progress, isocontrol_holds_view.hold1, BOM, LDL, bom_unit, bom_area, bom_train, bom_spec_code FROM isocontrol_all_view LEFT JOIN isocontrol_holds_view ON isocontrol_all_view.tag COLLATE utf8mb4_unicode_ci = isocontrol_holds_view.tag", (err, results) =>{
     if(err){
       console.log(err)
@@ -2783,6 +2830,7 @@ const exportFull = async(req, res) =>{
       let rows = results
       for(let i = 0; i < rows.length; i++){
 
+        //Se construyen algunos campos a partir de otros
         if(rows[i].LDL === "In LDL"){
           rows[i].line = rows[i].fluid + rows[i].seq
           rows[i].line_id = rows[i].unit + rows[i].fluid + rows[i].seq
@@ -2794,7 +2842,7 @@ const exportFull = async(req, res) =>{
           rows[i].line_id = rows[i].unit + rows[i].line
         }
 
-        if(rows[i].diameter === null){
+        if(rows[i].diameter === null){ //Se comprueba si esta modelada o no
             rows[i].modelled = "Not modelled"
         }else{
             rows[i].modelled = "Modelled"
@@ -2834,7 +2882,7 @@ const exportFull = async(req, res) =>{
 }
 
 const exportLineIdGroup = async(req, res) =>{
-  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{
+  sql.query("SELECT * FROM isocontrol_lineid_group WHERE line_id is not null", (err, results)=>{ //Select de una vista de la bd donde se agrpan las modeladas por line id
     if(err){
       res.status(401)
     }else{
@@ -2923,6 +2971,7 @@ const submitRevision = async(req, res) =>{
   const check = req.body.issuer_check
   const appr = req.body.issuer_appr
 
+  //Rellenamos los campos de issuer con los datos que ha introducido el usuario
   sql.query("UPDATE misoctrls SET issuer_date = ?, issuer_designation = ?, issuer_draw = ?, issuer_check = ?, issuer_appr = ? WHERE filename = ?", [date, designation, draw, check, appr, fileName], (err, results)=>{
     if(err){
       console.log(err)
@@ -3073,13 +3122,13 @@ function downloadIssuedTo3D(){
 
 const excludeHold = async(req, res) =>{
   fileName = req.params.fileName
-  await sql.query("UPDATE misoctrls SET onhold = 2, `to` = `from` WHERE filename = ?", [fileName], async (err, results) =>{
+  await sql.query("UPDATE misoctrls SET onhold = 2, `to` = `from` WHERE filename = ?", [fileName], async (err, results) =>{ //Sacamos la iso de hold
     if(err){
       console.log(err)
       res.status(401)
     }else{
       
-      await sql.query("UPDATE misoctrls SET `from` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{
+      await sql.query("UPDATE misoctrls SET `from` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{ //Indicamos la bandeja donde cae la iso
         if(err){
           console.log(err)
           res.status(401)
@@ -3094,12 +3143,12 @@ const excludeHold = async(req, res) =>{
 
 const sendHold = (req, res) =>{
   const fileName = req.body.fileName
-  sql.query("UPDATE misoctrls SET onhold = 1, `from` = `to` WHERE filename = ?", [fileName], (err, results) =>{
+  sql.query("UPDATE misoctrls SET onhold = 1, `from` = `to` WHERE filename = ?", [fileName], (err, results) =>{ //Enviamos una iso a hold
     if(err){
       console.log(err)
       res.status(401)
     }else{
-      sql.query("UPDATE misoctrls SET `to` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{
+      sql.query("UPDATE misoctrls SET `to` = ? WHERE filename = ?", ["On hold", fileName], (err, results) =>{ //Indicamos la bandeja donde cae la iso (bandeja de holds)
         if(err){
           console.log(err)
           res.status(401)
@@ -3125,22 +3174,25 @@ const createByPass = (req, res) =>{
   const type = req.body.type
   const notes = req.body.notes
   const iso_id = req.body.id
-  sql.query('SELECT id FROM users WHERE email = ?', [email], (err, results) =>{
+  sql.query('SELECT id FROM users WHERE email = ?', [email], (err, results) =>{ //Cogemos el usuario
     if (!results[0]){
       res.status(401)
     }else{   
       const user_id = results[0].id
-      sql.query("SELECT id FROM bypass ORDER BY id DESC LIMIT 1", (err, results) =>{
+      sql.query("SELECT id FROM bypass ORDER BY id DESC LIMIT 1", (err, results) =>{ //Cogemos el id del ultimo bypass realizado
         let tag = "BP000001"
-        if(results[0]){
+        if(results[0]){ //A partir de este codigo y la id obtenida formamos el nuevo codigo (parecido a pitrequest)
           tag = "BP000001".substring(0, tag.length - (results[0].id + 1).toString().length) + (results[0].id + 1).toString()
           console.log(tag)
         }
+        //Creamos el bypass
         sql.query("INSERT INTO bypass(misoctrls_id, tbypass_id, tag, note, user_id) VALUES(?,?,?,?,?)", [iso_id, type, tag, notes, user_id], (err, results)=>{
           if(err){
             console.log(err)
             res.status(401)
           }else{
+
+            //Enviamos un correo a todos los administradores del proyecto con la informacion del bypass
             var transporter = nodemailer.createTransport({
               host: "es001vs0064",
               port: 25,
@@ -3210,11 +3262,12 @@ const answerByPass = async(req, res) =>{
   if(type == 3){
     answer = "IFC"
   }
-  sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [type, id], (err, results) =>{
+  sql.query("UPDATE bypass SET bstatus_id = ? WHERE id = ?", [type, id], (err, results) =>{ //Guardamos la respuesta al bypass
     if(err){
       console.log(err)
       res.status(401)
     }else{
+      //Enviamos un correo al usuario que creo el bypass para informar de la respuesta
       sql.query("SELECT tag, users.email FROM bypass LEFT JOIN users ON bypass.user_id = users.id WHERE bypass.id = ?", [id], (err, results) =>{
         let email = results[0].email
         const tag = results[0].tag
@@ -3250,7 +3303,7 @@ const answerByPass = async(req, res) =>{
   })
 }
 
-const rejectByPass = async(req, res) =>{
+const rejectByPass = async(req, res) =>{ //Lo mismo que el anterior pero rechazando con comentarios
   const id = req.body.id
   const comments = req.body.comments
   sql.query("UPDATE bypass SET bstatus_id = 4, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
@@ -3293,7 +3346,7 @@ const rejectByPass = async(req, res) =>{
   })
 }
 
-const naByPass = async(req, res) =>{
+const naByPass = async(req, res) =>{ //Lo mismo que el anterior pero indicando que no aplica(N/A) con comentarios
   const id = req.body.id
   const comments = req.body.comments
   sql.query("UPDATE bypass SET bstatus_id = 5, comments = ? WHERE id = ?", [comments, id], (err, results) =>{
@@ -3412,22 +3465,22 @@ const exportByPass = async(req, res) =>{
 
 const isCancellable = async(req, res) =>{
   const filename = req.params.filename
-  sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{
+  sql.query("SELECT isoid, revision FROM misoctrls WHERE filename = ?",[filename], (err, results) =>{ //cogemos el isoid y la revision de la iso
     if(!results[0]){
       res.status(401)
     }else{
       const isoid = results[0].isoid
       const revision = results[0].revision
-      sql.query("SELECT * FROM misoctrls WHERE isoid = ? AND revision > ?", [isoid, revision], (err, results) =>{
+      sql.query("SELECT * FROM misoctrls WHERE isoid = ? AND revision > ?", [isoid, revision], (err, results) =>{ //Si no tiene una revision nueva no hay nada que cancelar
         if(results[0]){
           res.send({cancellable: false})
         }else{
-          sql.query("SELECT `to` FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL)", [isoid, revision], (err, results) =>{
+          sql.query("SELECT `to` FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL)", [isoid, revision], (err, results) =>{ //Si la tiene
             if(!results[0]){
               res.send({cancellable: false})
             }else{
               const tray = results[0].to
-              if(tray == "Design"){
+              if(tray == "Design"){ //Si aun no ha avanzado de diseño es cancelable, en caso contrario no se puede cancelar
                 res.send({cancellable: true})
               }else{
                 res.send({cancellable: false})
@@ -3468,25 +3521,26 @@ const cancelRev = async(req, res) =>{
                     const isoid = results[0].isoid
                     sql.query("SELECT filename FROM misoctrls WHERE isoid = ?", [isoid], (err, results) =>{
                       const newRevFilename = results[0].filename
-                      sql.query("DELETE FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL) AND `to` = ?", [isoid, "Design"], (err, results) =>{
+                      sql.query("DELETE FROM misoctrls WHERE isoid = ? AND (issued = 0 OR issued IS NULL) AND `to` = ?", [isoid, "Design"], (err, results) =>{ //Borramos la nueva revision de misoctrls
                         if(err){
                           console.log(err)
                           res.status(401)
                         }else{
                           sql.query("SELECT name FROM users WHERE email = ?", [user], (err, results)=>{
                             const username = results[0].name
-                            sql.query("INSERT INTO hisoctrls (filename, isoid, user, role) VALUES (?,?,?,?)", [filename, isoid,  username, "SpecialityLead"], (err, results) => {
+                            sql.query("INSERT INTO hisoctrls (filename, isoid, user, role) VALUES (?,?,?,?)", [filename, isoid,  username, "SpecialityLead"], (err, results) => { //Guardamos la transaccion en el historial
                               if(err){
                                 console.log(err)
                               }
                             })
                           })
+                          //Eliminamos la nueva revision del storage
                           fs.unlink('./app/storage/design/' + newRevFilename, function(err){
                             if(err){
                               console.log(err)
                             } 
                           }); 
-                          sql.query("UPDATE misoctrls SET requested = 0 WHERE filename = ?", [filename], (err, results) =>{
+                          sql.query("UPDATE misoctrls SET requested = 0 WHERE filename = ?", [filename], (err, results) =>{ //Actualizamos la revision anterior para que sea posible hacer una revision nueva en un futuro
                             if(err){
                               console.log(err)
                               res.status(401)

@@ -24,12 +24,12 @@ const getBom = async(req, res) =>{
   
   const isocontrolWeights = async(req, res) =>{
     let modelledWeight, notModelledWeight
-    sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_all_view WHERE area IS NOT null", (err, results)=>{
+    sql.query("SELECT SUM(total_weight) as modelledWeight FROM isocontrol_all_view WHERE area IS NOT null", (err, results)=>{ //Sumamos el peso de las modeladas
       if(err){
         res.status(401)
       }else{
         modelledWeight = results[0].modelledWeight
-        sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_all_view WHERE area IS null", (err, results)=>{
+        sql.query("SELECT SUM(total_weight) as notModelledWeight FROM isocontrol_all_view WHERE area IS null", (err, results)=>{ //Sumamos el peso de las no modeladas
           if(err){
             res.status(401)
           }else{

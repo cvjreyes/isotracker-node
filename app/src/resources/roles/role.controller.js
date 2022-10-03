@@ -15,16 +15,16 @@ exports.findAll = (req, res) => {
 
 exports.findByUser = async(req, res) => {
   const email = req.body;
-  sql.query('SELECT * FROM users WHERE email = ?', [email.user], async (err, results) => {
+  sql.query('SELECT * FROM users WHERE email = ?', [email.user], async (err, results) => { //Cogemos el user actual
     if (!results[0]){
       res.status(401).send("Username or password incorrect");
     }else{
       const user_id = results[0].id;
-      sql.query('SELECT role_id FROM model_has_roles WHERE model_id = ?', [user_id], async (err, results) =>{
+      sql.query('SELECT role_id FROM model_has_roles WHERE model_id = ?', [user_id], async (err, results) =>{ //Cogemos las ids de todos sus roles
         if (err){
           res.status(401).send("Roles not found");
         }else{
-          var q = 'SELECT name FROM roles WHERE id IN (';
+          var q = 'SELECT name FROM roles WHERE id IN ('; //Montamos un string que sera la query donde sacamos los nombres de los roles
           if (results.length === 1){
             q += results[0].role_id + ")";
           }else if(results.length === 2){
@@ -62,6 +62,7 @@ exports.findByUser = async(req, res) => {
   });
 }
 
+//Lo mismo que el anterior pero por username
 exports.findRolesByUsername = async(req,res) =>{
   sql.query('SELECT * FROM users WHERE name = ?', [req.params.username], async (err, results) => {
     if (!results[0]){
