@@ -3679,7 +3679,7 @@ const issuedFiles = async(req, res) =>{
 }
 
 const getDiameters = (req, res) =>{
-  if(process.env.NODE_MMDN == "1"){
+  if(process.env.NODE_MMDN == "1"){ 
     sql.query("SELECT dn as diameter FROM diameters", (err, results) =>{
       res.json({diameters: results}).status(200)
     })
@@ -3701,7 +3701,7 @@ const getLineRefs = async(req, res) =>{
   }) 
 }
 
-const getDesigners = async(req, res) =>{
+const getDesigners = async(req, res) =>{ //Get de los usuarios con rol de diseño
   sql.query("SELECT `users`.`name` as name FROM `users` LEFT JOIN model_has_roles ON `users`.id = model_has_roles.model_id  LEFT JOIN roles ON `model_has_roles`.role_id = roles.id WHERE role_id = 1", (err, results) =>{
     if(!results[0]){
       console.log("no lines")
@@ -3713,23 +3713,23 @@ const getDesigners = async(req, res) =>{
 }
 
 const modelledEstimatedPipes = async(req, res) =>{
-    sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{
+    sql.query("SELECT * FROM estimated_pipes_view", (err, results)=>{ //Get de las lineas estimadas
       if(err){
         console.log(err)
         res.status(401)
       }else{
-        for(let i = 0; i < results.length; i++){
-          if(!results[i].type){
+        for(let i = 0; i < results.length; i++){ //Por cada linea
+          if(!results[i].type){ //Si no tiene tipo (por lo tanto es TL3)
             if(process.env.NODE_MMDN == "0"){
-              if(results[i].diameter < 2.00){
+              if(results[i].diameter < 2.00){ //Si el diametro es inferior a 2 pulgadas
                 results[i].type = "TL1"
-              }else{
+              }else{ //Superior o igual
                 results[i].type = "TL2"
               }
             }else{
-              if(results[i].diameter < 50){
+              if(results[i].diameter < 50){ //Si el diametro es inferior a 50 milimetros
                 results[i].type = "TL1"
-              }else{
+              }else{ //Superior o igual
                 results[i].type = "TL2"
               }
             }
@@ -3741,27 +3741,28 @@ const modelledEstimatedPipes = async(req, res) =>{
 }
 
 const feedPipes = async(req, res) =>{
-  sql.query("SELECT * FROM feed_pipes_view", (err, results)=>{
+  sql.query("SELECT * FROM feed_pipes_view", (err, results)=>{ //Get de las lineas en feed
     if(err){
       console.log(err)
       res.status(401)
     }else{
-      for(let i = 0; i < results.length; i++){
-        if(results[i].calc_notes == "NA" || results[i].calc_notes == "unset"){
+      for(let i = 0; i < results.length; i++){ //Por cada linea
+        if(results[i].calc_notes == "NA" || results[i].calc_notes == "unset"){ //Si la linea no tiene CN
+          
           if(process.env.NODE_MMDN == "0"){
-            if(results[i].diameter < 2.00){
+            if(results[i].diameter < 2.00){ //Si el diametro es inferior a 2 pulgadas
               results[i].type = "TL1"
-            }else{
+            }else{ //Superior o igual
               results[i].type = "TL2"
             }
           }else{
-            if(results[i].diameter < 50){
+            if(results[i].diameter < 50){ //Si el diametro es inferior a 50 milimetros
               results[i].type = "TL1"
-            }else{
+            }else{ //Superior o igual
               results[i].type = "TL2"
             }
           }
-        }else{
+        }else{ //Si tiene CN
           results[i].type = "TL3"
         }
       }
@@ -3770,7 +3771,7 @@ const feedPipes = async(req, res) =>{
   })
 }
 
-const modelledEstimatedCustomPipes = async(req, res) =>{
+const modelledEstimatedCustomPipes = async(req, res) =>{ 
   sql.query("SELECT * FROM estimated_custom_status_pipes", (err, results)=>{
     if(err){
       console.log(err)
@@ -3798,7 +3799,7 @@ const modelledEstimatedCustomPipes = async(req, res) =>{
   })
 }
 
-const getDataByRef = async(req, res) =>{
+const getDataByRef = async(req, res) =>{ //Get de una linea en funcion del tag
   const ref = req.params.ref
   sql.query("SELECT unit, fluid, seq, spec_code, insulation, calc_notes FROM `lines` WHERE tag = ?", [ref], (err, results) =>{
     if(!results[0]){
@@ -3809,34 +3810,34 @@ const getDataByRef = async(req, res) =>{
   })
 }
 
-const submitModelledEstimatedPipes = async(req, res) =>{
-  const new_pipes = req.body.rows
-  const owners = req.body.owners
-  for(let i = 0; i < new_pipes.length; i++){
-    if(new_pipes[i]["Line reference"] == "deleted"){
+const submitModelledEstimatedPipes = async(req, res) =>{ //Guardamos las lineas del likeexcel de isocontrol (main)
+  const new_pipes = req.body.rows //Solo se postean las lineas nuevas o las que han recibido cambios
+  const owners = req.body.owners //Lista de nuevos owners
+  for(let i = 0; i < new_pipes.length; i++){ //Por cada linea
+    if(new_pipes[i]["Line reference"] == "deleted"){ //Si se a eliminado el tag se elimina la linea de la bd
       sql.query("DELETE FROM estimated_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
         if(err){
           console.log(err)
         }
       })
-    }else{
-      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+    }else{ //Si no se ha eliminado
+      sql.query("SELECT id FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{ //Cogemos el id de la linea
         if(!results[0]){
           console.log("Line tag incorrecto")
         }else{
           const line_ref_id = results[0].id
-          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], (err, results) =>{
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], (err, results) =>{ //Cogemos el id del area
             if(!results[0]){
               console.log("Area incorrecta")
             }else{
               const area_id = results[0].id
-              if(new_pipes[i].id){
+              if(new_pipes[i].id){ //Si el id de la linea ya exisita la actualizamos
                 sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, new_pipes[i].id], (err, results) =>{
                   if(err){
                     console.log(err)
                   }
                 })
-              }else{
+              }else{ //Si es nueva la creamos como estimada
                 sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
                   if(err){
                     console.log(err)
@@ -3850,29 +3851,29 @@ const submitModelledEstimatedPipes = async(req, res) =>{
     }
   }
 
-  for(let i = 1; i < owners.length; i++){
-    await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{
-      if(!results){
-        if(owners[i][0] == "IFC"){
+  for(let i = 1; i < owners.length; i++){ //Por cada nuevo owner asignado
+    await sql.query("SELECT id FROM users WHERE name = ?", owners[i][2], async (err, results) =>{ //Cogemos el id del owner
+      if(!results){ //Si no existe el id (se ha borrado el owner)
+        if(owners[i][0] == "IFC"){ //El owner ifc no se usa ya
           await sql.query("UPDATE owners SET owner_ifc_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
             if(err){
               console.log(err)
               res.status(401)
             }
           })
-        }else{
-          await sql.query("UPDATE owners SET owner_iso_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+        }else{ //Este si
+          await sql.query("UPDATE owners SET owner_iso_id = NULL WHERE tag = ?", [owners[i][1]], async(err, results) =>{ //Ponemos el owner a null
             if(err){
               console.log(err)
               res.status(401)
             }
           })
         }
-      }else{
+      }else{ //Si existe el id
         const user_id = results[0].id
-        await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{
-          if(!results[0] && owners[i][1] != owners[i-1][1]){
-            if(owners[i][0] == "IFC"){
+        await sql.query("SELECT id FROM owners WHERE tag = ?", owners[i][1], async(err, results) =>{ //Cogemos el id del owner
+          if(!results[0] && owners[i][1] != owners[i-1][1]){ //Si la iso no tenia owner asignado
+            if(owners[i][0] == "IFC"){ //Este no se usa
               await sql.query("INSERT INTO owners(owner_ifc_id, tag) VALUES(?,?)", [user_id, owners[i][1]], async(err, results) =>{
                 if(err){
                   console.log(err)
@@ -3881,6 +3882,7 @@ const submitModelledEstimatedPipes = async(req, res) =>{
               })
             }else{
               let now = new Date()
+              //Asignamos el owner a la linea
               await sql.query("INSERT INTO owners(owner_iso_id, tag, assignation_date) VALUES(?,?,?)", [user_id, owners[i][1], now], async(err, results) =>{
                 if(err){
                   console.log(err)
@@ -3888,7 +3890,7 @@ const submitModelledEstimatedPipes = async(req, res) =>{
                 }
               })
             }
-          }else{
+          }else{//Si ya tenia owner asignado
             if(owners[i][0] == "IFC"){
               await sql.query("UPDATE owners SET owner_ifc_id = ? WHERE tag = ?", [user_id, owners[i][1]], async(err, results) =>{
                 if(err){
@@ -3898,9 +3900,10 @@ const submitModelledEstimatedPipes = async(req, res) =>{
               })
             }else{
               let now = new Date()
-              await sql.query("SELECT owner_iso_id FROM owners WHERE tag = ?", [owners[i][1]], async(err, results) =>{
+              await sql.query("SELECT owner_iso_id FROM owners WHERE tag = ?", [owners[i][1]], async(err, results) =>{ //Cogemos la id del nuevo owner
                 if(results[0]){
                   if(results[0].owner_iso_id != user_id){
+                    //Actualizamos el owner de la linea
                     await sql.query("UPDATE owners SET owner_iso_id = ?, assignation_date = ? WHERE tag = ?", [user_id, now, owners[i][1]], async(err, results) =>{
                       if(err){
                         console.log(err)
@@ -3924,56 +3927,57 @@ const submitModelledEstimatedPipes = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const submitFeedPipes = async(req, res) =>{
+const submitFeedPipes = async(req, res) =>{ //Submit de las lineas del feed
   const new_pipes = req.body.rows
   const tag_order = req.body.tag_order
   
-  for(let i = 0; i < new_pipes.length; i++){
-    if(new_pipes[i]["Line reference"] == "deleted"){
+  for(let i = 0; i < new_pipes.length; i++){ //Por cada nueva linea del feed
+    if(new_pipes[i]["Line reference"] == "deleted"){ //Si no tiene line ref se elimina
       sql.query("DELETE FROM feed_pipes WHERE id = ?", [new_pipes[i].id], (err, results) =>{
         if(err){
           console.log(err)
         }
       })
     }else{
-      sql.query("SELECT id, refno FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{
+      sql.query("SELECT id, refno FROM `lines` WHERE tag = ?", [new_pipes[i]["Line reference"]], (err, results) =>{ //Cogemos el id y el ref number de la linea
         if(!results[0]){
           console.log("Line tag incorrecto")
         }else{
           const line_refno = results[0].refno
           const line_ref_id = results[0].id
-          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], async(err, results) =>{
+          sql.query("SELECT id FROM areas WHERE name = ?", [new_pipes[i].Area], async(err, results) =>{ //Cogemos el id del area
             if(!results[0]){
               console.log("Area incorrecta")
             }else{
               const area_id = results[0].id
-              await sql.query("SELECT id FROM users WHERE name = ?", [new_pipes[i].Owner], async (err, results) =>{
+              await sql.query("SELECT id FROM users WHERE name = ?", [new_pipes[i].Owner], async (err, results) =>{ //Cogemod el id del usuario
                 let owner_id = null
                 if(results[0]){
                   owner_id = results[0].id
                 }
-                if(!new_pipes[i].Status){
+                if(!new_pipes[i].Status){ //Si la linea no tiene status asignado entonces es nueva, asi que es estimada
                   new_pipes[i].Status = "ESTIMATED"
                 }
-                  if(new_pipes[i].id){
+                  if(new_pipes[i].id){ //Si ya existe el id de la linea
+                    //Actualizamos la linea del feed
                     sql.query("UPDATE feed_pipes SET line_refno = ?, area_id = ?, diameter = ?, train = ?, status=?, owner_id = ? WHERE id = ?", [line_refno, area_id, new_pipes[i].Diameter, new_pipes[i].Train, new_pipes[i].Status, owner_id, new_pipes[i].id], (err, results) =>{
                       if(err){
                         console.log(err)
                       }else{
-                        if(new_pipes[i].Status == "MODELLED(100%)"){
-                          sql.query("SELECT id FROM feed_pipes WHERE line_refno = ?", [line_refno], (err, results) =>{
+                        if(new_pipes[i].Status == "MODELLED(100%)"){ //Si la linea esta completamente modelada
+                          sql.query("SELECT id FROM feed_pipes WHERE line_refno = ?", [line_refno], (err, results) =>{ //Cogemos el id de la linea del feed
                             if(!results[0]){
                               res.status(401)
                             }else{
                               const feed_id = results[0].id
-                              sql.query("SELECT id FROM estimated_pipes WHERE feed_id = ?", [feed_id], (err, results) =>{
-                                if(!results[0]){
+                              sql.query("SELECT id FROM estimated_pipes WHERE feed_id = ?", [feed_id], (err, results) =>{ //Comprobamos si la linea modelada en feed ya existe en la tabla de estimadas
+                                if(!results[0]){ //Si no existe la añadimos
                                   sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, feed_id, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, feed_id, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
                                     if(err){
                                       console.log(err)
                                     }
                                   })
-                                }else{
+                                }else{ //Si exista la actualizamos
                                   sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE feed_id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, feed_id], (err, results) =>{
                                     if(err){
                                       console.log(err)
@@ -3987,25 +3991,26 @@ const submitFeedPipes = async(req, res) =>{
                         }
                       }
                     })
-                  }else{
+                  }else{ //Si no existe el id
+                    //Creamos la linea en el feed
                     sql.query("INSERT INTO feed_pipes(line_refno, area_id, diameter, train, status, owner_id) VALUES(?,?,?,?,?,?)", [line_refno, area_id, new_pipes[i].Diameter, new_pipes[i].Train, new_pipes[i].Status, owner_id], (err, results) =>{
                       if(err){
                         console.log(err)
                       }else{
-                        if(new_pipes[i].Status == "MODELLED(100%)"){
-                          sql.query("SELECT id FROM feed_pipes WHERE line_refno = ?", [line_refno], (err, results) =>{
+                        if(new_pipes[i].Status == "MODELLED(100%)"){ //Si se crea como modelada
+                          sql.query("SELECT id FROM feed_pipes WHERE line_refno = ?", [line_refno], (err, results) =>{ //Cogemos el ide de la linea del feed
                             if(!results[0]){
                               res.status(401)
                             }else{
                               const feed_id = results[0].id
-                              sql.query("SELECT id FROM estimated_pipes WHERE feed_id = ?", [feed_id], (err, results) =>{
-                                if(!results[0]){
+                              sql.query("SELECT id FROM estimated_pipes WHERE feed_id = ?", [feed_id], (err, results) =>{ //Cogemos el id de la linea de la tabla de estimadas
+                                if(!results[0]){ //Si no existe creamos la linea en las estimadas
                                   sql.query("INSERT INTO estimated_pipes(line_ref_id, tag, feed_id, unit, area_id, fluid, sequential, spec, diameter, insulation, train) VALUES(?,?,?,?,?,?,?,?,?,?,?)", [line_ref_id, new_pipes[i].Tag, feed_id, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train], (err, results) =>{
                                     if(err){
                                       console.log(err)
                                     }
                                   })
-                                }else{
+                                }else{//Si existe la actualizamos
                                   sql.query("UPDATE estimated_pipes SET line_ref_id = ?, tag = ?, unit = ?, area_id = ?, fluid = ?, sequential = ?, spec = ?, diameter = ?, insulation = ?, train = ? WHERE feed_id = ?", [line_ref_id, new_pipes[i].Tag, new_pipes[i].Unit, area_id, new_pipes[i].Fluid, new_pipes[i].Seq, new_pipes[i].Spec, new_pipes[i].Diameter, new_pipes[i].Insulation, new_pipes[i].Train, feed_id], (err, results) =>{
                                     if(err){
                                       console.log(err)
@@ -4031,7 +4036,7 @@ const submitFeedPipes = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const submitModelledEstimatedCustomPipes = async(req, res) =>{
+const submitModelledEstimatedCustomPipes = async(req, res) =>{ //Lo mismo que submitModelledEstimatedPipes pero el estado de a linea puede ser forzado (F)
   const new_pipes = req.body.rows
   const owners = req.body.owners
   for(let i = 0; i < new_pipes.length; i++){
@@ -4209,7 +4214,7 @@ const submitModelledEstimatedCustomPipes = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const modelledEstimatedHolds = async(req, res) =>{
+const modelledEstimatedHolds = async(req, res) =>{ //Get de los holds de las lineas modeladas y estimadas
   sql.query("SELECT estimated_pipes_view.tag , holds.has_holds, holds_isocontrol.`description` FROM estimated_pipes_view LEFT JOIN holds ON estimated_pipes_view.tag = holds.tag LEFT JOIN holds_isocontrol ON estimated_pipes_view.tag = holds_isocontrol.tag GROUP BY estimated_pipes_view.tag", (err, results)=>{
     if(err){
       console.log(err)
@@ -4220,7 +4225,7 @@ const modelledEstimatedHolds = async(req, res) =>{
   })
 }
 
-const getAllHolds = async(req, res) =>{
+const getAllHolds = async(req, res) =>{ //Get de todos los holds de las lineas del proyecto
   const tag = req.params.tag
   let holds3d = []
   let holdsIso = []
@@ -4239,25 +4244,25 @@ const getAllHolds = async(req, res) =>{
   })
 }
 
-const submitHoldsIso = async(req, res) =>{
+const submitHoldsIso = async(req, res) =>{ //Crear un hold para una iso
   const holds = req.body.rows
   const tag = req.body.tag
   for(let i = 0; i < holds.length; i++){
-    if(!holds[i]["description"]){
+    if(!holds[i]["description"]){ //Si se ha eliminado de la tabla lo eliminamos de la bd
       sql.query("DELETE FROM holds_isocontrol WHERE id = ?", [holds[i].id], (err, results) =>{
         if(err){
           console.log(err)
           res.status(401)
         }
       })
-    }else if(!holds[i]["id"]){
+    }else if(!holds[i]["id"]){ //Si el hold no tiene id es nuevo, lo instertamos
       sql.query("INSERT INTO holds_isocontrol(tag, description) VALUES(?,?)", [tag, holds[i].description], (err, results) =>{
         if(err){
           console.log(err)
           res.status(401)
         }
       })
-    }else{
+    }else{ //Si tiene id ya existia, lo actualizamos
       sql.query("UPDATE holds_isocontrol SET description = ? WHERE id = ?", [holds[i].description, holds[i].id], (err, results) =>{
         if(err){
           console.log(err)
@@ -4269,7 +4274,7 @@ const submitHoldsIso = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const getIsocontrolHolds = async(req, res) =>{
+const getIsocontrolHolds = async(req, res) =>{ //Get de los holds de isocontrol
   const tag = req.params.tag
   sql.query("SELECT description FROM holds_isocontrol WHERE tag = ?", [tag], (err, results) =>{
     if(!results[0]){
@@ -4280,27 +4285,28 @@ const getIsocontrolHolds = async(req, res) =>{
   })
 }
 
-const getEstimatedMatWeek = async(req, res) =>{
-  sql.query("SELECT week, estimated, material_id, name FROM epipes_new LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
+const getEstimatedMatWeek = async(req, res) =>{ //Get de las estimadas en funcion del material y la semana
+  //Cogemos cada valor estimado por semana y material
+  sql.query("SELECT week, estimated, material_id, name FROM epipes_new LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{ 
     if(!results[0]){
       res.json({estimated: []}).status(401)
     }else{
       let estimated = results
-      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{ //Cogemos el inicio y fin del proyecto
         const start = results[0].starting_date
-        const oneJan = new Date(start.getFullYear(),0,1);
-        const numberOfDays = Math.floor((start - oneJan) / (24 * 60 * 60 * 1000));
-        const initial_week = Math.ceil(( start.getDay() + 1 + numberOfDays) / 7);
+        const oneJan = new Date(start.getFullYear(),0,1); //Primer dia del año
+        const numberOfDays = Math.floor((start - oneJan) / (24 * 60 * 60 * 1000)); //Cantidad de dias entre el inicio del año y el dia de inicio del proyecto
+        const initial_week = Math.ceil(( start.getDay() + 1 + numberOfDays) / 7); //Dividimos esa cantidad entre 7 para obtener a que semana del año pertenece el primer dia del proyecto
         let counter = 0
         let mat = estimated[0].material_id
-        for(let i = 0; i < estimated.length; i++){
-          if(mat == estimated[i].material_id){
-            estimated[i].weekY = initial_week + counter
-            counter += 1
-          }else{
-            mat = estimated[i].material_id
-            estimated[i].weekY = initial_week
-            counter = 1
+        for(let i = 0; i < estimated.length; i++){ //Por cada estimacion
+          if(mat == estimated[i].material_id){ //Si pertenece al mismo material que la estimacion anterior
+            estimated[i].weekY = initial_week + counter //Asginamos el valor a la semana siguiente del material
+            counter += 1 //Aumentamos el contador para asignar el valor a la siguiente semana en el bucle
+          }else{ //Si hay un cambio de material
+            mat = estimated[i].material_id //Nuevo id del material
+            estimated[i].weekY = initial_week //Semana inicial para iniciar las semanas del nuevo material
+            counter = 1 //El contador se incia en 1
           }
         }
         res.json({estimated: estimated}).status(200)
@@ -4310,7 +4316,7 @@ const getEstimatedMatWeek = async(req, res) =>{
   })
 }
 
-const getForecastMatWeek = async(req, res) =>{
+const getForecastMatWeek = async(req, res) =>{ //Get del forecast de cada material
   sql.query("SELECT week, estimated, material_id, name FROM forecast LEFT JOIN materials ON material_id = materials.id ORDER BY material_id, week", (err, results) =>{
     if(!results[0]){
       res.json({forecast: []}).status(401)
@@ -4320,7 +4326,7 @@ const getForecastMatWeek = async(req, res) =>{
   })
 }
 
-const getMaterials = async(req, res) =>{
+const getMaterials = async(req, res) =>{ //Get de todos los materiales
   sql.query("SELECT id, name FROM materials", (err, results) =>{
     if(!results[0]){
       res.json({materials: []}).status(401)
@@ -4330,7 +4336,7 @@ const getMaterials = async(req, res) =>{
   })
 }
 
-const getMaterialsPipingClass = async(req, res) =>{
+const getMaterialsPipingClass = async(req, res) =>{ //Get de la piping class de cada material
   sql.query("SELECT materials.id as material_id, materials.name as material, pipingclass.id as piping_id, pipingclass.name as piping FROM pipingclass LEFT JOIN materials ON materials.id = pipingclass.material_id", (err, results) =>{
     if(!results[0]){
       res.json({materials: []}).status(200)
@@ -4340,7 +4346,7 @@ const getMaterialsPipingClass = async(req, res) =>{
   })
 }
 
-const getProjectSpan = async(req, res) =>{
+const getProjectSpan = async(req, res) =>{ //Get del inicio y fin del proyecto
   sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
     if(!results[0]){
       res.json({span: []}).status(200)
@@ -4350,47 +4356,48 @@ const getProjectSpan = async(req, res) =>{
   })
 }
 
-const submitProjectSpan = async(req, res) =>{
+const submitProjectSpan = async(req, res) =>{ //Submit del inicio y fin del proyecto
+  //Formateamos los inputs
   const start = req.body.span["Starting date"].substring(6,10) + "-" +  req.body.span["Starting date"].substring(3,5) + "-" + req.body.span["Starting date"].substring(0,2)
   const finish = req.body.span["Finishing date"].substring(6,10) + "-" +  req.body.span["Finishing date"].substring(3,5) + "-" + req.body.span["Finishing date"].substring(0,2)
-  sql.query("UPDATE project_span SET starting_date = ?, finishing_date = ?", [start, finish], (err, results) =>{
+  sql.query("UPDATE project_span SET starting_date = ?, finishing_date = ?", [start, finish], (err, results) =>{ //Actualizamos el span
     if(err){
       console.log(err)
       res.send({success: false}).status(401)
     }else{
       const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
       let currentWeeks = 0
-      sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC LIMIT 1", (err, results) =>{
+      sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC LIMIT 1", (err, results) =>{ //Cogemos la cantidad de semanas que habia en el proyecto antes de actualizar el span
         if(results[0]){
           currentWeeks = results[0].week
         }
-        if(weeks < currentWeeks){
-          sql.query("DELETE FROM epipes_new WHERE week > ?", [weeks], (err, results) =>{
+        if(weeks < currentWeeks){ //Si antes del cambio el proyecto tenia mas semanas
+          sql.query("DELETE FROM epipes_new WHERE week > ?", [weeks], (err, results) =>{ //Eliminamos las semanas sobrantes de la tabla de estimacion
             if(err){
               console.log(err)
               res.send({success: false}).status(401)
             }
           })
-          sql.query("DELETE FROM forecast WHERE week > ?", [weeks], (err, results) =>{
+          sql.query("DELETE FROM forecast WHERE week > ?", [weeks], (err, results) =>{ //Eliminamos las semanas sobrantes de la tabla de forecast
             if(err){
               console.log(err)
               res.send({success: false}).status(401)
             }
           })
-          sql.query("DELETE FROM epipes_ifd WHERE week > ?", [weeks], (err, results) =>{
+          sql.query("DELETE FROM epipes_ifd WHERE week > ?", [weeks], (err, results) =>{ //Eliminamos las semanas sobrantes de la tabla de estimacion para ifd
             if(err){
               console.log(err)
               res.send({success: false}).status(401)
             }
           })
-          sql.query("DELETE FROM forecast_ifd WHERE week > ?", [weeks], (err, results) =>{
+          sql.query("DELETE FROM forecast_ifd WHERE week > ?", [weeks], (err, results) =>{ //Eliminamos las semanas sobrantes de la tabla del forecast para ifd
             if(err){
               console.log(err)
               res.send({success: false}).status(401)
             }
           })
-        }else if(weeks > currentWeeks){
-          sql.query("SELECT id FROM materials", (err, results) =>{
+        }else if(weeks > currentWeeks){ //Si antes del cambio el proyecto tenia menos semanas
+          sql.query("SELECT id FROM materials", (err, results) =>{ //Cogemos los materiales del proyecto
             if(!results[0]){
               res.send({success: false}).status(401)
             }else{
@@ -4398,30 +4405,31 @@ const submitProjectSpan = async(req, res) =>{
               for(let i = 0; i < results.length; i++){
                 materials_ids.push(results[i].id)
               }
+              //Obtenemos las nuevas semanas
               let newWeeks = []
               for (var i = currentWeeks + 1; i <= weeks; i++) {
                 newWeeks.push(i);
               }
-              for(let i = 0; i < newWeeks.length; i++){
-                for(let j = 0; j < materials_ids.length; j++){
-                  sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+              for(let i = 0; i < newWeeks.length; i++){ //Por cada nueva semana
+                for(let j = 0; j < materials_ids.length; j++){ //Por cada material
+                  sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => { //Insert de las nuevas semanas en estimadas
                     if(err){
                       console.log(err)
                     }
                   })
-                  sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => {
+                  sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [newWeeks[i], materials_ids[j]], (err, results) => { //Insert de las nuevas semanas en forecast
                     if(err){
                       console.log(err)
                     }
                   })
                   
                 }
-                sql.query("INSERT INTO epipes_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                sql.query("INSERT INTO epipes_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => { //Insert de las nuevas semanas en estimadas para ifd
                   if(err){
                     console.log(err)
                   }
-                })
-                sql.query("INSERT INTO forecast_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+                }) 
+                sql.query("INSERT INTO forecast_ifd(week) VALUES(?)", [newWeeks[i]], (err, results) => { //Insert de las nuevas semanas en estimadas para ifd
                   if(err){
                     console.log(err)
                   }
@@ -4430,26 +4438,27 @@ const submitProjectSpan = async(req, res) =>{
             }
           })
         }
-        sql.query("SELECT DISTINCT week FROM eweights ORDER BY week DESC LIMIT 1", (err, results) =>{
+
+        sql.query("SELECT DISTINCT week FROM eweights ORDER BY week DESC LIMIT 1", (err, results) =>{ //Cogemos la cantidad de semanas del proyecto
           let currentWeeks = 0
           const weeks = (new Date(finish) - new Date(start)) / (1000 * 60 * 60 * 24) / 7
           if(results[0]){
             currentWeeks = results[0].week
           }
-          if(weeks < currentWeeks){
-            sql.query("DELETE FROM eweights WHERE week > ?", [weeks], (err, results) =>{
-              if(err){
+          if(weeks < currentWeeks){ //Si antes del cambio el proyecto tenia mas semanas
+            sql.query("DELETE FROM eweights WHERE week > ?", [weeks], (err, results) =>{ //Eliminamos las semanas sobrantes
+              if(err){ 
                 console.log(err)
                 res.send({success: false}).status(401)
               }
             })
-          }else if(weeks > currentWeeks){
+          }else if(weeks > currentWeeks){ //Si antes del cambio el proyecto tenia menos semanas
             let newWeeks = []
             for (var i = currentWeeks + 1; i <= weeks; i++) {
               newWeeks.push(i);
             }
             for(let i = 0; i < newWeeks.length; i++){
-              sql.query("INSERT INTO eweights(week) VALUES(?)", [newWeeks[i]], (err, results) => {
+              sql.query("INSERT INTO eweights(week) VALUES(?)", [newWeeks[i]], (err, results) => { //Creamos las semanas nuevas
                 if(err){
                   console.log(err)
                 }
@@ -4464,10 +4473,10 @@ const submitProjectSpan = async(req, res) =>{
   })
 }
 
-const submitPipingClass = async(req, res) =>{
+const submitPipingClass = async(req, res) =>{ //Submit de las piping class de los materiales
   const pipingClass = req.body.piping
-  for(let i = 0; i < pipingClass.length; i++){
-    if(!pipingClass[i]["PipingClass"] || pipingClass[i]["PipingClass"] == "" || !pipingClass[i]["Material"] || pipingClass[i]["Material"] == ""){
+  for(let i = 0; i < pipingClass.length; i++){ //Por cada piping class
+    if(!pipingClass[i]["PipingClass"] || pipingClass[i]["PipingClass"] == "" || !pipingClass[i]["Material"] || pipingClass[i]["Material"] == ""){ //Eliminamos la piping class 
       sql.query("DELETE FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results)=>{
           if(err){
               console.log(err)
@@ -4475,19 +4484,19 @@ const submitPipingClass = async(req, res) =>{
           }
       })
     }else{
-      sql.query("SELECT id FROM materials WHERE name = ?", [pipingClass[i]["Material"]], (err, results) =>{
+      sql.query("SELECT id FROM materials WHERE name = ?", [pipingClass[i]["Material"]], (err, results) =>{ //Cogemos el id del material
         if(!results[0]){
           res.send({success: false}).status(401)
         }else{
           const material_id = results[0].id
-          sql.query("SELECT * FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results) =>{
-            if(!results[0]){
+          sql.query("SELECT * FROM pipingclass WHERE id = ?", [pipingClass[i]["id"]], (err, results) =>{ //Cogemos la id de la pipingclass
+            if(!results[0]){ //Si no existe quiere decir que la pipingclass es nueva, la insertamos
               sql.query("INSERT INTO pipingclass(name, material_id) VALUES(?,?)", [pipingClass[i]["PipingClass"], material_id], (err, results) =>{
                 if(err){
                   console.log(err)
                 }
               })
-            }else{
+            }else{ //Si no la actualizamos
               sql.query("UPDATE pipingclass SET name = ?, material_id = ? WHERE id = ?", [pipingClass[i]["PipingClass"], material_id, results[0].id], (err, results) =>{
                 if(err){
                   console.log(err)
@@ -4502,10 +4511,10 @@ const submitPipingClass = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const submitMaterials = async(req, res) =>{
+const submitMaterials = async(req, res) =>{ //Submit de materiales
   const materials = req.body.materials
   for(let i = 0; i < materials.length; i++){
-    if(!materials[i]["Material"] || materials[i]["Material"] == ""){
+    if(!materials[i]["Material"] || materials[i]["Material"] == ""){ //Eliminamos el material si se elimina de la tabla
       await sql.query("DELETE FROM materials WHERE id = ?", [materials[i]["id"]], (err, results)=>{
           if(err){
               console.log(err)
@@ -4513,40 +4522,40 @@ const submitMaterials = async(req, res) =>{
           }
       })
     }else{
-      await sql.query("SELECT * FROM materials WHERE id = ?", [materials[i]["id"]], async(err, results) =>{
-        if(!results[0]){
-          await sql.query("INSERT INTO materials(name) VALUES(?)", [materials[i]["Material"]], async(err, results) =>{
+      await sql.query("SELECT * FROM materials WHERE id = ?", [materials[i]["id"]], async(err, results) =>{ //Cogemos el id del material
+        if(!results[0]){ //Si no existe es que el material es nuevo
+          await sql.query("INSERT INTO materials(name) VALUES(?)", [materials[i]["Material"]], async(err, results) =>{ //Lo creamos
             if(err){
               console.log(err)
             }else{
-              await sql.query("SELECT id FROM materials WHERE name = ?", [materials[i]["Material"]], async(err, results)=>{
+              await sql.query("SELECT id FROM materials WHERE name = ?", [materials[i]["Material"]], async(err, results)=>{ //Cogemos el id del material
                 const material_id = results[0].id
                 /*
                 await sql.query("SELECT DISTINCT week FROM epipes_new ORDER BY week DESC", async(err, results) =>{
                   if(results[0]){
                 */
-                  await sql.query("SELECT * FROM project_span", async(err, results) =>{
+                  await sql.query("SELECT * FROM project_span", async(err, results) =>{ //Cogemos el span del proyecto
                       if(results[0]){
                         let week = Math.floor((new Date(results[0].finishing_date) - new Date(results[0].starting_date)) / (1000 * 60 * 60 * 24) / 7)
                         
-                      for(let w = 1; w < week + 1; w++){
-                      await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
-                        if(err){
-                          console.log(err)
-                        }
-                      })
-                      await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{
-                        if(err){
-                          console.log(err)
-                        }
-                      })
+                      for(let w = 1; w < week + 1; w++){ //Por cada semana del proyecto
+                        await sql.query("INSERT INTO epipes_new(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{ //Añadimos la estimacion para cada semana del nuevo material
+                          if(err){
+                            console.log(err)
+                          }
+                        })
+                        await sql.query("INSERT INTO forecast(week, material_id) VALUES(?,?)", [w, material_id], (err, results) =>{ //Añadimos el forecast para cada semana del nuevo material
+                          if(err){
+                            console.log(err)
+                          }
+                        })
                     }
                   }
                 })
               })
             }
           })
-        }else{
+        }else{ //Si ya existe el id actualizamos el material
           await sql.query("UPDATE materials SET name = ? WHERE id = ?", [materials[i]["Material"], materials[i]["id"]], (err, results) =>{
             if(err){
               console.log(err)
@@ -4559,13 +4568,13 @@ const submitMaterials = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const submitEstimatedForecast = async(req, res) =>{
+const submitEstimatedForecast = async(req, res) =>{ //Submit de la estimacion y el forecast
   const material_id = req.body.material_id
   const estimated = req.body.estimated
   const forecast = req.body.forecast
 
-  Object.keys(estimated).map(function(key, index) {
-    sql.query("UPDATE epipes_new SET estimated = ? WHERE material_id = ? AND week = ?", [estimated[key], material_id, key], (err, results) =>{
+  Object.keys(estimated).map(function(key, index) { //Para cada valor de estimacion
+    sql.query("UPDATE epipes_new SET estimated = ? WHERE material_id = ? AND week = ?", [estimated[key], material_id, key], (err, results) =>{ //Actualizamos los valores de estimacion para cada semana del material
       if(err){
         console.log(err)
       }
@@ -4573,7 +4582,7 @@ const submitEstimatedForecast = async(req, res) =>{
   });
 
   Object.keys(forecast).map(function(key, index) {
-    sql.query("UPDATE forecast SET estimated = ? WHERE material_id = ? AND week = ?", [forecast[key], material_id, key], (err, results) =>{
+    sql.query("UPDATE forecast SET estimated = ? WHERE material_id = ? AND week = ?", [forecast[key], material_id, key], (err, results) =>{ //Actualizamos los valores de forecast para cada semana del material
       if(err){
         console.log(err)
       }
@@ -4583,7 +4592,7 @@ const submitEstimatedForecast = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const getEstimatedByMaterial = async(req, res) =>{
+const getEstimatedByMaterial = async(req, res) =>{ //Get de la estimacion de cada material
   sql.query("SELECT * FROM estimated_materials_view", (err, results) =>{
     if(!results[0]){
       res.json({estimated: []}).status(200)
@@ -4593,13 +4602,13 @@ const getEstimatedByMaterial = async(req, res) =>{
   })
 }
 
-const getIssuedByMatWeek = async(req, res) =>{
-  sql.query("SELECT * FROM issued_material_view", (err, results) =>{
+const getIssuedByMatWeek = async(req, res) =>{ //Get de las isometricas emitidas divididas por material
+  sql.query("SELECT * FROM issued_material_view", (err, results) =>{ //Cogemos las emitidas
     if(!results[0]){
       res.send({issued: []}).status(200)
     }else{
       const issued_isos = results
-      sql.query("SELECT starting_date FROM project_span", (err, results) =>{
+      sql.query("SELECT starting_date FROM project_span", (err, results) =>{ //Cogemos el span del proyecto
         if(!results[0]){
           res.send({issued: []}).status(200)
         }else{
@@ -4607,15 +4616,15 @@ const getIssuedByMatWeek = async(req, res) =>{
           let issued = {}
           let issued_mat = {}
           let material_id = issued_isos[0].material_id
-          for(let i = 0; i < issued_isos.length; i++){
-            let week = Math.floor((new Date(issued_isos[i].issuer_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
-            if(material_id == issued_isos[i].material_id){
-              if(issued_mat[week]){
+          for(let i = 0; i < issued_isos.length; i++){ //Por cada emitida
+            let week = Math.floor((new Date(issued_isos[i].issuer_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7) //Semana en la que se emitio la iso
+            if(material_id == issued_isos[i].material_id){ //Si el material es el mismo que en el valor de estimacion anterior
+              if(issued_mat[week]){ //Si esa semana ya tenia alguna emitida sumamos 1
                 issued_mat[week] += 1
-              }else{
+              }else{  //Si no inicializamos a 1
                 issued_mat[week] = 1
               }
-            }else{
+            }else{ //Si el material es cambia
               issued[material_id] = issued_mat
               material_id = issued_isos[i].material_id
               issued_mat = {}
@@ -4631,7 +4640,7 @@ const getIssuedByMatWeek = async(req, res) =>{
   })
 }
 
-const getIssuedWeightByMatWeek = async(req, res) =>{
+const getIssuedWeightByMatWeek = async(req, res) =>{ //Lo mismo que getIssuedByMatWeek pero en vez de por unidades por peso
   sql.query("SELECT * FROM isocontrol_issued_weight_view", (err, results) =>{
     if(!results[0]){
       res.send({issued: []}).status(200)
@@ -4669,7 +4678,7 @@ const getIssuedWeightByMatWeek = async(req, res) =>{
   })
 }
 
-const getEstimatedForecastWeight = async(req, res) =>{
+const getEstimatedForecastWeight = async(req, res) =>{ //Get del peso de las estimadas y modeladas
   sql.query("SELECT * FROM eweights", (err, results) =>{
     if(!results[0]){
       res.send({estimated: []}).status(200)
@@ -4679,7 +4688,7 @@ const getEstimatedForecastWeight = async(req, res) =>{
   })
 }
 
-const submitEstimatedForecastWeight = async(req, res) =>{
+const submitEstimatedForecastWeight = async(req, res) =>{ //Get del peso de las estimadas y modeladas
   const estimated = req.body.estimated
   const forecast = req.body.forecast
   Object.keys(estimated).map(function(key, index) {
@@ -4693,13 +4702,13 @@ const submitEstimatedForecastWeight = async(req, res) =>{
   res.send({success: true}).status(200)
 }
 
-const getIsosByUserWeekDesign = async(req, res) =>{
-  sql.query("SELECT name, assignation_date FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id ORDER BY name", (err, results) =>{
+const getIsosByUserWeekDesign = async(req, res) =>{ //Get de las isos por semana solo para diseño
+  sql.query("SELECT name, assignation_date FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id ORDER BY name", (err, results) =>{ //Cogemos los owners
     if(!results[0]){
       res.send({user_isos: []}).status(200)
     }else{
       let assignations = results
-      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
+      sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{ //Cogemos el span del proyecto
         if(!results[0]){
           res.send({user_isos: []}).status(200)
         }else{
@@ -4708,9 +4717,10 @@ const getIsosByUserWeekDesign = async(req, res) =>{
           let user_isos = {}
           let current_user = assignations[0].name
           let user = {}
-          for(let i = 0; i < assignations.length; i++){
-            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
-            if(current_user === assignations[i].name){
+          for(let i = 0; i < assignations.length; i++){ //Para cada owner
+            let week = Math.floor((new Date(assignations[i].assignation_date) - new Date(start)) / (1000 * 60 * 60 * 24) / 7) //Obtenemos la semana en la que al iso fue asignada al owner
+            //Rellenamos el array de asignadas 
+            if(current_user === assignations[i].name){ 
               if(user[week]){
                 user[week] += 1
               }else{
@@ -4725,22 +4735,22 @@ const getIsosByUserWeekDesign = async(req, res) =>{
           }
           user_isos[current_user] = {assigned: user}
 
-          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{
-            if(!results[0]){
+          sql.query("SELECT * FROM design_transactions_view", (err, results)=>{ //Cogemos todas las transacciones que se han hecho sobre cada iso en las que ha intervenido diseño
+            if(!results[0]){ //Si no hay transacciones en diseño solo se pueden haber asignado, pero el usuario no ha hecho nada con ellas aun
               let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
               Object.keys(user_isos).map(function(user, index) {
-                user_isos[user]["sent"] = {}
-                user_isos[user]["returned"] = {}
+                user_isos[user]["sent"] = {} //Isos enviadas
+                user_isos[user]["returned"] = {} //Isos retornadas
 
-                user_isos[user]["remaining"] = {}
-                for(let w = 1; w < total_weeks + 1; w++){
+                user_isos[user]["remaining"] = {} //Isos restantes
+                for(let w = 1; w < total_weeks + 1; w++){ //Por cada semana
                   let remaining = 0
-                  if(w > 1){
+                  if(w > 1){ //Excepto en la semana incicial, el valor de isos restantes se inicializa con el valor de la semana anterior
                     remaining = user_isos[user]["remaining"][w-1]
                   }
-                  if(user_isos[user]["assigned"]){
+                  if(user_isos[user]["assigned"]){ //Si se le han asignado isos esta semana al usuario
                     if(user_isos[user]["assigned"][w]){
-                      remaining += user_isos[user]["assigned"][w]
+                      remaining += user_isos[user]["assigned"][w] //Se las sumamos a las semanas restantes
                     }
                   }
                   user_isos[user]["remaining"][w] = remaining
@@ -4748,40 +4758,40 @@ const getIsosByUserWeekDesign = async(req, res) =>{
                 
               })
               res.send({design_isos: user_isos}).status(200)
-            }else{
+            }else{ //Si existen transacciones ha habido movimiento con las isos
               let transactions = results
               let current_user = transactions[0].name
               let user_sent = {}
               let user_returned = {} 
-              for(let i = 0; i < transactions.length; i++){
-                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
-                if(current_user === transactions[i].name){
-                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){
+              for(let i = 0; i < transactions.length; i++){ //Por cada transaccion
+                let week = Math.floor((new Date(transactions[i].created_at) - new Date(start)) / (1000 * 60 * 60 * 24) / 7) //Obtenemos la semana en la que se hizo la transaccion
+                if(current_user === transactions[i].name){ //Si la transaccion la ha hecho el usuario que estamos controlando
+                  if(transactions[i].from === "Design" && transactions[i].to !== "Design"){ //Si la iso ha ido de diseño a otro sitio se suma a las enviadas
                     if(user_sent[week]){
                       user_sent[week] += 1
                     }else{
                       user_sent[week] = 1
                     }
-                  }else if(transactions[i].to === "Cancel verify"){
+                  }else if(transactions[i].to === "Cancel verify"){ //Si se ha cancelado la verificacion se cuenta como retornada
                     if(user_returned[week]){
                       user_returned[week] += 1
                     }else{
                       user_returned[week] = 1
                     }
-                  }else if(transactions[i].from === "Issued"){
+                  }else if(transactions[i].from === "Issued"){  //Si la iso viene de issued es una nueva revision, cuenta como iso nueva asignada asignada
                     if(user_isos[current_user]["assigned"][week]){
                       user_isos[current_user]["assigned"][week] += 1
                     }else{
                       user_isos[current_user]["assigned"][week] = 1
                     }
-                  }else if(transactions[i].to === "Design"){
+                  }else if(transactions[i].to === "Design"){ //Si la iso vuevle a diseño, cuenta como retornada
                     if(user_returned[week]){
                       user_returned[week] += 1
                     }else{
                       user_returned[week] = 1
                     }
                   }
-                }else{
+                }else{ //Si la transaccion es de otro usuario
                   user_isos[current_user]["sent"] = user_sent
                   user_isos[current_user]["returned"] = user_returned
                   user_sent = {}
@@ -4818,7 +4828,7 @@ const getIsosByUserWeekDesign = async(req, res) =>{
               user_isos[current_user]["returned"] = user_returned
 
               let total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
-              Object.keys(user_isos).map(function(key, index) {
+              Object.keys(user_isos).map(function(key, index) { //Por cada semana de este usuario se calculan las restantes
                 user_isos[key]["remaining"] = {}
                 for(let w = 1; w < total_weeks + 1; w++){
                   let remaining = 0
@@ -4854,7 +4864,7 @@ const getIsosByUserWeekDesign = async(req, res) =>{
   })
 }
 
-const getWeightByUserWeekDesign = async(req, res) =>{
+const getWeightByUserWeekDesign = async(req, res) =>{ //Lo mismo que getIsosByUserWeekDesign pero por peso en vez de por unidad
   sql.query("SELECT users.name, assignation_date, tpipes.weight FROM owners LEFT JOIN users ON owners.owner_iso_id = users.id LEFT JOIN dpipes_view ON owners.tag = dpipes_view.tag JOIN tpipes ON dpipes_view.tpipes_id = tpipes.id ORDER BY name", (err, results) =>{
     if(!results[0]){
       res.send({user_isos: []}).status(200)
@@ -5016,7 +5026,7 @@ const getWeightByUserWeekDesign = async(req, res) =>{
 }
 
 
-const getIsosByUserWeek = async(req, res) =>{
+const getIsosByUserWeek = async(req, res) =>{ //Lo mismo que getIsosByUserWeekDesign pero para el resto de roles. La difenencia esta en que las isos asignadas van en funcion del claim de las isos en vez de por el owner
  
   sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
     if(!results[0]){
@@ -5027,27 +5037,28 @@ const getIsosByUserWeek = async(req, res) =>{
       const total_weeks = Math.floor((new Date() - new Date(start)) / (1000 * 60 * 60 * 24) / 7)
       let user_isos = {}
 
+      //Cogemos todos los usuarios y sus roles
       sql.query("SELECT `users`.`name` as `user`, `roles`.`name` as `role` FROM users JOIN model_has_roles ON users.id = model_has_roles.model_id LEFT JOIN roles ON model_has_roles.role_id = roles.id WHERE roles.id >= 2 AND roles.id <= 8 ORDER BY `roles`.`name`", (err, results)=>{
         if(!results[0]){
           res.send({user_isos: []}).status(200)
         }else{
           const roles = results
-          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"]
+          const order = ["DesignLead", "Stress", "StressLead", "Supports", "SupportsLead", "Materials", "Issuer", "LDE/Isocontrol"] //Posibles roles
           let role = results[0].role
           user_isos[role] = {}
           let weeksClaimed = {}
           let weeksSent = {}
           let weeksReturned = {}
           let weeksRemaining = {}
-          for(let i = 0; i < roles.length; i++){
+          for(let i = 0; i < roles.length; i++){ //Por cada rol que tiene el usuario
             
-            if(role == results[i].role){
+            if(role == results[i].role){ //Si ya existia algun usuario con ese rol, añadimos el nuevo usuario al diccionario
               user_isos[role][roles[i].user] = {}
               user_isos[role][roles[i].user]["claimed"] = {}
               user_isos[role][roles[i].user]["sent"] = {}
               user_isos[role][roles[i].user]["returned"] = {}
               user_isos[role][roles[i].user]["remaining"] = {}
-            }else{
+            }else{ //Si no existia ningun usuario con ese rol, creamos el diccionario para el rol y añadimos el nuevo usuario al diccionario
               role = results[i].role
               user_isos[role] = {}
               user_isos[role][roles[i].user] = {}
@@ -5058,7 +5069,7 @@ const getIsosByUserWeek = async(req, res) =>{
             }
           }
           
-          sql.query("SELECT * FROM transactions_view", (err, results)=>{
+          sql.query("SELECT * FROM transactions_view", (err, results)=>{ //A partir de aqui es lo mismo que en getIsosByUserWeekDesign con la diferencia del claim
             if(!results[0]){
               res.send({user_isos: user_isos}).status(200)
             }else{
@@ -5212,7 +5223,7 @@ const getIsosByUserWeek = async(req, res) =>{
 }
 
 
-const getWeightByUserWeek = async(req, res) =>{
+const getWeightByUserWeek = async(req, res) =>{ //Lo mismo que getIsosByUserWeek pero por peso en vez de por unidad
   sql.query("SELECT starting_date, finishing_date FROM project_span", (err, results) =>{
     if(!results[0]){
       res.send({user_isos: []}).status(200)
@@ -5406,7 +5417,7 @@ const getWeightByUserWeek = async(req, res) =>{
   
 }
 
-const trayCount = async(req, res) =>{
+const trayCount = async(req, res) =>{ //Contador de cuantas isos hay sin reclamar en cada bandeja
   sql.query("SELECT * FROM tray_count_view", (err, results) =>{
     if(!results[0]){
       res.send({isoCount: [{Design: 0, DesignLead: 0, Stress: 0, StressLead: 0, Supports:0, SupportsLead: 0, Materials: 0, Issuer: 0}]}).status(200)
@@ -5416,16 +5427,16 @@ const trayCount = async(req, res) =>{
   })
 }
 
-const getFeedProgress = async(req, res) =>{
+const getFeedProgress = async(req, res) =>{ //Get del progreso del feed
   sql.query("SELECT status FROM feed_pipes", (err, results) =>{
     if(!results[0]){
       res.send({progress: 0})
     }else{
       let progress = 0
       for(let i = 0; i < results.length; i++){
-        if(results[i].status == "MODELLING(50%)"){
+        if(results[i].status == "MODELLING(50%)"){ //Si el status es del MODELLED 50% sumamos 50 al progreso
           progress += 50
-        }else if(results[i].status == "MODELLED(100%)"){
+        }else if(results[i].status == "MODELLED(100%)"){ //Si es de MODELLED 100% sumamos 100
           progress += 100
         }
         
@@ -5437,7 +5448,7 @@ const getFeedProgress = async(req, res) =>{
   })
 }
 
-cron.schedule('0 1 * * *', async () => {
+cron.schedule('0 1 * * *', async () => { //Cada dia a la 1AM se guarda el progreso que hay en ese momento
   saveFeedWeight()
 })
 
@@ -5456,7 +5467,7 @@ async function saveFeedWeight(){
         }
         
       }
-      sql.query("INSERT INTO gfeed(progress, max_progress) VALUES(?,?)", [progress, max_progress], (err, results) =>{
+      sql.query("INSERT INTO gfeed(progress, max_progress) VALUES(?,?)", [progress, max_progress], (err, results) =>{ //Guardamos el progreso en la bd 
         if(err){
           console.log(err)
         }
@@ -5466,7 +5477,7 @@ async function saveFeedWeight(){
 }
 
 
-const gFeed = async(req, res) =>{
+const gFeed = async(req, res) =>{ //Get del progreso del feed para montar la grafica
   sql.query("SELECT gfeed.*, feed_forecast.estimated FROM gfeed JOIN feed_forecast ON gfeed.id = feed_forecast.`day`", (err, results)=>{
     if(!results[0]){
       res.status(200)
@@ -5476,7 +5487,7 @@ const gFeed = async(req, res) =>{
   })
 }
 
-const getFeedForecast = async(req, res) =>{
+const getFeedForecast = async(req, res) =>{ //Get del forecast del feed
   sql.query("SELECT id, day, estimated FROM feed_forecast", (err, results) =>{
     if(!results[0]){
       res.send({forecast: []}).status(200)
@@ -5486,17 +5497,17 @@ const getFeedForecast = async(req, res) =>{
   })
 }
 
-const submitFeedForecast = async(req, res) =>{
+const submitFeedForecast = async(req, res) =>{ //Se guarda el progreso del feed 
   const forecast = req.body.forecast
-  Object.keys(forecast).map(function(key, index) {
-    sql.query("SELECT * FROM feed_forecast WHERE day = ?", [parseInt(key.substring(1))], (err, results) =>{
-      if(!results[0]){
+  Object.keys(forecast).map(function(key, index) { //Por cada dia del forecast
+    sql.query("SELECT * FROM feed_forecast WHERE day = ?", [parseInt(key.substring(1))], (err, results) =>{ //Cogemos el forecast de ese dia
+      if(!results[0]){ //Si no existe lo creamos
         sql.query("INSERT INTO feed_forecast(day, estimated) VALUES(?,?)", [parseInt(key.substring(1)), forecast[key]], (err, results) =>{
           if(err){
             console.log(err)
           }
         })
-      }else{
+      }else{ //Si existe lo actualizamos
         sql.query("UPDATE feed_forecast SET estimated = ? WHERE day = ?", [forecast[key], parseInt(key.substring(1))], (err, results) =>{
           if(err){
             console.log(err)
