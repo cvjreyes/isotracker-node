@@ -55,10 +55,11 @@ const gcurve = (req,res) =>{
     })  
 }
 
+//Mismo proceso para el resto de disciplinas
 const submitEquipProgress = (req, res) =>{
     const rows = req.body.rows
     for(let i = 1; i < rows.length; i++){
-        if(!rows[i]["Week"] || rows[i]["Week"] == ""){
+        if(!rows[i]["Week"] || rows[i]["Week"] == ""){ //Si se ha eliminado la semana se elimina el progreso 
           sql.query("DELETE FROM gequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
               if(err){
                   console.log(err)
@@ -66,7 +67,7 @@ const submitEquipProgress = (req, res) =>{
               }
           })
         }else{
-          sql.query("SELECT * FROM gequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{
+          sql.query("SELECT * FROM gequis WHERE id = ?", [rows[i]["id"]], (err, results)=>{ //Si no exisita esta fila se crea
               if(!results[0]){
                 sql.query("INSERT INTO gequis(week, estimated) VALUES(?,?)", [rows[i]["Week"], rows[i]["Estimated"]], (err, results)=>{
                   if(err){
@@ -74,7 +75,7 @@ const submitEquipProgress = (req, res) =>{
                           res.status(401)
                       }
                   })
-              }else{
+              }else{ //Si exisitia se actualiza
                   sql.query("UPDATE gequis SET week = ?, estimated = ? WHERE id = ?", [rows[i]["Week"], rows[i]["Estimated"], rows[i]["id"]], (err, results) =>{
                       if(err){
                           console.log(err)
@@ -88,6 +89,7 @@ const submitEquipProgress = (req, res) =>{
     
 }
 
+//Mismo proceso submitEquipProgress
 const submitInstProgress = (req, res) =>{
     const rows = req.body.rows
     for(let i = 1; i < rows.length; i++){
@@ -121,6 +123,7 @@ const submitInstProgress = (req, res) =>{
     
 }
 
+//Mismo proceso submitEquipProgress
 const submitCivilProgress = (req, res) =>{
     const rows = req.body.rows
     for(let i = 1; i < rows.length; i++){
@@ -154,6 +157,7 @@ const submitCivilProgress = (req, res) =>{
     
 }
 
+//Mismo proceso submitEquipProgress
 const submitElecProgress = (req, res) =>{
     const rows = req.body.rows
     for(let i = 1; i < rows.length; i++){
@@ -187,6 +191,7 @@ const submitElecProgress = (req, res) =>{
     
 }
 
+//Mismo proceso submitEquipProgress
 const submitPipingProgress = (req, res) =>{
     const rows = req.body.rows
     for(let i = 1; i < rows.length; i++){
@@ -223,37 +228,37 @@ const submitPipingProgress = (req, res) =>{
 const currentProgress = async(req,res) =>{
   let progress = 0
   let realprogress = 0
-  sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
+  sql.query("SELECT SUM(progress) FROM misoctrls WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{ //Cogemos el progreso de las isos en r0
     if(results[0]["SUM(progress)"]){
       progress = results[0]["SUM(progress)"]
     }
-    sql.query("SELECT SUM(realprogress) FROM misoctrls WHERE requested is null OR requested = 1", (req, results) =>{
+    sql.query("SELECT SUM(realprogress) FROM misoctrls WHERE requested is null OR requested = 1", (req, results) =>{ //Cogemos el progreso real de las isos en r0
       if(results[0]["SUM(realprogress)"]){
         realprogress = results[0]["SUM(realprogress)"]
       }
-      if(process.env.NODE_PROGRESS_DIAMETER_FILTER){
+      if(process.env.NODE_PROGRESS_DIAMETER_FILTER){ //Si el proyecto tiene filtro de diametro
         let q1 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 1 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
         let q2 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 2 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
         let q3 = "SELECT COUNT(tpipes_id) FROM dpipes JOIN diameters ON dpipes.diameter_id = diameters.id WHERE tpipes_id = 3 AND dn " + process.env.NODE_PROGRESS_DIAMETER_FILTER
-        sql.query(q1, (err, results) =>{
+        sql.query(q1, (err, results) =>{ //Cogemos el peso de las TL1
           const tp1 = results[0]["COUNT(tpipes_id)"]
-          sql.query(q2, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{
+          sql.query(q2, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{ //TL2 
             const tp2 = results[0]["COUNT(tpipes_id)"]
-            sql.query(q3, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{
+            sql.query(q3, [process.env.NODE_PROGRESS_DIAMETER_FILTER],(err, results) =>{ //Y TL3
               const tp3 = results[0]["COUNT(tpipes_id)"]
               sql.query("SELECT weight FROM tpipes", (err, results) =>{
                 const weights = results
-                const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight
+                const maxProgress = tp1 * results[0].weight + tp2 * results[1].weight + tp3 * results[2].weight //Sumamos los pesos
                 res.json({
                   weight: maxProgress,
-                  progress: (progress/maxProgress * 100).toFixed(2),
-                  realprogress: (realprogress/maxProgress * 100).toFixed(2)
+                  progress: (progress/maxProgress * 100).toFixed(2), //Progreso actual
+                  realprogress: (realprogress/maxProgress * 100).toFixed(2) //Progreso real actual
                 }).status(200)
               })
             })
           })
         })
-      }else{
+      }else{ //Lo mismo pero sin el filtro de diametro en las querys
         sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 1", (err, results) =>{
           const tp1 = results[0]["COUNT(tpipes_id)"]
           sql.query("SELECT COUNT(tpipes_id) FROM dpipes WHERE tpipes_id = 2", (err, results) =>{
@@ -278,6 +283,8 @@ const currentProgress = async(req,res) =>{
   })
 }
 
+
+//Lo mismo que currentProgress pero teniendo en cuenta todas las lineas modeladas de dpipes
 const currentProgressISO = async(req,res) =>{
   sql.query("SELECT SUM(progress) FROM misoctrls INNER JOIN dpipes_view ON misoctrls.isoid COLLATE utf8mb4_unicode_ci = dpipes_view.isoid WHERE revision = 0 OR (revision = 1 AND issued = 1)", (req, results) =>{
     const progress = results[0]["SUM(progress)"]

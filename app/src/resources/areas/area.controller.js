@@ -1,3 +1,5 @@
+//Estos archivos de areas son de cuando empece y no se usan
+
 const Area = require("./area.model.js");
 
 // Create and Save a new area

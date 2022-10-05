@@ -23,11 +23,13 @@ const verify = async(req, res) => {
                     last = results[i]
                 }
             }
+            //Guardamos la transaccion en el historial
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?,?)", 
             [fileName, 0, 0, 0, last.claimed, 1, last.from, "Verify" , last.comments, username, role], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
+                    //Actualizamos la iso en misoctrls
                     sql.query("UPDATE misoctrls SET verifydesign = 1, returned = 0, user = ?, role = ? WHERE filename = ?", [username, role, fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);
@@ -64,11 +66,13 @@ const cancelVerify = async(req, res) => {
                     last = results[i]
                 }
             }
+            //Guardamos la transaccion en el historial
             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed,verifydesign, `from`, `to`, comments, user, role, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", 
             [fileName, 0, 0, 0, last.claimed, 0,  "Cancel verify" , last.to, last.comments, username, role, last.created_at], (err, results) => {
                 if (err) {
                     console.log("error: ", err);
                 }else{
+                    //Actualizamos la iso en misoctrls
                     sql.query("UPDATE misoctrls SET verifydesign = 0 WHERE filename = ?", [fileName], (err, results) =>{
                         if (err) {
                             console.log("error: ", err);

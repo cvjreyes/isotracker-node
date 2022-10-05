@@ -6,12 +6,12 @@ const singleUnclaim = async (req, res) => {
     const fileName = req.body.file
     let username = ""
 
-    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Cogemos el email
         if (!results[0]){
         res.status(401).send("Username or password incorrect");
         }else{
             username  = results[0].name
-            sql.query("SELECT forced, returned FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{
+            sql.query("SELECT forced, returned FROM misoctrls WHERE filename = ?", [fileName],(err, results) =>{ //Esta parte no se usa
                 /*if(results[0].forced == 1){
                     res.status(401).send({"error": "forced"})
                 }else if(results[0].returned == 1){
@@ -27,6 +27,7 @@ const singleUnclaim = async (req, res) => {
                                     last = results[i]
                                 }
                             }
+                            //Guardamos la transaccion en el historial
                             sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
                             [fileName, last.revision, last.spo, last.sit, 0, last.from, last.to, "Unclaimed", username, req.body.role], (err, results) => {
                             if (err) {
@@ -36,6 +37,7 @@ const singleUnclaim = async (req, res) => {
                                 if(req.body.role == "DesignLead" || req.body.role == "SupportsLead" || req.body.role == "StressLead"){
                                     ld = 1
                                 }
+                                //Actualizamos en misoctrls la iso
                                 sql.query("UPDATE misoctrls SET claimed = 0, verifyDesign = ?, user = ?, role = ? WHERE filename = ?", [ld,"None", null, fileName], (err, results) =>{
                                     if (err) {
                                         console.log("error: ", err);
@@ -58,7 +60,7 @@ const forceUnclaim = async(req,res) =>{
     const fileName = req.body.file
     let username = ""
 
-    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{
+    sql.query('SELECT * FROM users WHERE email = ?', [req.body.user], (err, results) =>{ //Cogemos el user
         if (!results[0]){
             res.status(401).send("Username or password incorrect");
         }else{   
@@ -73,11 +75,13 @@ const forceUnclaim = async(req,res) =>{
                             last = results[i]
                         }
                     }
+                    //Guardamos la transaccion en el historial
                     sql.query("INSERT INTO hisoctrls (filename, revision, spo, sit, claimed, `from`, `to`, comments, user, role) VALUES (?,?,?,?,?,?,?,?,?,?)", 
                     [fileName, 0, last.spo, last.sit, 0, last.from, last.to, "Forced unclaim", username, req.body.role], (err, results) => {
                     if (err) {
                         console.log("error: ", err);
                     }else{
+                        //Actualizamos en misoctrls la iso
                         sql.query("UPDATE misoctrls SET claimed = 0, verifydesign = 0, user = ?, role = ? WHERE filename = ?", ["None", null, fileName], (err, results) =>{
                             if (err) {
                                 console.log("error: ", err);
@@ -93,7 +97,7 @@ const forceUnclaim = async(req,res) =>{
     });
 }
 
-const singleUnclaimProc = async(req, res) =>{
+const singleUnclaimProc = async(req, res) =>{ //Mismo proceso pero para procesos
   const user = req.body.user
   const fileName = req.body.file
   sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{
@@ -130,7 +134,7 @@ const singleUnclaimProc = async(req, res) =>{
   })
 }
 
-const singleUnclaimInst = async(req, res) =>{
+const singleUnclaimInst = async(req, res) =>{ //Mismo proceso pero para instrumentos
     const user = req.body.user
     const fileName = req.body.file
     sql.query('SELECT * FROM hisoctrls WHERE filename = ?', [fileName], (err, results) =>{

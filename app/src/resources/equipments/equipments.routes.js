@@ -1,6 +1,6 @@
 module.exports = app => {
     const equipments = require("./equipments.controller.js");
-    // Create a new user
+    //Explicado en civils. Mismo funcionamiento
     app.get("/equipments/estimated", equipments.equipEstimated)
     app.get("/equipments/modelled", equipments.equipModelled)
     app.get("/equipments/steps", equipments.equipSteps)

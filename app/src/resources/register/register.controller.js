@@ -3,7 +3,6 @@ const md5 = require("md5");
 
 const registerUser = async(req, res) => {
     const { userName, email, role } = req.body;
-    
 
     sql.query('INSERT INTO users (name, email, password, remember_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)', [userName, email, md5("123456"), "asd", "2", "2"], async (err, result)=>{
         if(err){
