@@ -13,7 +13,7 @@ const upload = async (req, res) => {
   try {
     await uploadFile.uploadFileMiddleware(req, res); //Envia el archivo al middleware
 
-    if (req.file == undefined) {
+    if (req.file == undefined || req.file.originalname.split('.').length > 2) {
       return res.status(400).send({ message: "Please upload a file!" }); //Si se ha hecho un upload vacio
     }
     res.status(200).send({
