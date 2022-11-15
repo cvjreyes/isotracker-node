@@ -559,22 +559,22 @@ const updateStatus = async(req,res) =>{
         
               totalR2 = designR2 + stressR2 + supportsR2 + materialsR2 + issuerR2 + toIssueR2 + issuedR2
               //Obtenemos las isos en hold
-              sql.query("SELECT `to` FROM misoctrls WHERE onhold = 1", (err, results) =>{
+              sql.query("SELECT `from` FROM misoctrls WHERE onhold = 1", (err, results) =>{
                 if(!results[0]){
                   results = []
                 }
                   for(let i = 0; i < results.length; i++){
-                    if(results[i].to == "Design"){
+                    if(results[i].from == "Design"){
                       designHold += 1
-                    }else if(results[i].to == "Stress" || results[i].to == "stress"){
+                    }else if(results[i].from == "Stress" || results[i].to == "stress"){
                       stressHold += 1
-                    }else if(results[i].to == "Supports"){
+                    }else if(results[i].from == "Supports"){
                       supportsHold += 1
-                    }else if(results[i].to == "Materials"){
+                    }else if(results[i].from == "Materials"){
                       materialsHold += 1
-                    }else if(results[i].to == "Issuer"){
+                    }else if(results[i].from == "Issuer"){
                       issuerHold += 1
-                    }else if(results[i].to == "LDE/Isocontrol"){
+                    }else if(results[i].from == "LDE/Isocontrol"){
                       toIssueHold += 1
                     }
                   }
