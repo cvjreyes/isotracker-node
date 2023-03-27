@@ -82,17 +82,20 @@ const equipEstimated = (req, res) =>{
       for(let i = 0; i < elines.length; i++){
         eweight += elines[i].qty * elines[i].weight
       }
-      sql.query('SELECT pequis.percentage FROM dequis LEFT JOIN pequis ON dequis.pequis_id = pequis.id', (err, results)=>{
+      sql.query('SELECT * FROM dequistotalprogress_view', (err, results)=>{
+        const elinesp = results
         let total_progress = 0
+        let eweightp = 0
         for(let i = 0; i < results.length; i++){
           if(results[i].percentage == 100){
             total_progress += 100
          }else{
             total_progress += 65
           }
+          eweightp += elinesp[i].progressbyelem 
         }
   
-        total_progress = total_progress/results.length
+        total_progress = (eweightp / eweight) * 100
         if(!total_progress){
           total_progress = 0
         }
